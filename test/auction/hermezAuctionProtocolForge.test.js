@@ -36,9 +36,7 @@
    let buidlerHermezAuctionProtocol;
    let owner,
      coordinator1,
-     producer1,
      coordinator2,
-     producer2,
      registryFunder,
      hermezRollup,
      bootCoordinator,
@@ -55,7 +53,6 @@
      [
        owner,
        coordinator1,
-       producer1,
        coordinator2,
        producer2,
        registryFunder,
@@ -179,11 +176,6 @@
      it("The winner should be able to forge", async function() {
        let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
 
-       // Register coordinator
-       await buidlerHermezAuctionProtocol
-         .connect(coordinator1)
-         .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL);
-
        // Encode multiBid data
        let data = iface.encodeFunctionData("multiBid", [
          2,
@@ -191,7 +183,7 @@
          [true, true, true, true, true, true],
          ethers.utils.parseEther("11"),
          ethers.utils.parseEther("11"),
-         await producer1.getAddress(),
+         await coordinator1.getAddress(),
        ]);
 
        // Send tokens and multiBid data
@@ -209,7 +201,7 @@
        // Check forger address
        expect(
          await buidlerHermezAuctionProtocol.canForge(
-           await producer1.getAddress(),
+           await coordinator1.getAddress(),
            block
          )
        ).to.be.equal(true);
@@ -224,11 +216,6 @@
      it("bootCoordinator should be able to forge if bidAmount less than minBid", async function() {
        let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
 
-       // Register coordinator
-       await buidlerHermezAuctionProtocol
-         .connect(coordinator1)
-         .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL);
-
        // Encode multiBid data
        let data = iface.encodeFunctionData("multiBid", [
          2,
@@ -236,7 +223,7 @@
          [true, true, true, true, true, true],
          ethers.utils.parseEther("11"),
          ethers.utils.parseEther("11"),
-         await producer1.getAddress(),
+         await coordinator1.getAddress(),
        ]);
 
        // Send tokens and multiBid data
@@ -302,11 +289,6 @@
      it("should burn the HEZ tokens if it's no able to return them", async function() {
        let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
 
-       // Register coordinator
-       await buidlerHermezAuctionProtocol
-         .connect(coordinator1)
-         .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL);
-
        // Encode multibid data
        let data = iface.encodeFunctionData("multiBid", [
          2,
@@ -314,7 +296,7 @@
          [true, true, true, true, true, true],
          ethers.utils.parseEther("11"),
          ethers.utils.parseEther("11"),
-         await producer1.getAddress(),
+         await coordinator1.getAddress(),
        ]);
 
        // Send tokens and multibid data
@@ -406,7 +388,7 @@
      });
 
      it("Winner should be able to forge", async function() {
-       let producer1Address = await producer1.getAddress();
+       let producer1Address = await coordinator1.getAddress();
        let bidAmount = ethers.utils.parseEther("11");
        // Event NewForgeAllocated
        let eventNewForgeAllocated = new Promise((resolve, reject) => {
@@ -436,10 +418,7 @@
        });
 
        let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
-       // Register coordinator
-       await buidlerHermezAuctionProtocol
-         .connect(coordinator1)
-         .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL);
+
        // Encode multibid data
        let data = iface.encodeFunctionData("multiBid", [
          2,
@@ -447,7 +426,7 @@
          [true, true, true, true, true, true],
          bidAmount,
          bidAmount,
-         await producer1.getAddress(),
+         await coordinator1.getAddress(),
        ]);
        // Send tokens and mutlbid data
        await buidlerHEZToken
@@ -480,12 +459,12 @@
 
      it("shouldn't be able to claim HEZ if it doesn't have enough balance", async function() {
        await expect(
-         buidlerHermezAuctionProtocol.claimHEZ(donationAddress)
+         buidlerHermezAuctionProtocol.connect(donation).claimHEZ()
        ).to.be.revertedWith("Doesn't have enough balance");
      });
 
      it("should be able to claim HEZ", async function() {
-       let producer1Address = await producer1.getAddress();
+       let producer1Address = await coordinator1.getAddress();
        let bidAmount = ethers.utils.parseEther("11");
        // Event HEZClaimed
        let eventHEZClaimed = new Promise((resolve, reject) => {
@@ -507,10 +486,7 @@
        });
 
        let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
-       // Register coordinator
-       await buidlerHermezAuctionProtocol
-         .connect(coordinator1)
-         .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL);
+
        // Encode multibid data
        let data = iface.encodeFunctionData("multiBid", [
          2,
@@ -518,7 +494,7 @@
          [true, true, true, true, true, true],
          bidAmount,
          bidAmount,
-         await producer1.getAddress(),
+         await coordinator1.getAddress(),
        ]);
        // Send tokens and multibid data
        await buidlerHEZToken
@@ -548,7 +524,7 @@
        expect(
          await buidlerHermezAuctionProtocol.getClaimableHEZ(governanceAddress)
        ).to.be.equal(bidAmount.mul(3).mul(20).div(100));
-       await buidlerHermezAuctionProtocol.claimHEZ(governanceAddress);
+       await buidlerHermezAuctionProtocol.connect(governance).claimHEZ();
        expect(
          await buidlerHermezAuctionProtocol.getClaimableHEZ(governanceAddress)
        ).to.be.equal(0);
@@ -560,7 +536,7 @@
        expect(
          await buidlerHermezAuctionProtocol.getClaimableHEZ(donationAddress)
        ).to.be.equal(bidAmount.mul(3).mul(40).div(100));
-       await buidlerHermezAuctionProtocol.claimHEZ(donationAddress);
+       await buidlerHermezAuctionProtocol.connect(donation).claimHEZ();
        expect(
          await buidlerHermezAuctionProtocol.getClaimableHEZ(donationAddress)
        ).to.be.equal(0);
@@ -572,13 +548,10 @@
      });
 
      it("should revert when claim HEZ and it revert", async function() {
-       let producer1Address = await producer1.getAddress();
+       let producer1Address = await coordinator1.getAddress();
        let bidAmount = ethers.utils.parseEther("11");
        let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
-       // Register coordinator
-       await buidlerHermezAuctionProtocol
-         .connect(coordinator1)
-         .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL);
+
        // Encode multibid data
        let data = iface.encodeFunctionData("multiBid", [
          2,
@@ -586,7 +559,7 @@
          [true, true, true, true, true, true],
          bidAmount,
          bidAmount,
-         await producer1.getAddress(),
+         await coordinator1.getAddress(),
        ]);
        // Send tokens and multibid data
        await buidlerHEZToken

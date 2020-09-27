@@ -161,7 +161,7 @@ contract ERC777 is Context, IERC777, IERC20 {
         address recipient,
         uint256 amount,
         bytes memory data
-    ) public override {
+    ) public virtual override {
         _send(_msgSender(), recipient, amount, data, "", true);
     }
 
