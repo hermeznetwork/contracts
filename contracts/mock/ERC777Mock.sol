@@ -47,6 +47,15 @@ contract ERC777Mock is Context, ERC777 {
         return transferResult;
     }
 
+    function send(
+        address recipient,
+        uint256 amount,
+        bytes memory data
+    ) public virtual override {
+        require(!transferRevert, "Transfer reverted");
+        super.send(recipient, amount, data);
+    }
+
     function setTransferResult(bool result) public {
         transferResult = result;
     }

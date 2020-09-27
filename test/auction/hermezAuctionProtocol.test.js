@@ -1,7 +1,13 @@
-const {ethers} = require("@nomiclabs/buidler");
-const {expect} = require("chai");
+const {
+  ethers
+} = require("@nomiclabs/buidler");
+const {
+  expect
+} = require("chai");
 
-const {time} = require("@openzeppelin/test-helpers");
+const {
+  time
+} = require("@openzeppelin/test-helpers");
 
 const ERC1820_REGISTRY_ADDRESS = "0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24";
 const ERC1820_REGISTRY_DEPLOY_TX =
@@ -21,7 +27,7 @@ let ABIbid = [
 ];
 let iface = new ethers.utils.Interface(ABIbid);
 
-describe("Auction Protocol", function () {
+describe("Auction Protocol", function() {
   this.timeout(TIMEOUT);
 
   let buidlerHEZToken;
@@ -40,7 +46,7 @@ describe("Auction Protocol", function () {
   let governanceAddress, hermezRollupAddress, donationAddress;
 
   // Deploy
-  before(async function () {
+  before(async function() {
     const HEZToken = await ethers.getContractFactory("ERC777Mock");
 
     [
@@ -96,7 +102,7 @@ describe("Auction Protocol", function () {
       );
   });
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     const HermezAuctionProtocol = await ethers.getContractFactory(
       "HermezAuctionProtocol"
     );
@@ -134,7 +140,7 @@ describe("Auction Protocol", function () {
     );
   });
 
-  it("shouldn't be able to initialize twice", async function () {
+  it("shouldn't be able to initialize twice", async function() {
     await expect(
       buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
         buidlerHEZToken.address,
@@ -147,99 +153,8 @@ describe("Auction Protocol", function () {
     ).to.be.revertedWith("Contract instance has already been initialized");
   });
 
-  describe("Coordinator registration", function () {
-    beforeEach(async function () {
-      // Register Coordinator
-      await buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL);
-    });
-    it("should register a producer/coordinator", async function () {
-      // Get registered coordinator
-      let coordinator = await buidlerHermezAuctionProtocol.coordinators(
-        await producer1.getAddress()
-      );
-      // Check coordinator withdrawal address
-      expect(coordinator.withdrawalAddress).to.equal(
-        await coordinator1.getAddress()
-      );
-      // Check coordinator URL
-      expect(coordinator.coordinatorURL).to.equal(COORDINATOR_1_URL);
-    });
-    it("shouldn't register a producer that was already registered", async function () {
-      // Try to register the same coordinator
-      await expect(
-        buidlerHermezAuctionProtocol
-          .connect(coordinator2)
-          .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL)
-      ).to.be.revertedWith("Already registered");
-    });
-    it("should be able to update a producer with a new address and url", async function () {
-      // Update coordinator information
-      await buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .updateCoordinatorInfo(
-          await producer1.getAddress(),
-          await coordinator2.getAddress(),
-          COORDINATOR_1_URL_2
-        );
-      // Get registered coordinator with new information
-      let coordinator = await buidlerHermezAuctionProtocol.coordinators(
-        await producer1.getAddress()
-      );
-      // Check new coordinator withdrawal address
-      expect(coordinator.withdrawalAddress).to.equal(
-        await coordinator2.getAddress()
-      );
-      // Check new coordinator URL
-      expect(coordinator.coordinatorURL).to.equal(COORDINATOR_1_URL_2);
-    });
-    it("shouldn't update a producer that wasn't already registered", async function () {
-      // Try to update the information of an unregistered coordinator
-      await expect(
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .updateCoordinatorInfo(
-            await producer2.getAddress(),
-            await coordinator2.getAddress(),
-            COORDINATOR_1_URL_2
-          )
-      ).to.be.revertedWith("Forger doesn't exists");
-    });
-    it("shouldn't update a producer if it isn't called by the withdraw address", async function () {
-      // Try to update the coordinator information with msg.sender != withdrawalAddress
-      await expect(
-        buidlerHermezAuctionProtocol
-          .connect(coordinator2)
-          .updateCoordinatorInfo(
-            await producer1.getAddress(),
-            await coordinator2.getAddress(),
-            COORDINATOR_1_URL_2
-          )
-      ).to.be.revertedWith("Only the withdrawalAddress");
-    });
-    it("shouldn't update a producer with a 0x0 new withdraw address", async function () {
-      // Try to update the coordinator information with withdrawalAddress == 0x0
-      await expect(
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .updateCoordinatorInfo(
-            await producer1.getAddress(),
-            ethers.constants.AddressZero,
-            COORDINATOR_1_URL_2
-          )
-      ).to.be.revertedWith("WithdrawalAddress can't be 0x0");
-    });
-  });
-
-  describe("Send HEZ", function () {
-    // Register Coordinator
-    beforeEach(async function () {
-      await buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .registerCoordinator(await producer1.getAddress(), COORDINATOR_1_URL);
-    });
-    it("should revert if we try to send a different ERC777", async function () {
+  describe("Send HEZ", function() {
+    it("should revert if we try to send a different ERC777", async function() {
       // Deploy different ERC777 contract
       const ERC777 = await ethers.getContractFactory("ERC777Mock");
       let buidlerERC777 = await ERC777.deploy(
@@ -259,7 +174,7 @@ describe("Auction Protocol", function () {
         )
       ).to.be.revertedWith("Invalid ERC777 token");
     });
-    it("should revert if we try to send more than 2^128", async function () {
+    it("should revert if we try to send more than 2^128", async function() {
       let amount = ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
       let slot = 10;
       let producer = await producer1.getAddress();
@@ -274,7 +189,7 @@ describe("Auction Protocol", function () {
       ).to.be.revertedWith("Amount must be less than 2_128");
     });
 
-    it("should send 10 HEZ to the conctract", async function () {
+    it("should send 10 HEZ to the conctract", async function() {
       // NewBid event
       let eventNewBid = new Promise((resolve, reject) => {
         filter = buidlerHermezAuctionProtocol.filters.NewBid();
@@ -300,8 +215,8 @@ describe("Auction Protocol", function () {
     });
   });
 
-  describe("Slot info", function () {
-    it("should return slot 0 before starting", async function () {
+  describe("Slot info", function() {
+    it("should return slot 0 before starting", async function() {
       // Get current slot number
       expect(
         await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
@@ -317,7 +232,7 @@ describe("Auction Protocol", function () {
         await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
       ).to.be.equal(0);
     });
-    it("should return the correct slot at #1150=>0, #1205=>1, #1245=>2, #1365=>5, #1565=>10 starting at block #1150", async function () {
+    it("should return the correct slot at #1150=>0, #1205=>1, #1245=>2, #1365=>5, #1565=>10 starting at block #1150", async function() {
       let relative_block = 15;
       // Get starting Block
       let startingBlock = (
