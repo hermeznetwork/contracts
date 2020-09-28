@@ -796,11 +796,15 @@ describe("WithdrawalDelayer Tests", function() {
     });
 
     it("shouldn't be able to make a escapeHatchWithdrawal w/o Emergency Mode", async function() {
+      let ERC20Amount = await buidlerERC20[0].balanceOf(
+        buidlerWithdrawalDelayer.address
+      );
       await expect(
         buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
           hermezGovernanceDAOAddress,
-          buidlerERC20[0].address
+          buidlerERC20[0].address,
+          ERC20Amount
         )
       ).to.be.revertedWith("Only Emergency Mode");
     });
@@ -948,37 +952,94 @@ describe("WithdrawalDelayer Tests", function() {
     });
 
     it("anyone shouldn't be able to make a escapeHatchWithdrawal", async function() {
+      let ERC777Amount = await buidlerERC777[0].balanceOf(
+        buidlerWithdrawalDelayer.address
+      );
       await expect(
         buidlerWithdrawalDelayer
         .connect(hermezRollup)
         .escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
-          buidlerERC777[0].address
+          buidlerERC777[0].address,
+          ERC777Amount
         )
       ).to.be.revertedWith("Only GovernanceDAO or WHG");
     });
 
     it("GovernanceDAO should be able to make a escapeHatchWithdrawal at any time", async function() {
       // Check if the transfer is reverted (ERC777 and ETH)
+      let ETHAmount = await ethers.provider.getBalance(
+        buidlerWithdrawalDelayer.address
+      );
+
+      let ERC777Amount = await buidlerERC777[0].balanceOf(
+        buidlerWithdrawalDelayer.address
+      );
 
       await buidlerHermezGovernanceDAO.disablePayment();
       await expect(
         buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
           hermezGovernanceDAOAddress,
-          buidlerERC777[0].address
+          buidlerERC777[0].address,
+          ERC777Amount
         )
       ).to.be.revertedWith("Token Transfer Failed");
       await expect(
         buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
           hermezGovernanceDAOAddress,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          ETHAmount
         )
       ).to.be.revertedWith("ETH transfer failed");
 
       // Enable the normal behavior to test the withdrawal
       await buidlerHermezGovernanceDAO.enablePayment();
+
+      let ERC20Amount = await buidlerERC20[0].balanceOf(
+        buidlerWithdrawalDelayer.address
+      );
+      ERC777Amount = await buidlerERC777[0].balanceOf(
+        buidlerWithdrawalDelayer.address
+      );
+      ETHAmount = await ethers.provider.getBalance(
+        buidlerWithdrawalDelayer.address
+      );
+
+      // Withdraw the ERC20
+      await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
+        buidlerWithdrawalDelayer.address,
+        hermezGovernanceDAOAddress,
+        buidlerERC20[0].address,
+        ERC20Amount
+      );
+      expect(
+        await buidlerERC20[0].balanceOf(hermezGovernanceDAOAddress)
+      ).to.be.eq(ERC20Amount);
+      // Withdraw the ERC777
+      await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
+        buidlerWithdrawalDelayer.address,
+        hermezGovernanceDAOAddress,
+        buidlerERC777[0].address,
+        ERC777Amount
+      );
+      expect(
+        await buidlerERC777[0].balanceOf(hermezGovernanceDAOAddress)
+      ).to.be.eq(ERC777Amount);
+      // Withdraw the ETH
+      await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
+        buidlerWithdrawalDelayer.address,
+        hermezGovernanceDAOAddress,
+        ethers.constants.AddressZero,
+        ETHAmount
+      );
+      expect(
+        await ethers.provider.getBalance(hermezGovernanceDAOAddress)
+      ).to.be.eq(ETHAmount);
+    });
+
+    it("WHG should be able to make a escapeHatchWithdrawal after MAX_EMERGENCY_MODE_TIME", async function() {
 
       let ERC20Amount = await buidlerERC20[0].balanceOf(
         buidlerWithdrawalDelayer.address
@@ -989,49 +1050,20 @@ describe("WithdrawalDelayer Tests", function() {
       let ETHAmount = await ethers.provider.getBalance(
         buidlerWithdrawalDelayer.address
       );
-
-      // Withdraw the ERC20
-      await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
-        buidlerWithdrawalDelayer.address,
-        hermezGovernanceDAOAddress,
-        buidlerERC20[0].address
-      );
-      expect(
-        await buidlerERC20[0].balanceOf(hermezGovernanceDAOAddress)
-      ).to.be.eq(ERC20Amount);
-      // Withdraw the ERC777
-      await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
-        buidlerWithdrawalDelayer.address,
-        hermezGovernanceDAOAddress,
-        buidlerERC777[0].address
-      );
-      expect(
-        await buidlerERC777[0].balanceOf(hermezGovernanceDAOAddress)
-      ).to.be.eq(ERC777Amount);
-      // Withdraw the ETH
-      await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
-        buidlerWithdrawalDelayer.address,
-        hermezGovernanceDAOAddress,
-        ethers.constants.AddressZero
-      );
-      expect(
-        await ethers.provider.getBalance(hermezGovernanceDAOAddress)
-      ).to.be.eq(ETHAmount);
-    });
-
-    it("WHG should be able to make a escapeHatchWithdrawal after MAX_EMERGENCY_MODE_TIME", async function() {
       await expect(
         buidlerWhiteHackGroup.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
           whiteHackGroupAddress,
-          buidlerERC777[0].address
+          buidlerERC777[0].address,
+          ERC777Amount
         )
       ).to.be.revertedWith("NO MAX_EMERGENCY_MODE_TIME");
       await expect(
         buidlerWhiteHackGroup.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
           whiteHackGroupAddress,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          ETHAmount
         )
       ).to.be.revertedWith("NO MAX_EMERGENCY_MODE_TIME");
 
@@ -1047,27 +1079,29 @@ describe("WithdrawalDelayer Tests", function() {
         buidlerWhiteHackGroup.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
           whiteHackGroupAddress,
-          buidlerERC777[0].address
+          buidlerERC777[0].address,
+          ERC777Amount
         )
       ).to.be.revertedWith("Token Transfer Failed");
       await expect(
         buidlerWhiteHackGroup.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
           whiteHackGroupAddress,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          ETHAmount
         )
       ).to.be.revertedWith("ETH transfer failed");
 
       // Enable the normal behavior to test the withdrawal
       await buidlerWhiteHackGroup.enablePayment();
 
-      let ERC20Amount = await buidlerERC20[0].balanceOf(
+      ERC20Amount = await buidlerERC20[0].balanceOf(
         buidlerWithdrawalDelayer.address
       );
-      let ERC777Amount = await buidlerERC777[0].balanceOf(
+      ERC777Amount = await buidlerERC777[0].balanceOf(
         buidlerWithdrawalDelayer.address
       );
-      let ETHAmount = await ethers.provider.getBalance(
+      ETHAmount = await ethers.provider.getBalance(
         buidlerWithdrawalDelayer.address
       );
 
@@ -1075,7 +1109,8 @@ describe("WithdrawalDelayer Tests", function() {
       await buidlerWhiteHackGroup.escapeHatchWithdrawal(
         buidlerWithdrawalDelayer.address,
         whiteHackGroupAddress,
-        buidlerERC20[0].address
+        buidlerERC20[0].address,
+        ERC20Amount
       );
       expect(await buidlerERC20[0].balanceOf(whiteHackGroupAddress)).to.be.eq(
         ERC20Amount
@@ -1084,7 +1119,8 @@ describe("WithdrawalDelayer Tests", function() {
       await buidlerWhiteHackGroup.escapeHatchWithdrawal(
         buidlerWithdrawalDelayer.address,
         whiteHackGroupAddress,
-        buidlerERC777[0].address
+        buidlerERC777[0].address,
+        ERC777Amount
       );
       expect(await buidlerERC777[0].balanceOf(whiteHackGroupAddress)).to.be.eq(
         ERC777Amount
@@ -1093,7 +1129,8 @@ describe("WithdrawalDelayer Tests", function() {
       await buidlerWhiteHackGroup.escapeHatchWithdrawal(
         buidlerWithdrawalDelayer.address,
         whiteHackGroupAddress,
-        ethers.constants.AddressZero
+        ethers.constants.AddressZero,
+        ETHAmount
       );
       expect(await ethers.provider.getBalance(whiteHackGroupAddress)).to.be.eq(
         ETHAmount

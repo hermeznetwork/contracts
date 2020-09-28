@@ -8,7 +8,11 @@ import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 interface IWithdrawalDelayer {
     function changeDisputeResolutionAddress() external;
 
-    function escapeHatchWithdrawal(address _to, address _token) external;
+    function escapeHatchWithdrawal(
+        address _to,
+        address _token,
+        uint256 _amount
+    ) external;
 
     function setHermezGovernanceDAOAddress(address newAddress) external;
 
@@ -59,11 +63,13 @@ contract PayableRevert is IERC777Recipient {
     function escapeHatchWithdrawal(
         address withdrawalDelayerAddress,
         address _to,
-        address _token
+        address _token,
+        uint256 _amount
     ) public {
         IWithdrawalDelayer(withdrawalDelayerAddress).escapeHatchWithdrawal(
             _to,
-            _token
+            _token,
+            _amount
         );
     }
 

@@ -132,7 +132,12 @@
    });
 
    describe("Forge process", function() {
-
+     beforeEach(async function() {
+       // Register Coordinator
+       await buidlerHermezAuctionProtocol
+         .connect(coordinator1)
+         .registerCoordinator(COORDINATOR_1_URL);
+     });
 
      it("shouldn't be able to forge before the auction starts", async function() {
        let genesis = await buidlerHermezAuctionProtocol.genesisBlock();

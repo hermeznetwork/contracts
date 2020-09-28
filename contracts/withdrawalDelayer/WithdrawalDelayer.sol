@@ -36,16 +36,17 @@ contract WithdrawalDelayer is
     bytes32 private constant _ERC777_RECIPIENT_INTERFACE_HASH = keccak256(
         "ERC777TokensRecipient"
     );
-    uint64 public constant MAX_WITHDRAWAL_DELAY = 2 weeks;
-    uint64 public constant MAX_EMERGENCY_MODE_TIME = 26 weeks;
-    uint64 private _withdrawalDelay;
-    uint64 private _emergencyModeStartingTime;
-    address private _hermezGovernanceDAOAddress;
-    address payable private _whiteHackGroupAddress;
-    address private _hermezKeeperAddress;
-    bool private _emergencyMode;
-    address public hermezRollupAddress;
-    mapping(bytes32 => DepositState) public deposits;
+    uint64 public constant MAX_WITHDRAWAL_DELAY = 2 weeks; // Maximum time that the return of funds can be delayed
+    uint64 public constant MAX_EMERGENCY_MODE_TIME = 26 weeks; // Maximum time in a state of emergency before a
+    // resolution and after which the WHG can redeem the funds
+    uint64 private _withdrawalDelay; // Current delay
+    uint64 private _emergencyModeStartingTime; // When emergency mode has started
+    address private _hermezGovernanceDAOAddress; // Governance DAO who control the system parameters
+    address payable private _whiteHackGroupAddress; // WHG address who can redeem the funds after MAX_EMERGENCY_MODE_TIME
+    address private _hermezKeeperAddress; // Can enable the emergency mode
+    bool private _emergencyMode; // bool to set the emergency mode
+    address public hermezRollupAddress; // hermez Rollup Address who can send funds to this smart contract
+    mapping(bytes32 => DepositState) public deposits; // Mapping to keep track of deposits
 
     event Deposit(
         address indexed owner,
@@ -63,7 +64,8 @@ contract WithdrawalDelayer is
     event EscapeHatchWithdrawal(
         address indexed who,
         address indexed to,
-        address indexed token
+        address indexed token,
+        uint256 amount
     );
     event NewHermezKeeperAddress(address newHermezKeeperAddress);
     event NewWhiteHackGroupAddress(address newWhiteHackGroupAddress);
@@ -366,8 +368,8 @@ contract WithdrawalDelayer is
         uint192 amount = deposits[depositId].amount;
         require(amount > 0, "No funds to withdraw");
         require(
-            deposits[depositId].depositTimestamp + _withdrawalDelay <=
-                uint64(now),
+            uint64(now) >=
+                deposits[depositId].depositTimestamp + _withdrawalDelay,
             "Withdrawal not allowed yet"
         );
 
@@ -392,12 +394,14 @@ contract WithdrawalDelayer is
      * a security mechanism
      * @param _to where the funds will be sent
      * @param _token address of the token withdraw (0x0 in case of Ether)
+     * @param _amount the amount to send
      * Events: `EscapeHatchWithdrawal`
      */
-    function escapeHatchWithdrawal(address _to, address _token)
-        external
-        nonReentrant
-    {
+    function escapeHatchWithdrawal(
+        address _to,
+        address _token,
+        uint256 _amount
+    ) external nonReentrant {
         require(_emergencyMode, "Only Emergency Mode");
         require(
             msg.sender == _whiteHackGroupAddress ||
@@ -406,21 +410,17 @@ contract WithdrawalDelayer is
         );
         if (msg.sender == _whiteHackGroupAddress) {
             require(
-                _emergencyModeStartingTime + MAX_EMERGENCY_MODE_TIME <=
-                    uint64(now),
+                uint64(now) >=
+                    _emergencyModeStartingTime + MAX_EMERGENCY_MODE_TIME,
                 "NO MAX_EMERGENCY_MODE_TIME"
             );
         }
-        uint256 amount;
         if (_token == address(0x0)) {
-            amount = address(this).balance;
-            _ethWithdrawal(_to, amount);
+            _ethWithdrawal(_to, _amount);
         } else {
-            IERC20 token = IERC20(_token);
-            amount = token.balanceOf(address(this));
-            _tokenWithdrawal(_token, _to, amount);
+            _tokenWithdrawal(_token, _to, _amount);
         }
-        emit EscapeHatchWithdrawal(msg.sender, _to, _token);
+        emit EscapeHatchWithdrawal(msg.sender, _to, _token, _amount);
     }
 
     /**
