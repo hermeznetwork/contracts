@@ -129,6 +129,15 @@ describe("Consensus Protocol Bidding", function() {
   });
 
   describe("Call bid", function() {
+    // Register Coordinator
+    beforeEach(async function() {
+      await buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .registerCoordinator(COORDINATOR_1_URL);
+      await buidlerHermezAuctionProtocol
+        .connect(coordinator2)
+        .registerCoordinator(COORDINATOR_2_URL);
+    });
     it("should revert if getMinBidBySlot for an already closed bid", async function() {
       // Try to consult the minBid of a slot with closed auction
       await expect(
@@ -166,6 +175,25 @@ describe("Consensus Protocol Bidding", function() {
           data
         )
       ).to.be.revertedWith("Do not have enough balance");
+    });
+
+    it("should revert when the coordinator is not registered", async function() {
+      // Encode bid data with unregistered coordinator address
+      let data = iface.encodeFunctionData("bid", [
+        2,
+        ethers.utils.parseEther("11"),
+        await owner.getAddress(),
+      ]);
+      // Try to send a bid with an unregistered coordinator address
+      await expect(
+        buidlerHEZToken
+        .connect(owner)
+        .send(
+          buidlerHermezAuctionProtocol.address,
+          ethers.utils.parseEther("11"),
+          data
+        )
+      ).to.be.revertedWith("Coordinator not registered");
     });
 
     it("should call bid 11HEZ@2 ", async function() {
@@ -483,6 +511,28 @@ describe("Consensus Protocol Bidding", function() {
           data
         )
       ).to.be.revertedWith("maxBid should be >= minBid");
+    });
+
+    it("should revert when call multibid from a non registered coordinator", async function() {
+      // Encode multibid data with non registered coordinator
+      let data = iface.encodeFunctionData("multiBid", [
+        5,
+        10,
+        [true, true, true, true, true, true],
+        ethers.utils.parseEther("12"),
+        ethers.utils.parseEther("12"),
+        await owner.getAddress(),
+      ]);
+      // Send tokens and multibid data
+      await expect(
+        buidlerHEZToken
+        .connect(owner)
+        .send(
+          buidlerHermezAuctionProtocol.address,
+          ethers.utils.parseEther("100"),
+          data
+        )
+      ).to.be.revertedWith("Coordinator not registered");
     });
 
     it("should revert when calling to a not valid method", async function() {

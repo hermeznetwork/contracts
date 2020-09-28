@@ -34,9 +34,7 @@ describe("Auction Protocol", function() {
   let buidlerHermezAuctionProtocol;
   let owner,
     coordinator1,
-    producer1,
     coordinator2,
-    producer2,
     registryFunder,
     hermezRollup,
     bootCoordinator,
@@ -52,7 +50,6 @@ describe("Auction Protocol", function() {
     [
       owner,
       coordinator1,
-      producer1,
       coordinator2,
       producer2,
       registryFunder,
@@ -153,7 +150,64 @@ describe("Auction Protocol", function() {
     ).to.be.revertedWith("Contract instance has already been initialized");
   });
 
+  describe("Coordinator registration", function() {
+    beforeEach(async function() {
+      // Register Coordinator
+      await buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .registerCoordinator(COORDINATOR_1_URL);
+    });
+    it("should register a producer/coordinator", async function() {
+      // Get registered coordinator
+      let coordinator = await buidlerHermezAuctionProtocol.coordinators(
+        await coordinator1.getAddress()
+      );
+      // Check coordinator URL
+      expect(coordinator.coordinatorURL).to.equal(COORDINATOR_1_URL);
+    });
+    it("shouldn't register a producer that was already registered", async function() {
+      // Try to register the same coordinator
+      await expect(
+        buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .registerCoordinator(COORDINATOR_1_URL)
+      ).to.be.revertedWith("Already registered");
+    });
+    it("should be able to update a producer with a new address and url", async function() {
+      // Update coordinator information
+      await buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .updateCoordinatorInfo(
+          COORDINATOR_1_URL_2
+        );
+      // Get registered coordinator with new information
+      let coordinator = await buidlerHermezAuctionProtocol.coordinators(
+        await coordinator1.getAddress()
+      );
+
+      // Check new coordinator URL
+      expect(coordinator.coordinatorURL).to.equal(COORDINATOR_1_URL_2);
+    });
+    it("shouldn't update a producer that wasn't already registered", async function() {
+      // Try to update the information of an unregistered coordinator
+      await expect(
+        buidlerHermezAuctionProtocol
+        .connect(coordinator2)
+        .updateCoordinatorInfo(
+          COORDINATOR_1_URL_2
+        )
+      ).to.be.revertedWith("Forger doesn't exists");
+    });
+  });
+
   describe("Send HEZ", function() {
+    // Register Coordinator
+    beforeEach(async function() {
+      await buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .registerCoordinator(COORDINATOR_1_URL);
+    });
+
     it("should revert if we try to send a different ERC777", async function() {
       // Deploy different ERC777 contract
       const ERC777 = await ethers.getContractFactory("ERC777Mock");
@@ -177,7 +231,7 @@ describe("Auction Protocol", function() {
     it("should revert if we try to send more than 2^128", async function() {
       let amount = ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
       let slot = 10;
-      let producer = await producer1.getAddress();
+      let producer = await coordinator1.getAddress();
       let data = iface.encodeFunctionData("bid", [slot, amount, producer]);
       // Send bid data and amount
       await expect(
@@ -189,7 +243,7 @@ describe("Auction Protocol", function() {
       ).to.be.revertedWith("Amount must be less than 2_128");
     });
 
-    it("should send 10 HEZ to the conctract", async function() {
+    it("should send 10 HEZ to the contract", async function() {
       // NewBid event
       let eventNewBid = new Promise((resolve, reject) => {
         filter = buidlerHermezAuctionProtocol.filters.NewBid();
@@ -205,7 +259,7 @@ describe("Auction Protocol", function() {
       // Encode function data
       let amount = ethers.utils.parseEther("15");
       let slot = 10;
-      let producer = await producer1.getAddress();
+      let producer = await coordinator1.getAddress();
       let data = iface.encodeFunctionData("bid", [slot, amount, producer]);
       // Send bid data and amount
       await buidlerHEZToken

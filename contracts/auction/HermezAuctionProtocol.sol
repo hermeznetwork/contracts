@@ -23,6 +23,11 @@ contract HermezAuctionProtocol is
 {
     using SafeMath128 for uint128;
 
+    struct Coordinator {
+        bool registered;
+        string coordinatorURL;
+    }
+
     // The closedMinBid is the minimum biding with which it has been closed a slot and may be
     // higher than the bidAmount. This means that the funds must be returned to whoever has bid
     struct SlotState {
@@ -57,7 +62,7 @@ contract HermezAuctionProtocol is
     IERC777 public tokenHEZ;
     // HermezRollup smartcontract address
     address public hermezRollup;
-    // Hermez Governanze Token smartcontract address who controls some parameters and collects HEZ fee
+    // Hermez Governance smartcontract address who controls some parameters and collects HEZ fee
     address private _governanceAddress;
     // Boot Coordinator Address
     address private _donationAddress;
@@ -83,6 +88,8 @@ contract HermezAuctionProtocol is
     mapping(uint128 => SlotState) public slots;
     // Mapping to control balances pending to claim
     mapping(address => uint128) public pendingBalances;
+    // Mapping to register all the coordinators. The address used for the mapping is the forger address
+    mapping(address => Coordinator) public coordinators;
 
     event NewBid(
         uint128 indexed slot,
@@ -92,11 +99,15 @@ contract HermezAuctionProtocol is
     event NewSlotDeadline(uint8 newSlotDeadline);
     event NewClosedAuctionSlots(uint16 newClosedAuctionSlots);
     event NewOutbidding(uint16 newOutbidding);
-    event NewDonationAddress(address newDonationAddress);
-    event NewBootCoordinator(address newBootCoordinator);
+    event NewDonationAddress(address indexed newDonationAddress);
+    event NewBootCoordinator(address indexed newBootCoordinator);
     event NewOpenAuctionSlots(uint16 newOpenAuctionSlots);
     event NewAllocationRatio(uint16[3] newAllocationRatio);
-    event NewCoordinator(address forgerAddress);
+    event NewCoordinator(address indexed forgerAddress, string coordinatorURL);
+    event CoordinatorUpdated(
+        address indexed forgerAddress,
+        string coordinatorURL
+    );
     event NewForgeAllocated(
         address indexed forger,
         uint128 indexed slotToForge,
@@ -122,7 +133,7 @@ contract HermezAuctionProtocol is
      * @param tokenERC777 ERC777 token with which the bids will be made
      * @param hermezRollupAddress address authorized to forge
      * @param donationAddress address that can claim donated tokens
-     * @param governanceAddress Hermez Governanze Token smartcontract
+     * @param governanceAddress Hermez Governance smartcontract
      * @param bootCoordinatorAddress Boot Coordinator Address
      */
     function hermezAuctionProtocolInitializer(
@@ -367,6 +378,46 @@ contract HermezAuctionProtocol is
     }
 
     /**
+     * @notice Allows to register a new coordinator
+     * @dev The `msg.sender` will be considered the `withdrawalAddress`, it will be used in case tokens have to be
+     * returned to the coordinator
+     * @param coordinatorURL endopoint for this coordinator
+     * Events: `NewCoordinator`
+     */
+    function registerCoordinator(string memory coordinatorURL) external {
+        // check if the forger exists, withdrawalAddress can never be 0x0 since we use the msg.sender
+        require(!isRegisteredCoordinator(msg.sender), "Already registered");
+        coordinators[msg.sender].registered = true;
+        coordinators[msg.sender].coordinatorURL = coordinatorURL;
+        emit NewCoordinator(msg.sender, coordinatorURL);
+    }
+
+    /**
+     * @notice function to check if an coordinator has already been registered
+     * @dev The withdrawalAddress can never be 0x0 since we use the msg.sender to register a coordinator
+     * @param forgerAddress direction authorized to carry out the forge
+     */
+    function isRegisteredCoordinator(address forgerAddress)
+        public
+        view
+        returns (bool)
+    {
+        return (coordinators[forgerAddress].registered);
+    }
+
+    /**
+     * @notice It allows updating the information of a coordinator (WithdrawAddress and URL)
+     * @dev The withdrawalAddress can never be 0x0 since we use the msg.sender to register a coordinator
+     * @param newURL the new endopoint for this coordinator
+     * Events: `CoordinatorUpdated`
+     */
+    function updateCoordinatorInfo(string memory newURL) external {
+        require(isRegisteredCoordinator(msg.sender), "Forger doesn't exists");
+        coordinators[msg.sender].coordinatorURL = newURL;
+        emit CoordinatorUpdated(msg.sender, newURL);
+    }
+
+    /**
      * @notice Returns the current slot number
      * @return slotNumber an uint128 with the current slot
      */
@@ -494,6 +545,10 @@ contract HermezAuctionProtocol is
         address forgerAddress
     ) private {
         require(
+            isRegisteredCoordinator(forgerAddress),
+            "Coordinator not registered"
+        );
+        require(
             slot >= (getCurrentSlotNumber() + _closedAuctionSlots),
             "Auction has already been closed"
         );
@@ -550,13 +605,10 @@ contract HermezAuctionProtocol is
             "Bid has not been opened yet"
         );
         require(maxBid >= minBid, "maxBid should be >= minBid");
-
-        uint8 numSlotSets = 0;
-        for (uint256 i = 0; i < slotSets.length; i++) {
-            if (slotSets[i]) {
-                numSlotSets++;
-            }
-        }
+        require(
+            isRegisteredCoordinator(forgerAddress),
+            "Coordinator not registered"
+        );
 
         pendingBalances[forgerAddress] = pendingBalances[forgerAddress].add(
             amount
@@ -639,10 +691,9 @@ contract HermezAuctionProtocol is
         );
         // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
         // otherwise the one that has been saved will be used
-        uint128 minBid;
-        (slots[slotToForge].closedMinBid == 0)
-            ? minBid = _defaultSlotSetBid[getSlotSet(slotToForge)]
-            : minBid = slots[slotToForge].closedMinBid;
+        uint128 minBid = (slots[slotToForge].closedMinBid == 0)
+            ? _defaultSlotSetBid[getSlotSet(slotToForge)]
+            : slots[slotToForge].closedMinBid;
 
         // if the relative block has exceeded the slotDeadline and no batch has been forged, anyone can forge
         if (!slots[slotToForge].fulfilled && (relativeBlock >= _slotDeadline)) {
@@ -680,15 +731,15 @@ contract HermezAuctionProtocol is
 
         // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
         // otherwise the one that has been saved will be used
-        uint128 minBid;
-        (slots[slotToForge].closedMinBid == 0)
-            ? minBid = _defaultSlotSetBid[getSlotSet(slotToForge)]
-            : minBid = slots[slotToForge].closedMinBid;
+        uint128 minBid = (slots[slotToForge].closedMinBid == 0)
+            ? _defaultSlotSetBid[getSlotSet(slotToForge)]
+            : slots[slotToForge].closedMinBid;
 
         // Default values:** Burn: 40% - Donation: 40% - HGT: 20%
         // Allocated is used to know if we have already distributed the HEZ tokens
         if (!prevFulfilled) {
             slots[slotToForge].fulfilled = true;
+
             // If the bootcoordinator is forging and there has been a previous bid that is lower than the slot min bid,
             // we must return the tokens to the bidder and the tokens have not been distributed
             if (
@@ -724,7 +775,7 @@ contract HermezAuctionProtocol is
                 // Tokens to donate
                 pendingBalances[_donationAddress] = pendingBalances[_donationAddress]
                     .add(donationAmount);
-                // Tokes for the governace
+                // Tokens for the governace address
                 pendingBalances[_governanceAddress] = pendingBalances[_governanceAddress]
                     .add(governanceAmount);
 
