@@ -217,9 +217,9 @@ describe("Hermez integration", function () {
         await buidlerHermezAuctionProtocol.genesisBlock()
       ).toNumber();
 
-      // await buidlerHermezAuctionProtocol
-      //   .connect(owner)
-      //   .registerCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
+      await buidlerHermezAuctionProtocol
+        .connect(owner)
+        .registerCoordinator(COORDINATOR_1_URL);
 
       let data = iface.encodeFunctionData("multiBid", [
         2,
@@ -370,9 +370,9 @@ describe("Hermez integration", function () {
         await buidlerHermezAuctionProtocol.genesisBlock()
       ).toNumber();
 
-      // await buidlerHermezAuctionProtocol
-      //   .connect(owner)
-      //   .registerCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
+      await buidlerHermezAuctionProtocol
+        .connect(owner)
+        .registerCoordinator(COORDINATOR_1_URL);
 
       let data = iface.encodeFunctionData("multiBid", [
         2,

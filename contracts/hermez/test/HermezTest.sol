@@ -44,46 +44,6 @@ contract HermezTest is Hermez {
         );
     }
 
-    function updateBucketTest(uint256 bucketID) public {
-        // find the appropiate bucketId
-        Bucket storage currentBucket = buckets[bucketID];
-
-        // update the bucket and check again if there withdrawals available
-        uint256 differenceBlocks = block.number.sub(currentBucket.blockStamp);
-
-        // check if some withdrawal can be added
-        if ((differenceBlocks < currentBucket.blockWithdrawalRate)) {
-            // the bucket still empty, instant withdrawal can't be performed
-            return;
-        } else {
-            // add withdrawals
-            uint256 addWithdrawals = differenceBlocks.div(
-                currentBucket.blockWithdrawalRate
-            );
-
-            if (
-                currentBucket.withdrawals.add(addWithdrawals) >=
-                currentBucket.maxWithdrawals
-            ) {
-                // if the bucket is full, set to maxWithdrawals, and retrieve the current withdrawal
-                // set the blockStamp to the current block number
-                currentBucket.withdrawals = currentBucket.maxWithdrawals;
-                currentBucket.blockStamp = block.number;
-            } else {
-                // if the bucket is not filled, add the withdrawals minus the current one and update the blockstamp
-                // blockstamp increments with a multiple of blockWithdrawalRate nearest and smaller than differenceBlocks
-                // addWithdrawals is that multiple because solidity divisions always result into integer rounded to floor
-                // this expression, can be reduced into currentBucket.blockStamp = block.number only if addWithdrawals is a multiple of blockWithdrawalRate
-                currentBucket.withdrawals =
-                    currentBucket.withdrawals +
-                    addWithdrawals;
-                currentBucket.blockStamp = currentBucket.blockStamp.add(
-                    (addWithdrawals.mul(currentBucket.blockWithdrawalRate))
-                );
-            }
-        }
-    }
-
     uint256 private constant _L1_USER_BYTES = 72;
 
     function changeCurrentIdx(uint32 newCurrentIdx) public {

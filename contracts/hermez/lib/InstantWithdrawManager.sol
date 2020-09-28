@@ -101,7 +101,7 @@ contract InstantWithdrawManager is HermezHelpers {
         uint256 bucketIdx = _findBucketIdx(amountUSD);
         Bucket storage currentBucket = buckets[bucketIdx];
 
-        // update the bucket and check again if there withdrawals available
+        // update the bucket and check again if are withdrawals available
         uint256 differenceBlocks = block.number.sub(currentBucket.blockStamp);
 
         // check if some withdrawal can be added
@@ -134,7 +134,7 @@ contract InstantWithdrawManager is HermezHelpers {
             } else {
                 // if the bucket is not filled, add the withdrawals minus the current one and update the blockstamp
                 // blockstamp increments with a multiple of blockWithdrawalRate nearest and smaller than differenceBlocks
-                // addWithdrawals is that multiple because solidity divisions always result into integer rounded to floor
+                // addWithdrawals is that multiple because solidity divisions always round to floor
                 // this expression, can be reduced into currentBucket.blockStamp = block.number only if addWithdrawals is a multiple of blockWithdrawalRate
                 currentBucket.withdrawals =
                     currentBucket.withdrawals +

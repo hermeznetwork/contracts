@@ -646,9 +646,9 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
                 "token ID does not match"
             );
 
-            uint256 granularity = _calculateGranularity(msg.sender);
+            uint256 granularity = _getGranularity(msg.sender);
 
-            // check loadAmount, loadAmount will be graularized
+            // check loadAmount, loadAmount will be send divided by the granularity
             if (loadAmountF != 0) {
                 uint256 loadAmount = _float2Fix(loadAmountF);
                 require(
@@ -1078,7 +1078,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
 
                 // In case that the token is an ERC777 we use send instead of transfer
                 if (isERC777) {
-                    uint256 granularity = _calculateGranularity(tokenAddress);
+                    uint256 granularity = _getGranularity(tokenAddress);
 
                     /* solhint-disable avoid-low-level-calls */
                     (bool success, ) = tokenAddress.call(
@@ -1164,7 +1164,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
 
             // In case that the token is an ERC777 we use send instead of transfer
             if (isERC777) {
-                uint256 granularity = _calculateGranularity(token);
+                uint256 granularity = _getGranularity(token);
 
                 /* solhint-disable avoid-low-level-calls */
                 (bool success, bytes memory data) = token.call(
@@ -1217,17 +1217,13 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
 
     /**
      * @dev Get granularity of a ERC777 token
-     * // All the ERC777 are stored in the SC divided by the granularity
-     * // When withdrawn are multiplied by the granularity
+     * // All the ERC777 tokens amounts are stored in the SC divided by the granularity
+     * // When withdrawn the amount is multiplied by the granularity
      * // In this way we assure that the granularity is always accomplished
      * @param token Token address
      */
-    function _calculateGranularity(address token)
-        internal
-        view
-        returns (uint256)
-    {
-        // calculate granularity
+    function _getGranularity(address token) internal view returns (uint256) {
+        // get granularity
         (bool success, bytes memory data) = token.staticcall(
             abi.encodeWithSelector(_ERC777_GRANULARITY)
         );
