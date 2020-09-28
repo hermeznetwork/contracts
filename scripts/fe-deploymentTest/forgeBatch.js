@@ -2,7 +2,7 @@ const bre = require("@nomiclabs/buidler");
 const {expect} = require("chai");
 require("dotenv").config();
 const {ethers} = require("../../node_modules/@nomiclabs/buidler");
-const {common} = require("../../../index");
+const {common} = require("@hermeznetwork/commonjs");
 const {BigNumber} = require("ethers");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const {

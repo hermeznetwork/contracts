@@ -2,8 +2,7 @@ const {expect} = require("chai");
 const {ethers} = require("../../../node_modules/@nomiclabs/buidler");
 const Scalar = require("ffjavascript").Scalar;
 
-const {common} = require("../../../../index");
-const {float16, txUtils, utils} = common;
+const {float16, txUtils, utils} = require("@hermeznetwork/commonjs");
 const {BigNumber} = require("ethers");
 const nLevels = 32;
 
@@ -734,7 +733,7 @@ async function l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez) {
     r: "0",
     s: "0",
     v: "0",
-    fromEthAddr: "0",
+    fromEthAddr: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
   };
 
   const l1TxCoordinatorbytes = `0x${txUtils.encodeL1CoordinatorTx(
@@ -780,7 +779,8 @@ async function createAccounts(
   owner,
   buidlerHermez,
   buidlerToken,
-  numAccounts
+  numAccounts,
+  isERC777
 ) {
   const l1TxCreateAccounts = [];
 
@@ -792,37 +792,8 @@ async function createAccounts(
         babyjub,
         owner,
         buidlerHermez,
-        buidlerToken
-      )
-    );
-  }
-  // forge empty batch, now the current queue is filled with the L1-User-Tx
-  await forgerTest.forgeBatch(true, [], []);
-  // forge the create accounts
-  await forgerTest.forgeBatch(true, l1TxCreateAccounts, []);
-}
-
-async function createAccounts(
-  forgerTest,
-  loadAmount,
-  tokenID,
-  babyjub,
-  owner,
-  buidlerHermez,
-  buidlerToken,
-  numAccounts
-) {
-  const l1TxCreateAccounts = [];
-
-  for (let i = 0; i < numAccounts; i++) {
-    l1TxCreateAccounts.push(
-      await l1UserTxCreateAccountDeposit(
-        loadAmount,
-        tokenID,
-        babyjub,
-        owner,
-        buidlerHermez,
-        buidlerToken
+        buidlerToken,
+        isERC777
       )
     );
   }

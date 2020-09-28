@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 
+pragma solidity 0.6.12;
+
+import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "../interfaces/WithdrawalDelayerInterface.sol";
 import "./HermezHelpers.sol";
 
-import "./SafeMath.sol";
-
-pragma solidity ^0.6.12;
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract InstantWithdrawManager is HermezHelpers {
     using SafeMath for uint256;
@@ -19,11 +20,10 @@ contract InstantWithdrawManager is HermezHelpers {
         uint256 maxWithdrawals; // max withdrawals the bucket can hold
     }
 
-    // Reserved bucket index when token value is 0 USD
-    uint256 private constant _NO_LIMIT = 0xFFFF;
-
-    uint256 private constant _ARRAY_BUCKET_WITHDRAWALS = 1;
-    uint256 private constant _ARRAY_BUCKET_MAXWITHDRAWALS = 3;
+    // ERC1820Registry interface
+    IERC1820Registry constant _ERC1820 = IERC1820Registry(
+        0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
+    );
 
     // Number of buckets
     uint256 private constant _NUM_BUCKETS = 5;
@@ -40,6 +40,7 @@ contract InstantWithdrawManager is HermezHelpers {
     // Withdraw delay in seconds
     uint64 public withdrawalDelay;
 
+    // ERC20 decimals signature
     bytes4 private constant _ERC20_DECIMALS = bytes4(
         keccak256(bytes("decimals()"))
     );
@@ -81,24 +82,95 @@ contract InstantWithdrawManager is HermezHelpers {
     }
 
     /**
+     * @dev Attempt to use instant withdraw
+     * @param tokenAddress Token address
+     * @param amount Amount to withdraw
+     */
+    function _processInstantWithdrawal(address tokenAddress, uint192 amount)
+        internal
+        returns (bool)
+    {
+        // find amount in USD and then the corresponding bucketIdx
+        uint256 amountUSD = _token2USD(tokenAddress, amount);
+
+        if (amountUSD == 0) {
+            return true;
+        }
+
+        // find the appropiate bucketId
+        uint256 bucketIdx = _findBucketIdx(amountUSD);
+        Bucket storage currentBucket = buckets[bucketIdx];
+
+        // update the bucket and check again if there withdrawals available
+        uint256 differenceBlocks = block.number.sub(currentBucket.blockStamp);
+
+        // check if some withdrawal can be added
+        if ((differenceBlocks < currentBucket.blockWithdrawalRate)) {
+            if (currentBucket.withdrawals > 0) {
+                // can't add any wihtdrawal, retrieve the current withdrawal
+                if (currentBucket.withdrawals == currentBucket.maxWithdrawals) {
+                    // if the bucket was full set the blockStamp to the current block number
+                    currentBucket.blockStamp = block.number;
+                }
+                currentBucket.withdrawals--;
+                return true;
+            }
+            // the bucket still empty, instant withdrawal can't be performed
+            return false;
+        } else {
+            // add withdrawals
+            uint256 addWithdrawals = differenceBlocks.div(
+                currentBucket.blockWithdrawalRate
+            );
+
+            if (
+                currentBucket.withdrawals.add(addWithdrawals) >=
+                currentBucket.maxWithdrawals
+            ) {
+                // if the bucket is full, set to maxWithdrawals, and retrieve the current withdrawal
+                // set the blockStamp to the current block number
+                currentBucket.withdrawals = currentBucket.maxWithdrawals.sub(1);
+                currentBucket.blockStamp = block.number;
+            } else {
+                // if the bucket is not filled, add the withdrawals minus the current one and update the blockstamp
+                // blockstamp increments with a multiple of blockWithdrawalRate nearest and smaller than differenceBlocks
+                // addWithdrawals is that multiple because solidity divisions always result into integer rounded to floor
+                // this expression, can be reduced into currentBucket.blockStamp = block.number only if addWithdrawals is a multiple of blockWithdrawalRate
+                currentBucket.withdrawals =
+                    currentBucket.withdrawals +
+                    addWithdrawals -
+                    1;
+                currentBucket.blockStamp = currentBucket.blockStamp.add(
+                    (addWithdrawals.mul(currentBucket.blockWithdrawalRate))
+                );
+            }
+            return true;
+        }
+    }
+
+    /**
      * @dev Update bucket parameters
-     * @param arrayBuckets Array of buckets to replace the current ones
+     * @param arrayBuckets Array of buckets to replace the current ones, this array includes the
+     * following parameters: [ceilUSD, withdrawals, blockWithdrawalRate, maxWithdrawals]
      */
     function updateBucketsParameters(
         uint256[4][_NUM_BUCKETS] memory arrayBuckets
     ) external onlyGovernance {
         for (uint256 i = 0; i < _NUM_BUCKETS; i++) {
+            uint256 ceilUSD = arrayBuckets[i][0];
+            uint256 withdrawals = arrayBuckets[i][1];
+            uint256 blockWithdrawalRate = arrayBuckets[i][2];
+            uint256 maxWithdrawals = arrayBuckets[i][3];
             require(
-                arrayBuckets[i][_ARRAY_BUCKET_MAXWITHDRAWALS] >=
-                    arrayBuckets[i][_ARRAY_BUCKET_WITHDRAWALS],
-                "can't be more withdrawals than Max withdrawals"
+                withdrawals <= maxWithdrawals,
+                "withdrawals must be less than maxWithdrawals"
             );
             buckets[i] = Bucket(
-                arrayBuckets[i][0],
+                ceilUSD,
                 block.number,
-                arrayBuckets[i][1],
-                arrayBuckets[i][2],
-                arrayBuckets[i][3]
+                withdrawals,
+                blockWithdrawalRate,
+                maxWithdrawals
             );
         }
     }
@@ -114,7 +186,7 @@ contract InstantWithdrawManager is HermezHelpers {
     ) external onlyGovernance {
         require(
             addressArray.length == valueArray.length,
-            "address array and value array must have equal length"
+            "different array length "
         );
         for (uint256 i = 0; i < addressArray.length; i++) {
             tokenExchange[addressArray[i]] = valueArray[i];
@@ -168,9 +240,9 @@ contract InstantWithdrawManager is HermezHelpers {
     {
         // find amount in USD and then the corresponding bucketIdx
         uint256 amountUSD = _token2USD(tokenAddress, amount);
-        uint256 bucketIdx = _findBucketIdx(amountUSD);
+        if (amountUSD == 0) return true;
 
-        if (bucketIdx == _NO_LIMIT) return true;
+        uint256 bucketIdx = _findBucketIdx(amountUSD);
 
         Bucket storage currentBucket = buckets[bucketIdx];
         if (currentBucket.withdrawals > 0) {
@@ -199,101 +271,46 @@ contract InstantWithdrawManager is HermezHelpers {
         if (tokenExchange[tokenAddress] == 0) return 0;
 
         // this multiplication never overflows 192bits * 64 bits
-        uint256 baseUnitTokenUSD = (
-            uint256(amount).mul(tokenExchange[tokenAddress])
-        )
-            .div(_EXCHANGE_MULTIPLIER);
+        uint256 baseUnitTokenUSD = (uint256(amount) *
+            uint256(tokenExchange[tokenAddress])) / _EXCHANGE_MULTIPLIER;
 
-        // if decimals() is not implemented 0 decimals are assumed
-        (bool success, bytes memory data) = tokenAddress.staticcall(
-            abi.encodeWithSelector(_ERC20_DECIMALS)
-        );
         uint8 decimals;
-        if (success) {
-            decimals = abi.decode(data, (uint8));
+        // check if the contract is ERC777
+        bool isERC777 = _ERC1820.getInterfaceImplementer(
+            tokenAddress,
+            keccak256("ERC777Token")
+        ) != address(0x0)
+            ? true
+            : false;
+
+        // In case that the token is an ERC777 we assume 18 decimals
+        if (isERC777) {
+            decimals = 18;
+        } else {
+            // if decimals() is not implemented 0 decimals are assumed
+            (bool success, bytes memory data) = tokenAddress.staticcall(
+                abi.encodeWithSelector(_ERC20_DECIMALS)
+            );
+            if (success) {
+                decimals = abi.decode(data, (uint8));
+            }
         }
+
         require(decimals < 77, "tokenUSD decimals overflow");
-        return baseUnitTokenUSD.div(10**uint256(decimals));
+        return baseUnitTokenUSD / (10**uint256(decimals));
     }
 
     /**
      * @dev Find the corresponding bucket for the input amount
      * @param amountUSD USD amount
-     * @return Bucket index or `_NO_LIMIT` in case amountUSD is 0
+     * @return Bucket index
      */
     function _findBucketIdx(uint256 amountUSD) internal view returns (uint256) {
-        if (amountUSD == 0) return _NO_LIMIT;
-
         for (uint256 i = 0; i < _NUM_BUCKETS; i++) {
             if (amountUSD <= buckets[i].ceilUSD) {
                 return i;
             }
         }
         revert("exceed max amount");
-    }
-
-    /**
-     * @dev Add withdrawals to the bucket since the last update depending on the 'blockWithdrawalRate'
-     * @param bucketIdx Bucket index
-     */
-    function _updateBucket(uint256 bucketIdx) internal {
-        Bucket storage currentBucket = buckets[bucketIdx];
-
-        uint256 differenceBlocks = block.number.sub(currentBucket.blockStamp);
-        if (
-            (currentBucket.withdrawals == currentBucket.maxWithdrawals) ||
-            (differenceBlocks < currentBucket.blockWithdrawalRate)
-        ) return; // no changes in the bucket
-
-        uint256 addWithdrawals = differenceBlocks.div(
-            currentBucket.blockWithdrawalRate
-        );
-
-        if (
-            currentBucket.withdrawals.add(addWithdrawals) >=
-            currentBucket.maxWithdrawals
-        ) {
-            currentBucket.withdrawals = currentBucket.maxWithdrawals;
-        } else {
-            currentBucket.withdrawals = currentBucket.withdrawals.add(
-                addWithdrawals
-            );
-            // blockstamp increments with a multiple of blockWithdrawalRate nearest and smaller than differenceBlocks
-            // addWithdrawals is that multiple because solidity divisions always result into integer rounded to 0
-            // this expression, can be reduced into currentBucket.blockStamp = block.number only if addWithdrawals is a multiple of blockWithdrawalRate
-            // in other words, there's no rounding in the division, otherwise the rounding will alter the expressionç
-            currentBucket.blockStamp = currentBucket.blockStamp.add(
-                (addWithdrawals.mul(currentBucket.blockWithdrawalRate))
-            );
-        }
-    }
-
-    /**
-     * @dev Attempt to use instant withdraw
-     * @param tokenAddress Token address
-     * @param amount Amount to withdraw
-     */
-    function _processInstantWithdrawal(address tokenAddress, uint192 amount)
-        internal
-    {
-        // find amount in USD and then the corresponding bucketIdx
-        uint256 amountUSD = _token2USD(tokenAddress, amount);
-        uint256 bucketIdx = _findBucketIdx(amountUSD);
-
-        if (bucketIdx != _NO_LIMIT) {
-            _updateBucket(bucketIdx);
-            require(
-                buckets[bucketIdx].withdrawals > 0,
-                "instant withdrawals wasted"
-            );
-            if (
-                buckets[bucketIdx].withdrawals ==
-                buckets[bucketIdx].maxWithdrawals
-            ) {
-                buckets[bucketIdx].blockStamp = block.number;
-            }
-            // can't underflow, the last require assures that
-            buckets[bucketIdx].withdrawals--;
-        }
     }
 }

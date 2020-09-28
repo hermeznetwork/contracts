@@ -21,7 +21,6 @@ const {
   calculateInputMaxTxLevels,
   registerERC1820,
 } = require("./helpers/helpers");
-const {common} = require("../../../index");
 const {
   float16,
   HermezAccount,
@@ -33,7 +32,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = common;
+} = require("@hermeznetwork/commonjs");
 
 describe("Hermez ERC 777", function () {
   let buidlerTokenERC777Mock;
@@ -188,7 +187,7 @@ describe("Hermez ERC 777", function () {
     it("Should revert for unauthorized token", async function () {
       await expect(
         buidlerTokenERC777Mock.transfer(await buidlerHermez.address, 50)
-      ).to.be.revertedWith("don't accept unauthorized tokens");
+      ).to.be.revertedWith("Send ERC777 without data");
     });
   });
 
@@ -230,16 +229,25 @@ describe("Hermez ERC 777", function () {
         true
       );
 
-      // using ERC20 approach: approve and transferFrom
-      await l1UserTxCreateAccountDeposit(
-        loadAmount,
-        tokenID,
-        babyjub,
-        owner,
-        buidlerHermez,
-        buidlerTokenERC777Mock,
-        false
-      );
+      // using ERC20 approach: approve and transferFrom, shoudl revert
+      await expect(
+        buidlerTokenERC777Mock.approve(buidlerHermez.address, loadAmount)
+      ).to.emit(buidlerTokenERC777Mock, "Approval");
+
+      const fromIdx0 = 0;
+      const amountF0 = 0;
+      const toIdx0 = 0;
+
+      await expect(
+        buidlerHermez.addL1Transaction(
+          babyjub,
+          fromIdx0,
+          loadAmount,
+          amountF0,
+          tokenID,
+          toIdx0
+        )
+      ).to.be.revertedWith("safe transfer from failed");
     });
 
     it("deposit", async function () {
@@ -266,17 +274,6 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC777Mock,
         true
-      );
-
-      // using ERC20 approach: approve and transferFrom
-      await l1UserTxDeposit(
-        loadAmount,
-        tokenID,
-        fromIdx,
-        owner,
-        buidlerHermez,
-        buidlerTokenERC777Mock,
-        false
       );
     });
     it("depositTransfer", async function () {
@@ -309,19 +306,6 @@ describe("Hermez ERC 777", function () {
         buidlerTokenERC777Mock,
         true
       );
-
-      // using ERC20 approach: approve and transferFrom
-      await l1UserTxDepositTransfer(
-        loadAmount,
-        tokenID,
-        fromIdx,
-        toIdx,
-        amountF,
-        owner,
-        buidlerHermez,
-        buidlerTokenERC777Mock,
-        false
-      );
     });
     it("createAccountDepositTransfer", async function () {
       await AddToken(
@@ -352,19 +336,6 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC777Mock,
         true
-      );
-
-      // using ERC20 approach: approve and transferFrom
-      await l1UserTxCreateAccountDepositTransfer(
-        loadAmount,
-        tokenID,
-        toIdx,
-        amountF,
-        babyjub,
-        owner,
-        buidlerHermez,
-        buidlerTokenERC777Mock,
-        false
       );
     });
     it("forceTransfer", async function () {
@@ -660,7 +631,8 @@ describe("Hermez ERC 777", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       // add user l1 tx
@@ -671,7 +643,8 @@ describe("Hermez ERC 777", function () {
           babyjub,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -681,7 +654,8 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -693,7 +667,8 @@ describe("Hermez ERC 777", function () {
           amountF,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -705,7 +680,8 @@ describe("Hermez ERC 777", function () {
           babyjub,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -835,7 +811,8 @@ describe("Hermez ERC 777", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       // add user l1 tx
@@ -846,7 +823,8 @@ describe("Hermez ERC 777", function () {
           babyjub,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
 
@@ -857,7 +835,8 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -869,7 +848,8 @@ describe("Hermez ERC 777", function () {
           amountF,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -881,7 +861,8 @@ describe("Hermez ERC 777", function () {
           babyjub,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -953,7 +934,8 @@ describe("Hermez ERC 777", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       l1TxUserArray.push(
@@ -1041,7 +1023,8 @@ describe("Hermez ERC 777", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       l1TxUserArray.push(
@@ -1130,7 +1113,8 @@ describe("Hermez ERC 777", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       l1TxUserArray.push(
@@ -1209,7 +1193,8 @@ describe("Hermez ERC 777", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       l1TxUserArray.push(
@@ -1290,7 +1275,8 @@ describe("Hermez ERC 777", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       l1TxUserArray.push(

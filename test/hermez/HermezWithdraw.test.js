@@ -2,8 +2,7 @@ const {expect} = require("chai");
 const {ethers} = require("../../node_modules/@nomiclabs/buidler");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {time} = require("@openzeppelin/test-helpers");
-const {common} = require("../../../index");
-const {HermezAccount} = common;
+const {HermezAccount} = require("@hermeznetwork/commonjs");
 const {
   AddToken,
   calculateInputMaxTxLevels,
@@ -249,7 +248,7 @@ describe("Hermez instant withdraw manager", function () {
 
       await expect(
         buidlerHermez.instantWithdrawalTest(tokenAddress, tokenAmountDecimals)
-      ).to.be.revertedWith("instant withdrawals wasted");
+      ).to.be.revertedWith("instant withdrawals wasted for this USD range");
 
       let bucketSC = await buidlerHermez.buckets(bucketIdx);
       expect(bucketSC.withdrawals).to.be.equal(0);
@@ -365,7 +364,7 @@ describe("Hermez instant withdraw manager", function () {
 
       await expect(
         buidlerHermez.instantWithdrawalTest(tokenAddress, tokenAmountDecimals)
-      ).to.be.revertedWith("instant withdrawals wasted");
+      ).to.be.revertedWith("instant withdrawals wasted for this USD range");
 
       let bucketSC = await buidlerHermez.buckets(bucketIdx);
       expect(bucketSC.withdrawals).to.be.equal(0);
@@ -411,8 +410,7 @@ describe("Hermez instant withdraw manager", function () {
 
       // max withdawals = 4
       expect(bucketSC.withdrawals).to.be.equal(4);
-      // same as before, if withdrawals = maxWithdrawals, blockstamp is not updated when updateBucket
-      expect(bucketSC.blockStamp).to.be.equal(initialTimestamp + tokenRate * 2);
+      expect(bucketSC.blockStamp).to.be.equal(initialTimestamp + tokenRate * 5);
 
       // withdraw could be performed
       expect(
@@ -426,6 +424,7 @@ describe("Hermez instant withdraw manager", function () {
         tokenAddress,
         tokenAmountDecimals
       );
+      const lastBlock = await time.latestBlock();
 
       // still tokens for withdraw
       expect(
@@ -438,7 +437,6 @@ describe("Hermez instant withdraw manager", function () {
       bucketSC = await buidlerHermez.buckets(bucketIdx);
       expect(bucketSC.withdrawals).to.be.equal(3);
       // if withdrawals = maxWithdrawals, blockstamp is updated when withdraw
-      const lastBlock = await time.latestBlock();
       expect(bucketSC.blockStamp).to.be.equal(lastBlock.toNumber());
     });
 

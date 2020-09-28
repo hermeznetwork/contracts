@@ -7,8 +7,7 @@ const {smt} = require("circomlib");
 const babyJub = require("circomlib").babyJub;
 const utilsScalar = require("ffjavascript").utils;
 
-const {common} = require("../../../index");
-const {HermezAccount, stateUtils} = common;
+const {HermezAccount, stateUtils} = require("@hermeznetwork/commonjs");
 
 const {signBjjAuth} = require("./helpers/helpers");
 

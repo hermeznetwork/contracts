@@ -17,7 +17,6 @@ const {
   calculateInputMaxTxLevels,
   registerERC1820,
 } = require("./helpers/helpers");
-const {common} = require("../../../index");
 const {
   float16,
   HermezAccount,
@@ -29,7 +28,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = common;
+} = require("@hermeznetwork/commonjs");
 
 describe("Hermez Queue", function () {
   let buidlerTokenERC20Mock;

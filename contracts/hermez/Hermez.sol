@@ -6,10 +6,7 @@ import "./lib/InstantWithdrawManager.sol";
 import "./interfaces/VerifierRollupInterface.sol";
 import "./interfaces/VerifierWithdrawInterface.sol";
 import "./interfaces/AuctionInterface.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
-
-import "@nomiclabs/buidler/console.sol";
 
 contract Hermez is InstantWithdrawManager, IERC777Recipient {
     struct VerifierRollup {
@@ -18,11 +15,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
         uint256 nLevels; // number of levels of the circuit
     }
 
-    // ERC1820Registry interface
-    IERC1820Registry constant _ERC1820 = IERC1820Registry(
-        0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
-
+    // ERC777 recipient interface hash
     bytes32 constant _ERC777_RECIPIENT_INTERFACE_HASH = keccak256(
         "ERC777TokensRecipient"
     );
@@ -52,8 +45,13 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     bytes4 constant _APPROVE_SIGNATURE = bytes4(
         keccak256(bytes("approve(address,uint256)"))
     );
+
+    // Erc777 signatures:
     bytes4 constant _SEND_SIGNATURE = bytes4(
         keccak256(bytes("send(address,uint256,bytes)"))
+    );
+    bytes4 private constant _ERC777_GRANULARITY = bytes4(
+        keccak256(bytes("granularity()"))
     );
 
     // This constant are used to deposit tokens from ERC77 tokens into withdrawal delayer
@@ -105,6 +103,14 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     uint256 constant _INPUT_SHA_CONSTANT_BYTES = 18542;
 
     uint8 public constant ABSOLUTE_MAX_L1L2BATCHTIMEOUT = 240;
+
+    // This ethereum address is used internally for rollup accounts that don't have ethereum address, only Babyjubjub
+    // This non-ethereum accounts can be created by the coordinator and allow users to have a rollup
+    // account without needing an ethereum address
+    address constant _ETH_ADDRESS_INTERNAL_ONLY = address(
+        0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF
+    );
+
     // Verifiers array
     VerifierRollup[] public rollupVerifiers;
 
@@ -156,7 +162,6 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     // Max ethereum blocks after the last L1-L2-batch, when exceeds the timeout only L1-L2-batch are allowed
     uint8 public forgeL1L2BatchTimeout;
 
-    bool _acceptERC777Tokens;
     // HEZ token address
     address public tokenHEZ;
 
@@ -386,15 +391,17 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
         );
 
         // deposit token or ether
-        if (tokenID == 0) {
-            require(loadAmount == msg.value, "loadAmount != msg.value");
-        } else {
-            _safeTransferFrom(
-                tokenList[tokenID],
-                msg.sender,
-                address(this),
-                loadAmount
-            );
+        if (loadAmount > 0) {
+            if (tokenID == 0) {
+                require(loadAmount == msg.value, "loadAmount != msg.value");
+            } else {
+                _safeTransferFrom(
+                    tokenList[tokenID],
+                    msg.sender,
+                    address(this),
+                    loadAmount
+                );
+            }
         }
 
         // perform L1 User Tx
@@ -499,7 +506,10 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
         // and this is an empty tree.
         // in case of instant withdraw assure that is available
         if (instantWithdraw) {
-            _processInstantWithdrawal(tokenList[tokenID], amount);
+            require(
+                _processInstantWithdrawal(tokenList[tokenID], amount),
+                "instant withdrawals wasted for this USD range"
+            );
         }
 
         // build 'key' and 'value' for exit tree
@@ -557,7 +567,10 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     ) external {
         // in case of instant withdraw assure that is available
         if (instantWithdraw) {
-            _processInstantWithdrawal(tokenList[tokenID], amount);
+            require(
+                _processInstantWithdrawal(tokenList[tokenID], amount),
+                "instant withdrawals wasted for this USD range"
+            );
         }
         require(
             exitNullifierMap[numExitRoot][idx] == false,
@@ -591,6 +604,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     /**
      * @notice function that is triggered every time this smartcontract receives HEZ tokens (ERC777)
      * @dev This function will process the l1tx deposits from ERC777 tokens or the addTokens functions
+     * Use a ERC777 as a ERC20 using "approve" and "transferFrom" is not supported
      * @param operator - not used
      * @param from - not used
      * @param to - not used
@@ -607,12 +621,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
         bytes calldata userData,
         bytes calldata operatorData
     ) external override {
-        if (userData.length == 0) {
-            if (_acceptERC777Tokens) return;
-            else {
-                revert("don't accept unauthorized tokens");
-            }
-        }
+        require(userData.length != 0, "Send ERC777 without data");
         // decode the signature
         bytes4 sig = abi.decode(userData, (bytes4));
 
@@ -637,14 +646,19 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
                 "token ID does not match"
             );
 
-            // check loadAmount
+            uint256 granularity = _calculateGranularity(msg.sender);
+
+            // check loadAmount, loadAmount will be graularized
             if (loadAmountF != 0) {
                 uint256 loadAmount = _float2Fix(loadAmountF);
                 require(
                     loadAmount < _LIMIT_LOAD_AMOUNT,
                     "deposit amount larger than limit"
                 );
-                require(loadAmount == amount, "loadAmount != token amount");
+                require(
+                    loadAmount == amount / granularity,
+                    "loadAmount != token amount"
+                );
             }
 
             // perform L1 User Tx
@@ -870,7 +884,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
                 "token has not been registered"
             );
 
-            address ethAddress = address(0);
+            address ethAddress = _ETH_ADDRESS_INTERNAL_ONLY;
 
             // v must be >27 --> EIP-155, v == 0 means no signature
             if (v != 0) {
@@ -885,13 +899,13 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
                 mstore(ptr, babyPubKey) // write babyPubKey: bytes[20:51]
                 ptr := add(ptr, 32)
 
-                mstore(ptr, 0) // write
+                mstore(ptr, 0) // write zeros
                 // [6 Bytes] fromIdx ,
                 // [2 bytes] loadAmountFloat16 .
                 // [2 bytes] amountFloat16
                 ptr := add(ptr, 10)
 
-                mstore(ptr, shl(224, tokenID)) // 256 -32 = 224 write tokenID: bytes[62:65]
+                mstore(ptr, shl(224, tokenID)) // 256 - 32 = 224 write tokenID: bytes[62:65]
                 ptr := add(ptr, 4)
 
                 mstore(ptr, 0) // write [6 Bytes] toIdx
@@ -1064,17 +1078,19 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
 
                 // In case that the token is an ERC777 we use send instead of transfer
                 if (isERC777) {
+                    uint256 granularity = _calculateGranularity(tokenAddress);
+
                     /* solhint-disable avoid-low-level-calls */
                     (bool success, ) = tokenAddress.call(
                         abi.encodeWithSelector(
                             _SEND_SIGNATURE,
                             address(withdrawDelayerContract),
-                            amount,
+                            amount * granularity,
                             abi.encodeWithSelector(
                                 _WITHDRAWAL_DELAYER_DEPOSIT,
                                 msg.sender,
                                 tokenAddress,
-                                amount
+                                amount * granularity
                             )
                         )
                     );
@@ -1148,18 +1164,20 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
 
             // In case that the token is an ERC777 we use send instead of transfer
             if (isERC777) {
+                uint256 granularity = _calculateGranularity(token);
+
                 /* solhint-disable avoid-low-level-calls */
                 (bool success, bytes memory data) = token.call(
                     abi.encodeWithSelector(
                         _SEND_SIGNATURE,
                         to,
-                        value,
+                        value * granularity,
                         new bytes(0)
                     )
                 );
                 require(
                     success && (data.length == 0 || abi.decode(data, (bool))),
-                    "TRANSFER_FAILED"
+                    "ERC777 send failed"
                 );
             } else {
                 /* solhint-disable avoid-low-level-calls */
@@ -1168,7 +1186,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
                 );
                 require(
                     success && (data.length == 0 || abi.decode(data, (bool))),
-                    "TRANSFER_FAILED"
+                    "ERC20 transfer failed"
                 );
             }
         }
@@ -1188,14 +1206,32 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
         address to,
         uint256 value
     ) internal {
-        _acceptERC777Tokens = true;
         (bool success, bytes memory data) = token.call(
             abi.encodeWithSelector(_TRANSFER_FROM_SIGNATURE, from, to, value)
         );
-        _acceptERC777Tokens = false;
         require(
             success && (data.length == 0 || abi.decode(data, (bool))),
-            "TRANSFER_FROM_FAILED"
+            "safe transfer from failed"
         );
+    }
+
+    /**
+     * @dev Get granularity of a ERC777 token
+     * // All the ERC777 are stored in the SC divided by the granularity
+     * // When withdrawn are multiplied by the granularity
+     * // In this way we assure that the granularity is always accomplished
+     * @param token Token address
+     */
+    function _calculateGranularity(address token)
+        internal
+        view
+        returns (uint256)
+    {
+        // calculate granularity
+        (bool success, bytes memory data) = token.staticcall(
+            abi.encodeWithSelector(_ERC777_GRANULARITY)
+        );
+        require(success, "ERC777 don't implement granularity");
+        return abi.decode(data, (uint256));
     }
 }

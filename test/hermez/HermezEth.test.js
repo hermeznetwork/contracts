@@ -21,7 +21,6 @@ const {
   calculateInputMaxTxLevels,
   registerERC1820,
 } = require("./helpers/helpers");
-const {common} = require("../../../index");
 const {
   float16,
   HermezAccount,
@@ -33,7 +32,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = common;
+} = require("@hermeznetwork/commonjs");
 
 const babyjub0 = 0;
 const fromIdx0 = 0;

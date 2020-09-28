@@ -20,7 +20,6 @@ const {
   calculateInputMaxTxLevels,
   registerERC1820,
 } = require("./helpers/helpers");
-const {common} = require("../../../index");
 const {
   float16,
   HermezAccount,
@@ -32,7 +31,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = common;
+} = require("@hermeznetwork/commonjs");
 
 const COORDINATOR_1_URL = "https://hermez.io";
 const ERC1820_REGISTRY_DEPLOY_TX =
@@ -218,9 +217,9 @@ describe("Hermez integration", function () {
         await buidlerHermezAuctionProtocol.genesisBlock()
       ).toNumber();
 
-      await buidlerHermezAuctionProtocol
-        .connect(owner)
-        .registerCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
+      // await buidlerHermezAuctionProtocol
+      //   .connect(owner)
+      //   .registerCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
 
       let data = iface.encodeFunctionData("multiBid", [
         2,
@@ -280,7 +279,8 @@ describe("Hermez integration", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       // add user l1 tx
@@ -291,7 +291,8 @@ describe("Hermez integration", function () {
           babyjub,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
 
@@ -302,7 +303,8 @@ describe("Hermez integration", function () {
           fromIdx,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -314,7 +316,8 @@ describe("Hermez integration", function () {
           amountF,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -326,7 +329,8 @@ describe("Hermez integration", function () {
           babyjub,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock
+          buidlerTokenERC777Mock,
+          true
         )
       );
       l1TxUserArray.push(
@@ -366,9 +370,9 @@ describe("Hermez integration", function () {
         await buidlerHermezAuctionProtocol.genesisBlock()
       ).toNumber();
 
-      await buidlerHermezAuctionProtocol
-        .connect(owner)
-        .registerCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
+      // await buidlerHermezAuctionProtocol
+      //   .connect(owner)
+      //   .registerCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
 
       let data = iface.encodeFunctionData("multiBid", [
         2,
@@ -432,7 +436,8 @@ describe("Hermez integration", function () {
         owner,
         buidlerHermez,
         buidlerTokenERC777Mock,
-        numAccounts
+        numAccounts,
+        true
       );
 
       l1TxUserArray.push(
