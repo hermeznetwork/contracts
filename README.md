@@ -8,27 +8,51 @@ Implements Hermez smart contracts
 $ yarn install && cp .env.example .env
 ```
 
-Add your vars to .env after this commnad
+Optional:
 
-### WithdrawalDelayer
+- `cp .env.example .env`
+- Add your vars to .env after this commnad
 
-- #### WithdrawalDelayer Test
+### Run tests
+
+- #### Contracts tests
 
 ```
-$ yarn
+$ yarn run test
+```
+
+Or for a specific contract:
+
+```
+$ yarn run test:hermez
+$ yarn run test:auction
 $ yarn run test:withdrawalDelayer
 ```
 
-- #### WithdrawalDelayer Coverage
+- #### Contracts Coverage
 
 ```
-$ yarn
+$ yarn run test:coverage
+```
+
+Or for a specific contract:
+
+```
+$ yarn run test:coverage:hermez
+$ yarn run test:coverage:auction
 $ yarn run test:coverage:withdrawalDelayer
 ```
 
-- #### WithdrawalDelayer Gas Report
+- #### Contracts Gas Report
 
 ```
-$ yarn
+$ yarn run test:gas
+```
+
+Or for a specific contract:
+
+```
+$ yarn run test:gas:hermez
+$ yarn run test:gas:auction
 $ yarn run test:gas:withdrawalDelayer
 ```
