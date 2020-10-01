@@ -22,8 +22,8 @@ const MIN_BLOCKS = 81;
 
 
 let ABIbid = [
-  "function bid(uint128 slot, uint128 bidAmount, address producer)",
-  "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid,address forger)",
+  "function bid(uint128 slot, uint128 bidAmount)",
+  "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid)",
 ];
 let iface = new ethers.utils.Interface(ABIbid);
 
@@ -34,7 +34,9 @@ describe("Consensus Protocol Bidding", function() {
   let buidlerHermezAuctionProtocol;
   let owner,
     coordinator1,
+    forger1,
     coordinator2,
+    forger2,
     registryFunder,
     hermezRollup,
     donation,
@@ -50,7 +52,9 @@ describe("Consensus Protocol Bidding", function() {
     [
       owner,
       coordinator1,
+      forger1,
       coordinator2,
+      forger2,
       registryFunder,
       hermezRollup,
       donation,
@@ -133,10 +137,10 @@ describe("Consensus Protocol Bidding", function() {
     beforeEach(async function() {
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .registerCoordinator(COORDINATOR_1_URL);
+        .setCoordinator(await forger1.getAddress(), COORDINATOR_1_URL);
       await buidlerHermezAuctionProtocol
         .connect(coordinator2)
-        .registerCoordinator(COORDINATOR_2_URL);
+        .setCoordinator(await forger2.getAddress(), COORDINATOR_2_URL);
     });
     it("should revert if getMinBidBySlot for an already closed bid", async function() {
       // Try to consult the minBid of a slot with closed auction
@@ -163,7 +167,6 @@ describe("Consensus Protocol Bidding", function() {
       let data = iface.encodeFunctionData("bid", [
         2,
         ethers.utils.parseEther("12"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens and bid data (amount != call amount)
       await expect(
@@ -182,7 +185,6 @@ describe("Consensus Protocol Bidding", function() {
       let data = iface.encodeFunctionData("bid", [
         2,
         ethers.utils.parseEther("11"),
-        await owner.getAddress(),
       ]);
       // Try to send a bid with an unregistered coordinator address
       await expect(
@@ -213,7 +215,6 @@ describe("Consensus Protocol Bidding", function() {
       let data = iface.encodeFunctionData("bid", [
         2,
         ethers.utils.parseEther("11"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens with bid data
       await buidlerHEZToken
@@ -234,7 +235,6 @@ describe("Consensus Protocol Bidding", function() {
         [false, true, false, true, false, true],
         ethers.utils.parseEther("11"),
         ethers.utils.parseEther("11"),
-        await coordinator1.getAddress(),
       ]);
       let overrides = {
         // The maximum units of gas for the transaction to use
@@ -260,7 +260,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("11"),
         ethers.utils.parseEther("11"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens with multibid data without enough balance
       await expect(
@@ -288,7 +287,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, false, true, false, true, false],
         ethers.utils.parseEther("30"),
         ethers.utils.parseEther("20"),
-        coordinator1Address,
       ]);
       // Send tokens with multibid data
       await buidlerHEZToken
@@ -313,7 +311,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, false, true, false, true, false],
         ethers.utils.parseEther("30"),
         ethers.utils.parseEther("20"),
-        coordinator1Address,
       ]);
       // Send tokens with multibid data
       await buidlerHEZToken
@@ -328,19 +325,19 @@ describe("Consensus Protocol Bidding", function() {
         coordinator1Address
       );
 
+
       // 20 * 1.1 * [ 1 , 0 , 1 , 0 , 1 , 0 ] => 6 slots -> 6 * 22 = 132 HEZ
       // Diff: 132 HEZ - 120 HEZ = 12 HEZ -> 880 HEZ - 12 HEZ -> 868 HEZ
       expect(postBalance).to.be.equal(ethers.utils.parseEther("868"));
       // Send tokens with multibid data
       await buidlerHEZToken
-        .connect(coordinator2)
+        .connect(coordinator1)
         .send(
           buidlerHermezAuctionProtocol.address,
           ethers.utils.parseEther("0"),
           iface.encodeFunctionData("bid", [
             11,
             ethers.utils.parseEther("800"),
-            await coordinator1.getAddress(),
           ])
         );
       // Get how much HEZ tokens are pending to be claimed for coordinator1Address
@@ -368,7 +365,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("11"),
         ethers.utils.parseEther("11"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens and multibid data
       await expect(
@@ -390,7 +386,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("11"),
         ethers.utils.parseEther("11"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens and multibid data
       await expect(
@@ -412,7 +407,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("15"),
         ethers.utils.parseEther("0"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens and multibid data
       await buidlerHEZToken
@@ -444,7 +438,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("15"),
         ethers.utils.parseEther("0"),
-        producer,
       ]);
       // Send tokens and multibid data
       await buidlerHEZToken
@@ -454,19 +447,19 @@ describe("Consensus Protocol Bidding", function() {
           ethers.utils.parseEther("100"),
           data
         );
-      // Check that forger is producer
-      expect((await buidlerHermezAuctionProtocol.slots(5)).forger).to.be.equal(
+      // Check that bidder is producer
+      expect((await buidlerHermezAuctionProtocol.slots(5)).bidder).to.be.equal(
         producer
       );
       // The minbid has been updated, the bid has not been enough
       // Check that forger is 0x00
-      expect((await buidlerHermezAuctionProtocol.slots(6)).forger).to.be.equal(
+      expect((await buidlerHermezAuctionProtocol.slots(6)).bidder).to.be.equal(
         ethers.constants.AddressZero
       );
       for (let i = 7; i < 12; i++) {
         // Check that forger is producer
         expect(
-          (await buidlerHermezAuctionProtocol.slots(i)).forger
+          (await buidlerHermezAuctionProtocol.slots(i)).bidder
         ).to.be.equal(producer);
       }
     });
@@ -479,7 +472,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("15"),
         ethers.utils.parseEther("15"),
-        await coordinator1.getAddress(),
       ]);
       // Send exact tokens and multibid data
       await buidlerHEZToken
@@ -499,7 +491,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("10"),
         ethers.utils.parseEther("15"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens and multibid data
       await expect(
@@ -521,7 +512,6 @@ describe("Consensus Protocol Bidding", function() {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("12"),
         ethers.utils.parseEther("12"),
-        await owner.getAddress(),
       ]);
       // Send tokens and multibid data
       await expect(
@@ -574,7 +564,6 @@ describe("Consensus Protocol Bidding", function() {
       let data = iface.encodeFunctionData("bid", [
         2,
         ethers.utils.parseEther("12"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens and bid data
       await buidlerHEZToken
@@ -594,7 +583,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             2,
             ethers.utils.parseEther("11"),
-            await coordinator1.getAddress(),
           ])
         )
       ).to.be.revertedWith("Bid below minimum");
@@ -610,7 +598,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             2,
             ethers.utils.parseEther("14"),
-            await coordinator2.getAddress(),
           ])
         );
 
@@ -635,7 +622,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             0,
             ethers.utils.parseEther("14"),
-            await coordinator1.getAddress(),
           ])
         )
       ).to.be.revertedWith("Auction has already been closed");
@@ -649,7 +635,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             1,
             ethers.utils.parseEther("14"),
-            await coordinator1.getAddress(),
           ])
         )
       ).to.be.revertedWith("Auction has already been closed");
@@ -666,7 +651,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             4322,
             ethers.utils.parseEther("14"),
-            await coordinator1.getAddress(),
           ])
         )
       ).to.be.revertedWith("Bid has not been opened yet");
@@ -680,7 +664,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             4323,
             ethers.utils.parseEther("14"),
-            await coordinator1.getAddress(),
           ])
         )
       ).to.be.revertedWith("Bid has not been opened yet");
@@ -696,7 +679,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             2,
             ethers.utils.parseEther("10"),
-            await coordinator1.getAddress(),
           ])
         )
       ).to.be.revertedWith("Bid below minimum");
@@ -707,7 +689,6 @@ describe("Consensus Protocol Bidding", function() {
       let data = iface.encodeFunctionData("bid", [
         2,
         ethers.utils.parseEther("12"),
-        await coordinator1.getAddress(),
       ]);
       // Send tokens and bid data
       await buidlerHEZToken
@@ -726,7 +707,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             2,
             ethers.utils.parseEther("14"),
-            await coordinator2.getAddress(),
           ])
         );
       // Check that the coordinator can withdraw the tokens from the previous bid
@@ -768,7 +748,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             2,
             ethers.utils.parseEther("10"),
-            await coordinator1.getAddress(),
           ])
         )
       ).to.be.revertedWith("Bid below minimum");
@@ -781,7 +760,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             2,
             ethers.utils.parseEther("330"),
-            await coordinator1.getAddress(),
           ])
         );
 
@@ -795,7 +773,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             2 + 6,
             ethers.utils.parseEther("10"),
-            await coordinator1.getAddress(),
           ])
         )
       ).to.be.revertedWith("Bid below minimum");
@@ -807,7 +784,6 @@ describe("Consensus Protocol Bidding", function() {
           iface.encodeFunctionData("bid", [
             2 + 6,
             ethers.utils.parseEther("330"),
-            await coordinator1.getAddress(),
           ])
         );
     });

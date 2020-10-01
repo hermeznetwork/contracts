@@ -22,8 +22,8 @@ const TIMEOUT = 40000;
 const MIN_BLOCKS = 81;
 
 let ABIbid = [
-  "function bid(uint128 slot, uint128 bidAmount, address producer)",
-  "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid,address forger)",
+  "function bid(uint128 slot, uint128 bidAmount)",
+  "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid)",
 ];
 let iface = new ethers.utils.Interface(ABIbid);
 
@@ -34,7 +34,9 @@ describe("Auction Protocol", function() {
   let buidlerHermezAuctionProtocol;
   let owner,
     coordinator1,
+    forger1,
     coordinator2,
+    forger2,
     registryFunder,
     hermezRollup,
     bootCoordinator,
@@ -50,7 +52,9 @@ describe("Auction Protocol", function() {
     [
       owner,
       coordinator1,
+      forger1,
       coordinator2,
+      forger2,
       producer2,
       registryFunder,
       hermezRollup,
@@ -155,48 +159,36 @@ describe("Auction Protocol", function() {
       // Register Coordinator
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .registerCoordinator(COORDINATOR_1_URL);
+        .setCoordinator(await forger1.getAddress(), COORDINATOR_1_URL);
     });
     it("should register a producer/coordinator", async function() {
       // Get registered coordinator
       let coordinator = await buidlerHermezAuctionProtocol.coordinators(
         await coordinator1.getAddress()
       );
+      // Check coordinator withdrawal address
+      expect(coordinator.forger).to.equal(
+        await forger1.getAddress()
+      );
       // Check coordinator URL
       expect(coordinator.coordinatorURL).to.equal(COORDINATOR_1_URL);
     });
-    it("shouldn't register a producer that was already registered", async function() {
-      // Try to register the same coordinator
-      await expect(
-        buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .registerCoordinator(COORDINATOR_1_URL)
-      ).to.be.revertedWith("Already registered");
-    });
-    it("should be able to update a producer with a new address and url", async function() {
-      // Update coordinator information
+    it("should be able to change a register a forger", async function() {
+      // Register Coordinator
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .updateCoordinatorInfo(
-          COORDINATOR_1_URL_2
-        );
-      // Get registered coordinator with new information
+        .setCoordinator(await forger2.getAddress(), COORDINATOR_1_URL_2);
+
+      // Get registered coordinator
       let coordinator = await buidlerHermezAuctionProtocol.coordinators(
         await coordinator1.getAddress()
       );
-
-      // Check new coordinator URL
+      // Check coordinator withdrawal address
+      expect(coordinator.forger).to.equal(
+        await forger2.getAddress()
+      );
+      // Check coordinator URL
       expect(coordinator.coordinatorURL).to.equal(COORDINATOR_1_URL_2);
-    });
-    it("shouldn't update a producer that wasn't already registered", async function() {
-      // Try to update the information of an unregistered coordinator
-      await expect(
-        buidlerHermezAuctionProtocol
-        .connect(coordinator2)
-        .updateCoordinatorInfo(
-          COORDINATOR_1_URL_2
-        )
-      ).to.be.revertedWith("Forger doesn't exists");
     });
   });
 
@@ -205,7 +197,7 @@ describe("Auction Protocol", function() {
     beforeEach(async function() {
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .registerCoordinator(COORDINATOR_1_URL);
+        .setCoordinator(await forger1.getAddress(), COORDINATOR_1_URL);
     });
 
     it("should revert if we try to send a different ERC777", async function() {
@@ -232,7 +224,7 @@ describe("Auction Protocol", function() {
       let amount = ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
       let slot = 10;
       let producer = await coordinator1.getAddress();
-      let data = iface.encodeFunctionData("bid", [slot, amount, producer]);
+      let data = iface.encodeFunctionData("bid", [slot, amount]);
       // Send bid data and amount
       await expect(
         buidlerHEZToken.send(
@@ -259,8 +251,7 @@ describe("Auction Protocol", function() {
       // Encode function data
       let amount = ethers.utils.parseEther("15");
       let slot = 10;
-      let producer = await coordinator1.getAddress();
-      let data = iface.encodeFunctionData("bid", [slot, amount, producer]);
+      let data = iface.encodeFunctionData("bid", [slot, amount]);
       // Send bid data and amount
       await buidlerHEZToken
         .connect(coordinator1)
