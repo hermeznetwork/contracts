@@ -24,11 +24,11 @@ contract HermezAuctionProtocol is
     using SafeMath128 for uint128;
 
     struct Coordinator {
-        address forger; // Address allowed by de the bidder to forge a batch
+        address forger; // Address allowed by the bidder to forge a batch
         string coordinatorURL;
     }
 
-    // The closedMinBid is the minimum biding with which it has been closed a slot and may be
+    // The closedMinBid is the minimum bidding with which it has been closed a slot and may be
     // higher than the bidAmount. This means that the funds must be returned to whoever has bid
     struct SlotState {
         address bidder;
