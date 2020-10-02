@@ -24,14 +24,14 @@ contract HermezAuctionProtocol is
     using SafeMath128 for uint128;
 
     struct Coordinator {
-        bool registered;
+        address forger; // Address allowed by the bidder to forge a batch
         string coordinatorURL;
     }
 
-    // The closedMinBid is the minimum biding with which it has been closed a slot and may be
+    // The closedMinBid is the minimum bidding with which it has been closed a slot and may be
     // higher than the bidAmount. This means that the funds must be returned to whoever has bid
     struct SlotState {
-        address forger;
+        address bidder;
         bool fulfilled;
         uint128 bidAmount; // Since the total supply of HEZ will be less than 100M, with 128 bits it is enough to
         uint128 closedMinBid; // store the bidAmount and closed minBid. bidAmount is the bidding for an specific slot.
@@ -44,10 +44,10 @@ contract HermezAuctionProtocol is
         "ERC777TokensRecipient"
     );
     bytes4 private constant _BID_SIGNATURE = bytes4(
-        keccak256("bid(uint128,uint128,address)")
+        keccak256("bid(uint128,uint128)")
     );
     bytes4 private constant _MULTIBID_SIGNATURE = bytes4(
-        keccak256("multiBid(uint128,uint128,bool[6],uint128,uint128,address)")
+        keccak256("multiBid(uint128,uint128,bool[6],uint128,uint128)")
     );
     bytes4 private constant _SEND_SIGNATURE = bytes4(
         keccak256(bytes("send(address,uint256,bytes)"))
@@ -88,13 +88,13 @@ contract HermezAuctionProtocol is
     mapping(uint128 => SlotState) public slots;
     // Mapping to control balances pending to claim
     mapping(address => uint128) public pendingBalances;
-    // Mapping to register all the coordinators. The address used for the mapping is the forger address
+    // Mapping to register all the coordinators. The address used for the mapping is the bidder address
     mapping(address => Coordinator) public coordinators;
 
     event NewBid(
         uint128 indexed slot,
         uint128 bidAmount,
-        address indexed coordinatorForger
+        address indexed bidder
     );
     event NewSlotDeadline(uint8 newSlotDeadline);
     event NewClosedAuctionSlots(uint16 newClosedAuctionSlots);
@@ -103,12 +103,13 @@ contract HermezAuctionProtocol is
     event NewBootCoordinator(address indexed newBootCoordinator);
     event NewOpenAuctionSlots(uint16 newOpenAuctionSlots);
     event NewAllocationRatio(uint16[3] newAllocationRatio);
-    event NewCoordinator(address indexed forgerAddress, string coordinatorURL);
-    event CoordinatorUpdated(
-        address indexed forgerAddress,
+    event SetCoordinator(
+        address indexed bidder,
+        address indexed forger,
         string coordinatorURL
     );
     event NewForgeAllocated(
+        address indexed bidder,
         address indexed forger,
         uint128 indexed slotToForge,
         uint128 burnAmount,
@@ -379,42 +380,17 @@ contract HermezAuctionProtocol is
 
     /**
      * @notice Allows to register a new coordinator
-     * @dev The `msg.sender` will be considered the `withdrawalAddress`, it will be used in case tokens have to be
-     * returned to the coordinator
+     * @dev The `msg.sender` will be considered the `bidder`, who can change the forger address and the url
+     * @param forger the address allowed to forger batches
      * @param coordinatorURL endopoint for this coordinator
      * Events: `NewCoordinator`
      */
-    function registerCoordinator(string memory coordinatorURL) external {
-        // check if the forger exists, withdrawalAddress can never be 0x0 since we use the msg.sender
-        require(!isRegisteredCoordinator(msg.sender), "Already registered");
-        coordinators[msg.sender].registered = true;
-        coordinators[msg.sender].coordinatorURL = coordinatorURL;
-        emit NewCoordinator(msg.sender, coordinatorURL);
-    }
-
-    /**
-     * @notice function to check if an coordinator has already been registered
-     * @dev The withdrawalAddress can never be 0x0 since we use the msg.sender to register a coordinator
-     * @param forgerAddress direction authorized to carry out the forge
-     */
-    function isRegisteredCoordinator(address forgerAddress)
-        public
-        view
-        returns (bool)
+    function setCoordinator(address forger, string memory coordinatorURL)
+        external
     {
-        return (coordinators[forgerAddress].registered);
-    }
-
-    /**
-     * @notice It allows updating the information of a coordinator (WithdrawAddress and URL)
-     * @dev The withdrawalAddress can never be 0x0 since we use the msg.sender to register a coordinator
-     * @param newURL the new endopoint for this coordinator
-     * Events: `CoordinatorUpdated`
-     */
-    function updateCoordinatorInfo(string memory newURL) external {
-        require(isRegisteredCoordinator(msg.sender), "Forger doesn't exists");
-        coordinators[msg.sender].coordinatorURL = newURL;
-        emit CoordinatorUpdated(msg.sender, newURL);
+        coordinators[msg.sender].forger = forger;
+        coordinators[msg.sender].coordinatorURL = coordinatorURL;
+        emit SetCoordinator(msg.sender, forger, coordinatorURL);
     }
 
     /**
@@ -495,26 +471,29 @@ contract HermezAuctionProtocol is
         require(msg.sender == address(tokenHEZ), "Invalid ERC777 token");
         require(userData.length != 0, "Sent HEZ without data");
         require(amount < 2**128, "Amount must be less than 2_128");
-
+        address bidder = from;
         // Decode the signature
         bytes4 sig = abi.decode(userData, (bytes4));
 
         if (sig == _BID_SIGNATURE) {
             //Decode the call to get the slot, the bidAmount and the forger
-            (uint128 slot, uint128 bidAmount, address forgerAddress) = abi
-                .decode(userData[4:], (uint128, uint128, address));
-            _processBid(uint128(amount), slot, bidAmount, forgerAddress);
+            (uint128 slot, uint128 bidAmount) = abi.decode(
+                userData[4:],
+                (uint128, uint128)
+            );
+            _processBid(uint128(amount), slot, bidAmount, bidder);
         } else if (sig == _MULTIBID_SIGNATURE) {
+            //Decode the call to get the startingSlot, endingSlot, slotSets, maxBid, minBid
+
             (
                 uint128 startingSlot,
                 uint128 endingSlot,
                 bool[6] memory slotSets,
                 uint128 maxBid,
-                uint128 minBid,
-                address forgerAddress
+                uint128 minBid
             ) = abi.decode(
                 userData[4:],
-                (uint128, uint128, bool[6], uint128, uint128, address)
+                (uint128, uint128, bool[6], uint128, uint128)
             );
             _processMultiBid(
                 uint128(amount),
@@ -523,7 +502,7 @@ contract HermezAuctionProtocol is
                 slotSets,
                 maxBid,
                 minBid,
-                forgerAddress
+                bidder
             );
         } else {
             revert("Not a valid calldata");
@@ -536,16 +515,17 @@ contract HermezAuctionProtocol is
      * @param amount the amount of tokens that have been sent
      * @param slot the slot for which the caller is bidding
      * @param bidAmount the amount of the bidding
-     * @param forgerAddress the address of the coodirnator's forger
+     * @param bidder the address of the bidder
      */
     function _processBid(
         uint128 amount,
         uint128 slot,
         uint128 bidAmount,
-        address forgerAddress
+        address bidder
     ) private {
+        // To avoid possible mistakes we don't allow anyone to bid without setting a forger
         require(
-            isRegisteredCoordinator(forgerAddress),
+            coordinators[bidder].forger != address(0),
             "Coordinator not registered"
         );
         require(
@@ -562,15 +542,13 @@ contract HermezAuctionProtocol is
             "Bid has not been opened yet"
         );
 
-        pendingBalances[forgerAddress] = pendingBalances[forgerAddress].add(
-            amount
-        );
+        pendingBalances[bidder] = pendingBalances[bidder].add(amount);
 
         require(
-            pendingBalances[forgerAddress] >= bidAmount,
+            pendingBalances[bidder] >= bidAmount,
             "Do not have enough balance"
         );
-        _doBid(slot, bidAmount, forgerAddress);
+        _doBid(slot, bidAmount, bidder);
     }
 
     /**
@@ -582,7 +560,7 @@ contract HermezAuctionProtocol is
      * @param slotSets the set of slots to which the coordinator wants to bid
      * @param maxBid the maximum bid that is allowed
      * @param minBid the minimum that you want to bid
-     * @param forgerAddress the address of the coodirnator's forger
+     * @param bidder the address of the bidder
      */
     function _processMultiBid(
         uint128 amount,
@@ -591,7 +569,7 @@ contract HermezAuctionProtocol is
         bool[6] memory slotSets,
         uint128 maxBid,
         uint128 minBid,
-        address forgerAddress
+        address bidder
     ) private {
         require(
             startingSlot >= (getCurrentSlotNumber() + _closedAuctionSlots),
@@ -605,14 +583,13 @@ contract HermezAuctionProtocol is
             "Bid has not been opened yet"
         );
         require(maxBid >= minBid, "maxBid should be >= minBid");
+        // To avoid possible mistakes we don't allow anyone to bid without setting a forger
         require(
-            isRegisteredCoordinator(forgerAddress),
+            coordinators[bidder].forger != address(0),
             "Coordinator not registered"
         );
 
-        pendingBalances[forgerAddress] = pendingBalances[forgerAddress].add(
-            amount
-        );
+        pendingBalances[bidder] = pendingBalances[bidder].add(amount);
 
         uint128 bidAmount;
         for (uint128 slot = startingSlot; slot <= endingSlot; slot++) {
@@ -632,10 +609,10 @@ contract HermezAuctionProtocol is
             // check if it is a selected slotSet
             if (slotSets[getSlotSet(slot)]) {
                 require(
-                    pendingBalances[forgerAddress] >= bidAmount,
+                    pendingBalances[bidder] >= bidAmount,
                     "Do not have enough balance"
                 );
-                _doBid(slot, bidAmount, forgerAddress);
+                _doBid(slot, bidAmount, bidder);
             }
         }
     }
@@ -645,29 +622,29 @@ contract HermezAuctionProtocol is
      * @dev will only be called by _processBid or _processMultiBid
      * @param slot the slot for which the caller is bidding
      * @param bidAmount the amount of the bidding
-     * @param forger the address of the coodirnator's forger
+     * @param bidder the address of the bidder
      * Events: `NewBid`
      */
     function _doBid(
         uint128 slot,
         uint128 bidAmount,
-        address forger
+        address bidder
     ) private {
-        address prevForger = slots[slot].forger;
+        address prevBidder = slots[slot].bidder;
         uint128 prevBidValue = slots[slot].bidAmount;
 
-        pendingBalances[forger] = pendingBalances[forger].sub(bidAmount);
+        pendingBalances[bidder] = pendingBalances[bidder].sub(bidAmount);
 
-        slots[slot].forger = forger;
+        slots[slot].bidder = bidder;
         slots[slot].bidAmount = bidAmount;
 
         // If there is a previous bid we must return the HEZ tokens
-        if (prevForger != address(0) && prevBidValue != 0) {
-            pendingBalances[prevForger] = pendingBalances[prevForger].add(
+        if (prevBidder != address(0) && prevBidValue != 0) {
+            pendingBalances[prevBidder] = pendingBalances[prevBidder].add(
                 prevBidValue
             );
         }
-        emit NewBid(slot, bidAmount, forger);
+        emit NewBid(slot, bidAmount, bidder);
     }
 
     /**
@@ -700,7 +677,7 @@ contract HermezAuctionProtocol is
             return true;
             //if forger bidAmount has exceeded the minBid it can forge
         } else if (
-            (slots[slotToForge].forger == forger) &&
+            (coordinators[slots[slotToForge].bidder].forger == forger) &&
             (slots[slotToForge].bidAmount >= minBid)
         ) {
             return true;
@@ -750,7 +727,7 @@ contract HermezAuctionProtocol is
                 // We save the minBid that this block has had
                 slots[slotToForge].closedMinBid = minBid;
                 pendingBalances[slots[slotToForge]
-                    .forger] = pendingBalances[slots[slotToForge].forger].add(
+                    .bidder] = pendingBalances[slots[slotToForge].bidder].add(
                     slots[slotToForge].bidAmount
                 );
                 // In case the winner is forging we have to allocate the tokens according to the desired distribution
@@ -780,6 +757,7 @@ contract HermezAuctionProtocol is
                     .add(governanceAmount);
 
                 emit NewForgeAllocated(
+                    slots[slotToForge].bidder,
                     forger,
                     slotToForge,
                     burnAmount,
@@ -793,15 +771,11 @@ contract HermezAuctionProtocol is
 
     /**
      * @notice function to know how much HEZ tokens are pending to be claimed for an address
-     * @param claimAddress query address
+     * @param bidder address to query
      * @return the total claimable HEZ by an address
      */
-    function getClaimableHEZ(address claimAddress)
-        public
-        view
-        returns (uint128)
-    {
-        return pendingBalances[claimAddress];
+    function getClaimableHEZ(address bidder) public view returns (uint128) {
+        return pendingBalances[bidder];
     }
 
     /**

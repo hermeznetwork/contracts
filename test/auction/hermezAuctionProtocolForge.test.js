@@ -24,8 +24,8 @@
 
 
  let ABIbid = [
-   "function bid(uint128 slot, uint128 bidAmount, address producer)",
-   "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid,address forger)",
+   "function bid(uint128 slot, uint128 bidAmount)",
+   "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid)",
  ];
  let iface = new ethers.utils.Interface(ABIbid);
 
@@ -36,7 +36,9 @@
    let buidlerHermezAuctionProtocol;
    let owner,
      coordinator1,
+     forger1,
      coordinator2,
+     forger2,
      registryFunder,
      hermezRollup,
      bootCoordinator,
@@ -53,6 +55,7 @@
      [
        owner,
        coordinator1,
+       forger1,
        coordinator2,
        producer2,
        registryFunder,
@@ -136,7 +139,7 @@
        // Register Coordinator
        await buidlerHermezAuctionProtocol
          .connect(coordinator1)
-         .registerCoordinator(COORDINATOR_1_URL);
+         .setCoordinator(await forger1.getAddress(), COORDINATOR_1_URL);
      });
 
      it("shouldn't be able to forge before the auction starts", async function() {
@@ -188,7 +191,6 @@
          [true, true, true, true, true, true],
          ethers.utils.parseEther("11"),
          ethers.utils.parseEther("11"),
-         await coordinator1.getAddress(),
        ]);
 
        // Send tokens and multiBid data
@@ -206,7 +208,7 @@
        // Check forger address
        expect(
          await buidlerHermezAuctionProtocol.canForge(
-           await coordinator1.getAddress(),
+           await forger1.getAddress(),
            block
          )
        ).to.be.equal(true);
@@ -228,7 +230,6 @@
          [true, true, true, true, true, true],
          ethers.utils.parseEther("11"),
          ethers.utils.parseEther("11"),
-         await coordinator1.getAddress(),
        ]);
 
        // Send tokens and multiBid data
@@ -301,7 +302,6 @@
          [true, true, true, true, true, true],
          ethers.utils.parseEther("11"),
          ethers.utils.parseEther("11"),
-         await coordinator1.getAddress(),
        ]);
 
        // Send tokens and multibid data
@@ -393,7 +393,7 @@
      });
 
      it("Winner should be able to forge", async function() {
-       let producer1Address = await coordinator1.getAddress();
+       let producer1Address = await forger1.getAddress();
        let bidAmount = ethers.utils.parseEther("11");
        // Event NewForgeAllocated
        let eventNewForgeAllocated = new Promise((resolve, reject) => {
@@ -401,6 +401,7 @@
          buidlerHermezAuctionProtocol.on(
            filter,
            (
+             bidder,
              forger,
              slotToForge,
              burnAmount,
@@ -431,7 +432,6 @@
          [true, true, true, true, true, true],
          bidAmount,
          bidAmount,
-         await coordinator1.getAddress(),
        ]);
        // Send tokens and mutlbid data
        await buidlerHEZToken
@@ -469,7 +469,7 @@
      });
 
      it("should be able to claim HEZ", async function() {
-       let producer1Address = await coordinator1.getAddress();
+       let producer1Address = await forger1.getAddress();
        let bidAmount = ethers.utils.parseEther("11");
        // Event HEZClaimed
        let eventHEZClaimed = new Promise((resolve, reject) => {
@@ -499,7 +499,6 @@
          [true, true, true, true, true, true],
          bidAmount,
          bidAmount,
-         await coordinator1.getAddress(),
        ]);
        // Send tokens and multibid data
        await buidlerHEZToken
@@ -553,7 +552,7 @@
      });
 
      it("should revert when claim HEZ and it revert", async function() {
-       let producer1Address = await coordinator1.getAddress();
+       let producer1Address = await forger1.getAddress();
        let bidAmount = ethers.utils.parseEther("11");
        let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
 
@@ -564,7 +563,6 @@
          [true, true, true, true, true, true],
          bidAmount,
          bidAmount,
-         await coordinator1.getAddress(),
        ]);
        // Send tokens and multibid data
        await buidlerHEZToken
