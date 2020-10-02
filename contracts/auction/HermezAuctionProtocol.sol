@@ -88,7 +88,7 @@ contract HermezAuctionProtocol is
     mapping(uint128 => SlotState) public slots;
     // Mapping to control balances pending to claim
     mapping(address => uint128) public pendingBalances;
-    // Mapping to register all the coordinators. The address used for the mapping is the forger address
+    // Mapping to register all the coordinators. The address used for the mapping is the bidder address
     mapping(address => Coordinator) public coordinators;
 
     event NewBid(
@@ -104,13 +104,13 @@ contract HermezAuctionProtocol is
     event NewOpenAuctionSlots(uint16 newOpenAuctionSlots);
     event NewAllocationRatio(uint16[3] newAllocationRatio);
     event SetCoordinator(
-        address indexed bidderAddress,
-        address indexed forgerAddress,
+        address indexed bidder,
+        address indexed forger,
         string coordinatorURL
     );
     event NewForgeAllocated(
-        address indexed bidderAddress,
-        address indexed forgerAddress,
+        address indexed bidder,
+        address indexed forger,
         uint128 indexed slotToForge,
         uint128 burnAmount,
         uint128 donationAmount,
@@ -380,18 +380,17 @@ contract HermezAuctionProtocol is
 
     /**
      * @notice Allows to register a new coordinator
-     * @dev The `msg.sender` will be considered the `withdrawalAddress`, it will be used in case tokens have to be
-     * returned to the coordinator
-     * @param forgerAddress the address allowed to forger batches
+     * @dev The `msg.sender` will be considered the `bidder`, who can change the forger address and the url
+     * @param forger the address allowed to forger batches
      * @param coordinatorURL endopoint for this coordinator
      * Events: `NewCoordinator`
      */
-    function setCoordinator(address forgerAddress, string memory coordinatorURL)
+    function setCoordinator(address forger, string memory coordinatorURL)
         external
     {
-        coordinators[msg.sender].forger = forgerAddress;
+        coordinators[msg.sender].forger = forger;
         coordinators[msg.sender].coordinatorURL = coordinatorURL;
-        emit SetCoordinator(msg.sender, forgerAddress, coordinatorURL);
+        emit SetCoordinator(msg.sender, forger, coordinatorURL);
     }
 
     /**
@@ -516,17 +515,17 @@ contract HermezAuctionProtocol is
      * @param amount the amount of tokens that have been sent
      * @param slot the slot for which the caller is bidding
      * @param bidAmount the amount of the bidding
-     * @param bidderAddress the address of the bidder
+     * @param bidder the address of the bidder
      */
     function _processBid(
         uint128 amount,
         uint128 slot,
         uint128 bidAmount,
-        address bidderAddress
+        address bidder
     ) private {
         // To avoid possible mistakes we don't allow anyone to bid without setting a forger
         require(
-            coordinators[bidderAddress].forger != address(0),
+            coordinators[bidder].forger != address(0),
             "Coordinator not registered"
         );
         require(
@@ -543,15 +542,13 @@ contract HermezAuctionProtocol is
             "Bid has not been opened yet"
         );
 
-        pendingBalances[bidderAddress] = pendingBalances[bidderAddress].add(
-            amount
-        );
+        pendingBalances[bidder] = pendingBalances[bidder].add(amount);
 
         require(
-            pendingBalances[bidderAddress] >= bidAmount,
+            pendingBalances[bidder] >= bidAmount,
             "Do not have enough balance"
         );
-        _doBid(slot, bidAmount, bidderAddress);
+        _doBid(slot, bidAmount, bidder);
     }
 
     /**
@@ -563,7 +560,7 @@ contract HermezAuctionProtocol is
      * @param slotSets the set of slots to which the coordinator wants to bid
      * @param maxBid the maximum bid that is allowed
      * @param minBid the minimum that you want to bid
-     * @param bidderAddress the address of the bidder
+     * @param bidder the address of the bidder
      */
     function _processMultiBid(
         uint128 amount,
@@ -572,7 +569,7 @@ contract HermezAuctionProtocol is
         bool[6] memory slotSets,
         uint128 maxBid,
         uint128 minBid,
-        address bidderAddress
+        address bidder
     ) private {
         require(
             startingSlot >= (getCurrentSlotNumber() + _closedAuctionSlots),
@@ -588,13 +585,11 @@ contract HermezAuctionProtocol is
         require(maxBid >= minBid, "maxBid should be >= minBid");
         // To avoid possible mistakes we don't allow anyone to bid without setting a forger
         require(
-            coordinators[bidderAddress].forger != address(0),
+            coordinators[bidder].forger != address(0),
             "Coordinator not registered"
         );
 
-        pendingBalances[bidderAddress] = pendingBalances[bidderAddress].add(
-            amount
-        );
+        pendingBalances[bidder] = pendingBalances[bidder].add(amount);
 
         uint128 bidAmount;
         for (uint128 slot = startingSlot; slot <= endingSlot; slot++) {
@@ -614,10 +609,10 @@ contract HermezAuctionProtocol is
             // check if it is a selected slotSet
             if (slotSets[getSlotSet(slot)]) {
                 require(
-                    pendingBalances[bidderAddress] >= bidAmount,
+                    pendingBalances[bidder] >= bidAmount,
                     "Do not have enough balance"
                 );
-                _doBid(slot, bidAmount, bidderAddress);
+                _doBid(slot, bidAmount, bidder);
             }
         }
     }
@@ -776,15 +771,11 @@ contract HermezAuctionProtocol is
 
     /**
      * @notice function to know how much HEZ tokens are pending to be claimed for an address
-     * @param bidderAddress address to query
+     * @param bidder address to query
      * @return the total claimable HEZ by an address
      */
-    function getClaimableHEZ(address bidderAddress)
-        public
-        view
-        returns (uint128)
-    {
-        return pendingBalances[bidderAddress];
+    function getClaimableHEZ(address bidder) public view returns (uint128) {
+        return pendingBalances[bidder];
     }
 
     /**
