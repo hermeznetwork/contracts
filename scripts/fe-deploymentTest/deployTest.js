@@ -6,6 +6,8 @@ const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {BigNumber} = require("ethers");
 const {
   calculateInputMaxTxLevels,
+  registerERC1820,
+  AddToken,
 } = require("../../test/hermez/helpers/helpers");
 
 async function main() {
@@ -27,7 +29,6 @@ async function main() {
   let chainID;
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
-
   [
     owner,
     governance,
@@ -73,7 +74,6 @@ async function main() {
     poseidonUnit.createCode(4),
     owner
   );
-
   const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
   const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
   const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
@@ -82,10 +82,13 @@ async function main() {
   const poseidonAddr3 = buidlerPoseidon3Elements.address;
   const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
+  // deploy registry erc1820
+  await registerERC1820(owner);
+
   // factory hermez
   const Hermez = await ethers.getContractFactory("HermezTest");
 
-  // deploy helpers
+  // deploy tokens
   buidlerTokenERC20Mock = await TokenERC20Mock.deploy(
     "tokenname",
     "TKN",
@@ -93,76 +96,90 @@ async function main() {
     tokenInitialAmount
   );
 
+  buidlerHEZ = await TokenERC777Mock.deploy(
+    await owner.getAddress(),
+    tokenInitialAmount,
+    "tokenname",
+    "TKN",
+    []
+  );
+
+  // deploy helpers
   let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
   let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
 
   let buidlerHermezAuctionTest = await HermezAuctionTest.deploy();
 
-  buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
-    hermezGovernanceDAOAddress,
-    hermezGovernanceDAOAddress,
-    hermezGovernanceDAOAddress,
-    hermezGovernanceDAOAddress,
-    0
-  );
-
   // deploy hermez
   buidlerHermez = await Hermez.deploy();
   await buidlerHermez.deployed();
 
-  // deploy hermez
+  buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+    0,
+    buidlerHermez.address,
+    hermezGovernanceDAOAddress,
+    hermezGovernanceDAOAddress,
+    hermezGovernanceDAOAddress
+  );
+
+  // initialize hermez
   await buidlerHermez.initializeHermez(
     [buidlerVerifierRollupHelper.address],
     [calculateInputMaxTxLevels(maxTx, nLevels)],
     buidlerVerifierWithdrawHelper.address,
-    buidlerTokenERC20Mock.address,
-    hermezGovernanceDAOAddress,
-    await safetyAddress.getAddress(),
     buidlerHermezAuctionTest.address,
-    buidlerWithdrawalDelayer.address,
+    buidlerHEZ.address,
+    forgeL1L2BatchTimeout,
+    feeAddToken,
     poseidonAddr2,
     poseidonAddr3,
     poseidonAddr4,
-    feeAddToken,
-    forgeL1L2BatchTimeout,
-    withdrawalDelay
+    hermezGovernanceDAOAddress,
+    await safetyAddress.getAddress(),
+    withdrawalDelay,
+    buidlerWithdrawalDelayer.address
   );
+
+  // add tokens
 
   // wait until is deployed
   await buidlerTokenERC20Mock.deployed();
-
-  // add token
-
+  await buidlerHEZ.deployed();
   const addressOwner = await owner.getAddress();
-  const initialOwnerBalance = await buidlerTokenERC20Mock.balanceOf(
-    addressOwner
+
+  await AddToken(
+    buidlerHermez,
+    buidlerTokenERC20Mock,
+    buidlerHEZ,
+    addressOwner,
+    feeAddToken
+  );
+  await AddToken(
+    buidlerHermez,
+    buidlerHEZ,
+    buidlerHEZ,
+    addressOwner,
+    feeAddToken
   );
 
-  await expect(
-    buidlerTokenERC20Mock.approve(buidlerHermez.address, feeAddToken)
-  ).to.emit(buidlerTokenERC20Mock, "Approval");
+  // wait until is deployed
 
-  const tokensAdded = await buidlerHermez.registerTokensCount();
-  await expect(buidlerHermez.addToken(buidlerTokenERC20Mock.address))
-    .to.emit(buidlerHermez, "AddToken")
-    .withArgs(buidlerTokenERC20Mock.address, tokensAdded);
-
-  const finalOwnerBalance = await buidlerTokenERC20Mock.balanceOf(addressOwner);
-  expect(finalOwnerBalance).to.equal(
-    BigNumber.from(initialOwnerBalance).sub(feeAddToken)
-  );
-
+  // transfer tokens and ether
   await buidlerTokenERC20Mock.transfer(
     process.env.ETH_ADDRESS,
     ethers.utils.parseEther("10000")
   );
-
+  await buidlerHEZ.transfer(
+    process.env.ETH_ADDRESS,
+    ethers.utils.parseEther("10000")
+  );
   let tx = {
     to: process.env.ETH_ADDRESS,
     value: ethers.utils.parseEther("1000.0"),
   };
   await owner.sendTransaction(tx);
 
+  // los
   console.log(
     "/////////////////////////////////////////////////////////////////"
   );
@@ -174,10 +191,10 @@ async function main() {
   console.log(
     "note that if the blockchain is restarted the contracts will be deployed in the same address:"
   );
-  console.log("token Contract Address: ", buidlerTokenERC20Mock.address);
-  console.log("hermez deployed in; ", buidlerHermez.address);
   console.log("account with tokens and funds:", process.env.ETH_ADDRESS);
-
+  console.log("hermez SC deployed in; ", buidlerHermez.address);
+  console.log("token ERC20 Contract Address: ", buidlerTokenERC20Mock.address);
+  console.log("(ERC777) HEZ deployed in; ", buidlerHEZ.address);
   console.log();
   console.log(
     "/////////////////////////////////////////////////////////////////"

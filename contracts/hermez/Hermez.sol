@@ -74,7 +74,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     // Max number of tokens allowed to be registered inside the rollup
     uint256 constant _LIMIT_TOKENS = (1 << 32);
 
-    // [4 bytes] token + [32 bytes] babyjub + [65 bytes] compressedSignature
+    // [65 bytes] compressedSignature + [32 bytes] fromBjj-compressed + [4 bytes] tokenId
     uint256 constant _L1_COORDINATOR_TOTALBYTES = 101;
 
     // [20 bytes] fromEthAddr + [32 bytes] fromBjj-compressed + [6 bytes] fromIdx +
@@ -443,11 +443,14 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
         if (toIdx == 0) {
             require((amount == 0), "amount must be 0 if toIdx is 0");
         } else {
-            require(
-                ((toIdx > _RESERVED_IDX) && (toIdx <= lastIdx)) ||
-                    (toIdx == _EXIT_IDX),
-                "invalid toIdx"
-            );
+            if ((toIdx == _EXIT_IDX)) {
+                require((loadAmountF == 0), "loadAmount must be 0 if exit");
+            } else {
+                require(
+                    ((toIdx > _RESERVED_IDX) && (toIdx <= lastIdx)),
+                    "invalid toIdx"
+                );
+            }
         }
         // fromIdx can be: 0 if create account or (fromIdx > _RESERVED_IDX)
         if (fromIdx == 0) {
@@ -860,7 +863,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
             bytes32 s; // L1-Coordinator-Tx bytes[1:32]
             bytes32 r; // L1-Coordinator-Tx bytes[33:64]
             bytes32 babyPubKey; // L1-Coordinator-Tx bytes[65:96]
-            uint256 tokenID; // L1-Coordinator-Tx bytes[97:128]
+            uint256 tokenID; // L1-Coordinator-Tx bytes[97:100]
 
             assembly {
                 v := byte(0, calldataload(dPtr))
@@ -886,7 +889,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
 
             address ethAddress = _ETH_ADDRESS_INTERNAL_ONLY;
 
-            // v must be >27 --> EIP-155, v == 0 means no signature
+            // v must be >=27 --> EIP-155, v == 0 means no signature
             if (v != 0) {
                 ethAddress = _checkSig(babyPubKey, r, s, v);
             }

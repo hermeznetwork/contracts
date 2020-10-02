@@ -2,7 +2,6 @@ const bre = require("@nomiclabs/buidler");
 const {expect} = require("chai");
 require("dotenv").config();
 const {ethers} = require("../../node_modules/@nomiclabs/buidler");
-const {common} = require("@hermeznetwork/commonjs");
 const {BigNumber} = require("ethers");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const {
@@ -16,7 +15,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = common;
+} = require("@hermeznetwork/commonjs");
 
 async function main() {
   [owner, ...addrs] = await ethers.getSigners();
@@ -24,8 +23,7 @@ async function main() {
   const maxL1Tx = 256;
   const maxTx = 512;
   const nLevels = 32;
-  const L1_USER_BYTES = 68;
-
+  const l1TxBytes = 72;
   const network = await owner.provider.getNetwork();
   const chainID = network.chainId;
   const rollupDB = await RollupDB(new SMTMemDB(), chainID);
@@ -39,7 +37,9 @@ async function main() {
 
   for (let i = 0; i < currentQueue; i++) {
     const bb = await rollupDB.buildBatch(maxTx, nLevels, maxL1Tx);
-    const filter = buidlerHermez.filters.L1UserTxEvent(null, i, null);
+
+    // filter for queueIndex
+    const filter = buidlerHermez.filters.L1UserTxEvent(i, null, null);
     let events = await buidlerHermez.queryFilter(filter, 0, "latest");
     events.forEach((e) => {
       bb.addTx(txUtils.decodeL1Tx(e.args.l1UserTx));
@@ -54,10 +54,10 @@ async function main() {
   let SCL1TxData = await buidlerHermez.mapL1TxQueue(currentQueue);
   SCL1TxData = SCL1TxData.slice(2);
   // 1 byte, 2 characters in hex String
-  const l1TxLen = SCL1TxData.length / (68 * 2);
+  const l1TxLen = SCL1TxData.length / (l1TxBytes * 2);
   for (let i = 0; i < l1TxLen; i++) {
-    const lastChar = i * 68 * 2;
-    const currentHexChar = (i + 1) * 68 * 2;
+    const lastChar = i * l1TxBytes * 2;
+    const currentHexChar = (i + 1) * l1TxBytes * 2;
     const currenTx = SCL1TxData.slice(lastChar, currentHexChar);
     bbCurrent.addTx(txUtils.decodeL1Tx(currenTx));
   }

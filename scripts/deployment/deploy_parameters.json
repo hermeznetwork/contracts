@@ -1,0 +1,34 @@
+{
+  "31337": {
+    "hermezKeeperAddress": "",
+    "hermezGovernanceAddress": "",
+    "whiteHackGroupAddress": "",
+    "donationAddress": "",
+    "bootCoordinatorAddress": "",
+    "HEZTokenAddress": "",
+    "HEZTokenHolderAddress": "",
+    "genesisBlock": "100",
+    "verifiers": [],
+    "maxTX": [512],
+    "poseidonElements": [],
+    "feeAddToken": 10,
+    "forgeL1L2BatchTimeout": 10,
+    "withdrawalDelay": 1209600
+  },
+  "4": {
+    "hermezKeeperAddress": "",
+    "hermezGovernanceAddress": "",
+    "whiteHackGroupAddress": "",
+    "donationAddress": "",
+    "bootCoordinatorAddress": "",
+    "HEZTokenAddress": "",
+    "HEZTokenHolderAddress": "",
+    "genesisBlock": "",
+    "verifiers": [],
+    "maxTX": [512],
+    "poseidonElements": [],
+    "feeAddToken": 10,
+    "forgeL1L2BatchTimeout": 10,
+    "withdrawalDelay": 1209600
+  }
+}
