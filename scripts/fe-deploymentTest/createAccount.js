@@ -40,6 +40,7 @@ async function main() {
     buidlerToken,
     isERC777
   );
+  console.log("account created!");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

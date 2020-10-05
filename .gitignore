@@ -8,3 +8,6 @@ coverage.json
 package-lock.json
 coverage
 .coverage_*
+.openzeppelin
+deploy_output.json
+tokenList.json

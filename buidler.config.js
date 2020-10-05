@@ -23,6 +23,9 @@ module.exports = {
     },
     localhost: {
       url: "http://127.0.0.1:8545",
+    },
+    localhostMnemonic: {
+      url: "http://127.0.0.1:8545",
       accounts: {
         mnemonic: process.env.MNEMONIC || DEFAULT_MNEMONIC,
         path: "m/44'/60'/0'/0",

@@ -9,6 +9,9 @@ contract ERC777Mock is Context, ERC777 {
     bool public transferResult = true;
     bool public transferRevert = false;
 
+    // default mint amount
+    uint256 public constant defaultMintAmount = 1000 ether;
+
     constructor(
         address initialHolder,
         uint256 initialBalance,
@@ -62,5 +65,9 @@ contract ERC777Mock is Context, ERC777 {
 
     function setTransferRevert(bool result) public {
         transferRevert = result;
+    }
+
+    receive() external payable {
+        _mint(msg.sender, defaultMintAmount, new bytes(0), new bytes(0));
     }
 }

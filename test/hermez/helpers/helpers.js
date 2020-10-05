@@ -438,7 +438,7 @@ async function l1UserTxDepositTransfer(
         BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
       );
     } else {
-      // tokens ERC20
+      // tokens ERC777
       const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
         await owner.getAddress()
       );
@@ -769,6 +769,8 @@ async function AddToken(
   expect(finalOwnerBalance).to.equal(
     BigNumber.from(initialOwnerBalance).sub(feeAddToken)
   );
+
+  return tokensAdded;
 }
 
 async function createAccounts(
@@ -803,8 +805,14 @@ async function createAccounts(
   await forgerTest.forgeBatch(true, l1TxCreateAccounts, []);
 }
 
-async function calculateInputMaxTxLevels(maxTx, nLevels) {
-  return Scalar.add(Scalar.e(maxTx), Scalar.shl(nLevels, 256 - 8));
+function calculateInputMaxTxLevels(maxTxArray, nLevelsArray) {
+  let returnArray = [];
+  for (let i = 0; i < maxTxArray.length; i++) {
+    returnArray.push(
+      Scalar.add(Scalar.e(maxTxArray[i]), Scalar.shl(nLevelsArray[i], 256 - 8))
+    );
+  }
+  return returnArray;
 }
 
 async function registerERC1820(signer) {

@@ -125,7 +125,7 @@ async function main() {
   // initialize hermez
   await buidlerHermez.initializeHermez(
     [buidlerVerifierRollupHelper.address],
-    [calculateInputMaxTxLevels(maxTx, nLevels)],
+    calculateInputMaxTxLevels([maxTx], [nLevels]),
     buidlerVerifierWithdrawHelper.address,
     buidlerHermezAuctionTest.address,
     buidlerHEZ.address,
@@ -169,10 +169,13 @@ async function main() {
     process.env.ETH_ADDRESS,
     ethers.utils.parseEther("10000")
   );
-  await buidlerHEZ.transfer(
+
+  await buidlerHEZ.send(
     process.env.ETH_ADDRESS,
-    ethers.utils.parseEther("10000")
+    ethers.utils.parseEther("10000"),
+    ethers.utils.toUtf8Bytes("")
   );
+
   let tx = {
     to: process.env.ETH_ADDRESS,
     value: ethers.utils.parseEther("1000.0"),

@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // mock class using ERC20
 contract ERC20Mock is ERC20 {
+    // default mint amount
+    uint256 public constant defaultMintAmount = 1000 ether;
+
     constructor(
         string memory name,
         string memory symbol,
@@ -37,5 +40,9 @@ contract ERC20Mock is ERC20 {
         uint256 value
     ) public {
         _approve(owner, spender, value);
+    }
+
+    receive() external payable {
+        _mint(msg.sender, defaultMintAmount);
     }
 }

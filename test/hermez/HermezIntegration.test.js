@@ -39,8 +39,8 @@ const ERC1820_REGISTRY_DEPLOY_TX =
 const ERC1820_REGISTRY_ADDRESS = "0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24";
 const BLOCKS_PER_SLOT = 40;
 let ABIbid = [
-  "function bid(uint128 slot, uint128 bidAmount, address producer)",
-  "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid,address forger)",
+  "function bid(uint128 slot, uint128 bidAmount)",
+  "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid)",
 ];
 
 const MIN_BLOCKS = 81;
@@ -76,6 +76,7 @@ describe("Hermez integration", function () {
     [
       owner,
       governance,
+      forger1,
       safetyAddress,
       id1,
       id2,
@@ -189,7 +190,7 @@ describe("Hermez integration", function () {
 
     await buidlerHermez.initializeHermez(
       [buidlerVerifierRollupHelper.address],
-      [calculateInputMaxTxLevels(maxTx, nLevels)],
+      calculateInputMaxTxLevels([maxTx], [nLevels]),
       buidlerVerifierWithdrawHelper.address,
       buidlerHermezAuctionProtocol.address,
       buidlerTokenERC777Mock.address,
@@ -219,7 +220,7 @@ describe("Hermez integration", function () {
 
       await buidlerHermezAuctionProtocol
         .connect(owner)
-        .registerCoordinator(COORDINATOR_1_URL);
+        .setCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
 
       let data = iface.encodeFunctionData("multiBid", [
         2,
@@ -227,7 +228,6 @@ describe("Hermez integration", function () {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("11"),
         ethers.utils.parseEther("11"),
-        await owner.getAddress(),
       ]);
 
       await buidlerTokenERC777Mock
@@ -372,7 +372,7 @@ describe("Hermez integration", function () {
 
       await buidlerHermezAuctionProtocol
         .connect(owner)
-        .registerCoordinator(COORDINATOR_1_URL);
+        .setCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
 
       let data = iface.encodeFunctionData("multiBid", [
         2,
@@ -380,7 +380,6 @@ describe("Hermez integration", function () {
         [true, true, true, true, true, true],
         ethers.utils.parseEther("11"),
         ethers.utils.parseEther("11"),
-        await owner.getAddress(),
       ]);
 
       await buidlerTokenERC777Mock

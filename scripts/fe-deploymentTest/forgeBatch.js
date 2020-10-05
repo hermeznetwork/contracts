@@ -38,7 +38,7 @@ async function main() {
   for (let i = 0; i < currentQueue; i++) {
     const bb = await rollupDB.buildBatch(maxTx, nLevels, maxL1Tx);
 
-    // filter for queueIndex
+    // filter L1UserTxEvent for queueIndex
     const filter = buidlerHermez.filters.L1UserTxEvent(i, null, null);
     let events = await buidlerHermez.queryFilter(filter, 0, "latest");
     events.forEach((e) => {
@@ -106,6 +106,8 @@ async function main() {
     proofB,
     proofC
   );
+
+  console.log("batch forged!");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
