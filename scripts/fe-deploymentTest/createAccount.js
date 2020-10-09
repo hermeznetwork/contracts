@@ -1,3 +1,6 @@
+// set enviroment variable for buidler
+process.env.BUIDLER_NETWORK = "localhost";
+
 const bre = require("@nomiclabs/buidler");
 const {expect} = require("chai");
 require("dotenv").config();
@@ -11,6 +14,9 @@ const {
 const isERC777 = true;
 
 async function main() {
+  // compìle contracts
+  await bre.run("compile");
+
   [owner, ...addrs] = await ethers.getSigners();
 
   const Hermez = await ethers.getContractFactory("HermezTest");

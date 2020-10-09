@@ -6,7 +6,7 @@ In repository root:
 
 2. Terminal 1: `npx buidler node`
 
-3. In root repository edit `.env.example` adding your mnemonic and save it as `.env`
+3. If you want to use a custom mnemonic go to the root of the repository and edit `.env.example`, change the variable `MNEMONIC` and save it as `.env`
    The path `m/44'/60'/0'/0` will be used, starting from index '0'
 4. Terminal 2: - Enter in `scripts/deployment` folder and edit the `deploy_parameters.json`
    The json contains all the deployment parameters, indexed with a `chainID`
@@ -14,10 +14,10 @@ In repository root:
 
    - The `numAccountsFund` are the number of accounts, starting with index '0' of the mnemonic to fund with ether and HEZ **ether funding only available in evmbuidler enviroment**
    - Then there are some configuration parameters, related with the Smart contracts constructor
-   - Lastly are some parameters wich only has more relevance in testnet wich are:
+   - Lastly are some parameters wich only has more relevance in testnet:
 
-     - Some address wich can perform especial operations in the SC, if empty, the accounts in mnemonic will be used in order
-     - Finally librarys, if empty, will be deployed
+     - Some address which can perform especial operations in the SC, if empty, the accounts in mnemonic will be used in order
+     - Finally libraries, if empty, will be deployed
 
    - A `deploy_output.json` will be created with all the address of the SC created, and the mnemonic index of the relevant accounts
 
@@ -29,6 +29,7 @@ In repository root:
    - `numAccountsFund`: number of accounts, starting with index '0' of the mnemonic to fund with tokens of every token contract deployed. Default: 10
    - `numERC777Deployments`: number of ERC777 tokens deployed. Default: 0
    - `numERC20Deployments`: number of ERC20 tokens deployed. Default: 0
+   - `decimalsERC20`: number of decimals of the ERC20, must be a uint8 (max value 255). Default: 18
    - `addTokensBool`: Boolean, if `true` the token will be added to the rollup. Default: true
 
 Example: `node createTokens.js --numERC777Deployments 5 --numERC20Deployments 4` This command will deploy 5 ERC777 and 4 ERC20, will add them to Hermez and will fund the first 10 index of the mnemonic with tokens

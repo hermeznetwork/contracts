@@ -1,8 +1,10 @@
+// set enviroment variable for buidler
+process.env.BUIDLER_NETWORK = "localhost";
+
 const bre = require("@nomiclabs/buidler");
 const {expect} = require("chai");
 require("dotenv").config();
 const {ethers} = require("../../node_modules/@nomiclabs/buidler");
-const {BigNumber} = require("ethers");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const {
   float16,
@@ -18,6 +20,10 @@ const {
 } = require("@hermeznetwork/commonjs");
 
 async function main() {
+  // compìle contracts
+  await bre.run("compile");
+
+  
   [owner, ...addrs] = await ethers.getSigners();
 
   const maxL1Tx = 256;
@@ -32,9 +38,8 @@ async function main() {
 
   buidlerHermez = Hermez.attach(process.env.HERMEZ_ADDRESS);
 
-  // check L1 user tx are the same in batchbuilder and contract
+  // sync previous l1 tx
   const currentQueue = await buidlerHermez.nextL1ToForgeQueue();
-
   for (let i = 0; i < currentQueue; i++) {
     const bb = await rollupDB.buildBatch(maxTx, nLevels, maxL1Tx);
 
@@ -48,8 +53,9 @@ async function main() {
     await rollupDB.consolidate(bb);
   }
 
+  // build current batch with current L1Tx queue
   const bbCurrent = await rollupDB.buildBatch(maxTx, nLevels, maxL1Tx);
-
+  const l1TxForged = [];
   //await buidlerHermez.createAccountDeposit(0, 0, 0);
   let SCL1TxData = await buidlerHermez.mapL1TxQueue(currentQueue);
   SCL1TxData = SCL1TxData.slice(2);
@@ -59,7 +65,9 @@ async function main() {
     const lastChar = i * l1TxBytes * 2;
     const currentHexChar = (i + 1) * l1TxBytes * 2;
     const currenTx = SCL1TxData.slice(lastChar, currentHexChar);
-    bbCurrent.addTx(txUtils.decodeL1Tx(currenTx));
+    const decodedTx = txUtils.decodeL1Tx(currenTx)
+    l1TxForged.push(decodedTx);
+    bbCurrent.addTx(decodedTx);
   }
   await bbCurrent.build();
 
@@ -108,6 +116,10 @@ async function main() {
   );
 
   console.log("batch forged!");
+  console.log(`${l1TxForged.length} trasnsaction forged`);
+  if (l1TxForged.length != 0) {
+    console.log(l1TxForged);
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

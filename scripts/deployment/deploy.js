@@ -1,10 +1,10 @@
 // set enviroment variable for buidler
 process.env.BUIDLER_NETWORK = "localhostMnemonic";
 
-const {ethers, upgrades} = require("@nomiclabs/buidler");
+const { ethers, upgrades } = require("@nomiclabs/buidler");
 const bre = require("@nomiclabs/buidler");
 
-const {time} = require("@openzeppelin/test-helpers");
+const { time } = require("@openzeppelin/test-helpers");
 const fs = require("fs");
 const INITIAL_WITHDRAWAL_DELAY = 3600; //seconds
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
@@ -90,7 +90,6 @@ async function main() {
     deployParameters[chainId].bootCoordinatorAddress ||
     (await bootCoordinatorEthers.getAddress());
 
-  console.log(hermezKeeperAddress);
   console.log("hermezKeeperAddress: " + hermezKeeperAddress);
   console.log("whiteHackGroupAddress: " + whiteHackGroupAddress);
   console.log("hermezGovernanceAddress: " + hermezGovernanceAddress);
@@ -318,20 +317,34 @@ async function main() {
     hermezAddress: hermez.address,
     withdrawalDelayeAddress: withdrawalDelayer.address,
     HEZTokenAddress: buidlerHEZToken.address,
-    hermezKeeperEthersIndex: deployParameters[chainId].hermezKeeperAddress
+    hermezKeeperIndex: deployParameters[chainId].hermezKeeperAddress
       ? null
       : 1,
-    hermezGovernanceEthersIndex: deployParameters[chainId]
+    hermezKeeperAddress: deployParameters[chainId].hermezKeeperAddress
+      ? deployParameters[chainId].hermezKeeperAddress
+      : signersArray[1]._address,
+    hermezGovernanceIndex: deployParameters[chainId]
       .hermezGovernanceAddress
       ? null
       : 2,
-    whiteHackGroupEthersIndex: deployParameters[chainId].whiteHackGroupAddress
+    hermezGovernanceAddress: deployParameters[chainId].hermezGovernanceAddress
+      ? deployParameters[chainId].hermezKeeperAddress
+      : signersArray[2]._address,
+    whiteHackGroupIndex: deployParameters[chainId].whiteHackGroupAddress
       ? null
       : 3,
-    donationEthersIndex: deployParameters[chainId].donationAddress ? null : 4,
-    bootCoordinatorEthersIndex: deployParameters[chainId].bootCoordinatorAddress
+    whiteHackGroupAddress: deployParameters[chainId].whiteHackGroupAddress
+      ? deployParameters[chainId].whiteHackGroupAddress
+      : signersArray[3]._address,
+    donationIndex: deployParameters[chainId].donationAddress ? null : 4,
+    donationAddress: deployParameters[chainId].donationAddress ? deployParameters[chainId].donationAddress : signersArray[4]._address,
+    bootCoordinatorIndex: deployParameters[chainId].bootCoordinatorAddress
       ? null
       : 5,
+    bootCoordinatorAddress: deployParameters[chainId].bootCoordinatorAddress
+      ? deployParameters[chainId].bootCoordinatorAddress
+      : signersArray[5]._address,
+    accountsFunded: numAccountsFund,
   };
 
   fs.writeFileSync(pathOutputJson, JSON.stringify(outputJson, null, 1));

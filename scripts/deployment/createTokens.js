@@ -11,11 +11,6 @@ const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
 
-const pathDeploymentOutputJson = path.join(__dirname, "./deploy_output.json");
-const pathtokenListJson = path.join(__dirname, "./tokenList.json");
-
-const deploymentOutputJson = require(pathDeploymentOutputJson);
-
 const {argv} = require("yargs") // eslint-disable-line
   .version()
   .usage(
@@ -25,17 +20,26 @@ node createTokens.js <options>
     Number of ERC777 tokens deployed. Default: 0
 --numERC20Deployments or -erc20 <number>
     Number of ERC20 tokens deployed. Default: 0
+--decimalsERC20 or -dec <number>
+    Number of decimals of the ERC20, must be a uint8 (max value 255). Default: 18
 --addTokensBool or -add <bool>
     Boolean, if "true" the token will be added to the rollup. Default: true
 --numAccountsFund or -fund <number>
     Number of accounts, starting with index '0' of the mnemonic to fund with tokens of every token contract deployed. Default: 10
+--tokenListPath or -tklist <path>
+    Path of the tokenList. Default: ./tokenList.json
+--deploymentOutputPath or -depout <path>
+    Path of the deployment output. Default: ./deploy_output.json
 `
   )
   .help("h")
   .alias("erc777", "numERC777Deployments")
   .alias("erc20", "numERC20Deployments")
+  .alias("dec", "decimalsERC20")
   .alias("add", "addTokensBool")
-  .alias("fund", "numAccountsFund");
+  .alias("fund", "numAccountsFund")
+  .alias("tklist", "tokenListPath")
+  .alias("depout", "deploymentOutputPath");
 async function main() {
   // compìle contracts
   await bre.run("compile");
@@ -47,9 +51,15 @@ async function main() {
   const numERC20Deployments = argv.numERC20Deployments
     ? argv.numERC20Deployments
     : 0;
+  const decimalsERC20 = argv.decimalsERC20 ? argv.decimalsERC20 : 18;
   const addTokensBool = argv.addTokensBool ? argv.addTokensBool : true;
   const numAccountsFund = argv.numAccountsFund ? argv.numAccountsFund : 10;
 
+  const pathtokenListJson = argv.tokenListPath ? argv.tokenListPath : path.join(__dirname, "./tokenList.json");
+  const pathDeploymentOutputJson =  argv.deploymentOutputPath ? argv.deploymentOutputPath : path.join(__dirname, "./deploy_output.json");
+
+  const deploymentOutputJson = require(pathDeploymentOutputJson);
+  
   // get chain ID
   const chainId = (await ethers.provider.getNetwork()).chainId;
 
@@ -89,7 +99,7 @@ async function main() {
     // Send tokens to the other address
     for (let j = 0; j < numAccountsFund - 1; j++) {
       await buidlerERC777[i].send(
-        await addrs[i].getAddress(),
+        await addrs[j].getAddress(),
         ethers.utils.parseEther("10000"),
         ethers.utils.toUtf8Bytes("")
       );
@@ -114,7 +124,7 @@ async function main() {
   }
 
   // get ERC20 factory
-  const ERC20Factory = await ethers.getContractFactory("ERC20Mock");
+  const ERC20Factory = await ethers.getContractFactory("ERC20MockDecimals");
   // deploy all the ERC20
   buidlerERC20 = [];
   for (let i = 0; i < numERC20Deployments; i++) {
@@ -122,14 +132,15 @@ async function main() {
       "ERC20_" + i,
       "20_" + i,
       await owner.getAddress(),
-      tokenInitialAmount
+      tokenInitialAmount,
+      decimalsERC20
     );
     await buidlerERC20[i].deployed();
 
     // Send tokens to the other address
     for (let j = 0; j < numAccountsFund - 1; j++) {
       await buidlerERC20[i].transfer(
-        await addrs[i].getAddress(),
+        await addrs[j].getAddress(),
         ethers.utils.parseEther("10000")
       );
     }
