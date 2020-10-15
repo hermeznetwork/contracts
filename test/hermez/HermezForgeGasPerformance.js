@@ -68,7 +68,7 @@ describe("Hermez gas performance", function () {
 
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -107,8 +107,7 @@ describe("Hermez gas performance", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    // deploy registry erc1820
-    await registerERC1820(owner);
+
 
     // factory hermez
     const Hermez = await ethers.getContractFactory("HermezTest");
@@ -121,12 +120,11 @@ describe("Hermez gas performance", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
@@ -181,7 +179,7 @@ describe("Hermez gas performance", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       const proofA = ["0", "0"];
@@ -194,7 +192,7 @@ describe("Hermez gas performance", function () {
       const newLastIdx = 257;
       const newStateRoot = 123;
       const newExitRoot = 456;
-      const compressedL1CoordinatorTx = `0x00`;
+      const compressedL1CoordinatorTx = "0x00";
 
       const L2TxsData = `0x${"1".repeat(((nLevels / 8) * 2 + 3) * maxTx * 2)}`;
       // const L2TxsData = `0x${utils.padZeros(
@@ -289,7 +287,7 @@ describe("Hermez gas performance", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       const proofA = ["0", "0"];

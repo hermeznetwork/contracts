@@ -47,7 +47,7 @@ const MIN_BLOCKS = 81;
 let iface = new ethers.utils.Interface(ABIbid);
 
 describe("Hermez integration", function () {
-  let buidlerTokenERC777Mock;
+  let buidlerTokenERC20PermitMock;
   let buidlerHermez;
   let buidlerWithdrawalDelayer;
   let buidlerHermezAuctionProtocol;
@@ -93,7 +93,7 @@ describe("Hermez integration", function () {
 
     // factory
     const Hermez = await ethers.getContractFactory("HermezTest");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
     );
@@ -136,15 +136,14 @@ describe("Hermez integration", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    buidlerTokenERC777Mock = await TokenERC777Mock.deploy(
-      ownerAddress,
-      tokenInitialAmount,
+    buidlerTokenERC20PermitMock = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
-    await buidlerTokenERC777Mock.deployed();
+    await buidlerTokenERC20PermitMock.deployed();
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
     let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
 
@@ -168,7 +167,7 @@ describe("Hermez integration", function () {
     const latest = (await time.latestBlock()).toNumber();
 
     await buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
-      buidlerTokenERC777Mock.address,
+      buidlerTokenERC20PermitMock.address,
       latest + 1 + MIN_BLOCKS,
       HermezAddress,
       hermezGovernanceDAOAddress,
@@ -193,7 +192,7 @@ describe("Hermez integration", function () {
       calculateInputMaxTxLevels([maxTx], [nLevels]),
       buidlerVerifierWithdrawHelper.address,
       buidlerHermezAuctionProtocol.address,
-      buidlerTokenERC777Mock.address,
+      buidlerTokenERC20PermitMock.address,
       forgeL1L2BatchTimeout,
       feeAddToken,
       poseidonAddr2,
@@ -230,7 +229,7 @@ describe("Hermez integration", function () {
         ethers.utils.parseEther("11"),
       ]);
 
-      await buidlerTokenERC777Mock
+      await buidlerTokenERC20PermitMock
         .connect(owner)
         .send(
           buidlerHermezAuctionProtocol.address,
@@ -263,8 +262,8 @@ describe("Hermez integration", function () {
       );
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
         await owner.getAddress(),
         feeAddToken
       );
@@ -278,7 +277,7 @@ describe("Hermez integration", function () {
         babyjub,
         owner,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -291,7 +290,7 @@ describe("Hermez integration", function () {
           babyjub,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -303,7 +302,7 @@ describe("Hermez integration", function () {
           fromIdx,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -316,7 +315,7 @@ describe("Hermez integration", function () {
           amountF,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -329,7 +328,7 @@ describe("Hermez integration", function () {
           babyjub,
           owner,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -382,7 +381,7 @@ describe("Hermez integration", function () {
         ethers.utils.parseEther("11"),
       ]);
 
-      await buidlerTokenERC777Mock
+      await buidlerTokenERC20PermitMock
         .connect(owner)
         .send(
           buidlerHermezAuctionProtocol.address,
@@ -419,8 +418,8 @@ describe("Hermez integration", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
         await owner.getAddress(),
         feeAddToken
       );
@@ -434,7 +433,7 @@ describe("Hermez integration", function () {
         babyjub,
         owner,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -443,7 +442,7 @@ describe("Hermez integration", function () {
         await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
       );
 
-      const initialOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const initialOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         buidlerWithdrawalDelayer.address
       );
 
@@ -471,7 +470,7 @@ describe("Hermez integration", function () {
       )
         .to.emit(buidlerHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
-      const finalOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const finalOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         buidlerWithdrawalDelayer.address
       );
       expect(parseInt(finalOwnerBalance)).to.equal(

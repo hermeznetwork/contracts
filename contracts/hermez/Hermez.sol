@@ -6,35 +6,17 @@ import "./lib/InstantWithdrawManager.sol";
 import "./interfaces/VerifierRollupInterface.sol";
 import "./interfaces/VerifierWithdrawInterface.sol";
 import "./interfaces/AuctionInterface.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
+import "../ERC20/IERC2612Permit.sol";
 
-contract Hermez is InstantWithdrawManager, IERC777Recipient {
+contract Hermez is InstantWithdrawManager {
     struct VerifierRollup {
         VerifierRollupInterface verifierInterface;
         uint256 maxTx; // maximum rollup transactions in a batch: L2-tx + L1-tx transactions
         uint256 nLevels; // number of levels of the circuit
     }
 
-    // ERC777 recipient interface hash
-    bytes32 constant _ERC777_RECIPIENT_INTERFACE_HASH = keccak256(
-        "ERC777TokensRecipient"
-    );
-
-    // When this contract recept an ERC777 tokens, the tokensReceived method is iked.
-    // The field data is used to determine wich function is called.
-    // We codify the call exactly the same way that ethereum does for a normal call.
-    // The tokenReceipt method will parse this data and call the corresponding method to do the action
-    // Here we define the signatures of the functions that can be called thru an ERC777 `send`
-    bytes4 constant _PERFORM_L1_USER_TX_SIGNATURE = bytes4(
-        keccak256(
-            "addL1Transaction(uint256,uint48,uint16,uint16,uint32,uint48)"
-        )
-    );
-    bytes4 constant _ADD_TOKEN_SIGNATURE = bytes4(
-        keccak256("addToken(address)")
-    );
-
-    // Erc20 signatures:
+    //calculate and  put the signature?
+    // ERC20 signatures:
     // This constants are used in the _safeTransfer internal method in order to safe GAS.
     bytes4 constant _TRANSFER_SIGNATURE = bytes4(
         keccak256(bytes("transfer(address,uint256)"))
@@ -46,17 +28,19 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
         keccak256(bytes("approve(address,uint256)"))
     );
 
-    // Erc777 signatures:
-    bytes4 constant _SEND_SIGNATURE = bytes4(
-        keccak256(bytes("send(address,uint256,bytes)"))
-    );
-    bytes4 private constant _ERC777_GRANULARITY = bytes4(
-        keccak256(bytes("granularity()"))
+    // ERC20 decimals signature
+    bytes4 private constant _ALLOWANCE_SIGNATURE = bytes4(
+        keccak256(bytes("allowance(address,address)"))
     );
 
-    // This constant are used to deposit tokens from ERC77 tokens into withdrawal delayer
-    bytes4 constant _WITHDRAWAL_DELAYER_DEPOSIT = bytes4(
-        keccak256(bytes("deposit(address,address,uint192)"))
+    // ERC20 extensions:
+    // ERC20 permit signature:
+    bytes4 constant _PERMIT_SIGNATURE = bytes4(
+        keccak256(
+            bytes(
+                "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)"
+            )
+        )
     );
 
     // First 256 indexes reserved, first user index will be the 256
@@ -133,7 +117,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     // rootId => (Idx => true/false)
     mapping(uint64 => mapping(uint48 => bool)) public exitNullifierMap;
 
-    // List of ERC20/ERC777 tokens that can be used in rollup
+    // List of ERC20 tokens that can be used in rollup
     // ID = 0 will be reserved for ether
     address[] public tokenList;
 
@@ -226,13 +210,6 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
         nextL1FillingQueue = 1;
         // stateRootMap[0] = 0 --> genesis batch will have root = 0
         tokenList.push(address(0)); // Token 0 is ETH
-        // register interface for ERC777 send
-        _ERC1820.setInterfaceImplementer(
-            address(this),
-            _ERC777_RECIPIENT_INTERFACE_HASH,
-            address(this)
-        );
-        // _acceptERC777Tokens = false --> don't accept ERC777 tokens unauthorized
 
         // initialize libs
         _initializeHelpers(
@@ -400,6 +377,73 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
                     msg.sender,
                     address(this),
                     loadAmount
+                );
+            }
+        }
+
+        // perform L1 User Tx
+        _addL1Transaction(
+            msg.sender,
+            babyPubKey,
+            fromIdx,
+            loadAmountF,
+            amountF,
+            tokenID,
+            toIdx
+        );
+    }
+
+    /**
+     * @dev Create a new rollup l1 user transaction
+     * @param babyPubKey Public key babyjubjub represented as point: sign + (Ay)
+     * @param fromIdx Index leaf of sender account or 0 if create new account
+     * @param loadAmountF Amount from L1 to L2 to sender account or new account
+     * @param amountF Amount transfered between L2 accounts
+     * @param tokenID Token identifier
+     * @param toIdx Index leaf of recipient account, or _EXIT_IDX if exit, or 0 if not transfer
+     * @param deadline deadline for the permit
+     * @param v Signature parameter
+     * @param r Signature parameter
+     * @param s Signature parameter
+     * Events: `L1UserTxEvent`
+     */
+    function addL1TransactionWithPermit(
+        uint256 babyPubKey,
+        uint48 fromIdx,
+        uint16 loadAmountF,
+        uint16 amountF,
+        uint32 tokenID,
+        uint48 toIdx,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external payable {
+        // check tokenID
+        require(tokenID < tokenList.length, "token has not been registered");
+
+        // check loadAmount
+        uint256 loadAmount = _float2Fix(loadAmountF);
+        require(
+            loadAmount < _LIMIT_LOAD_AMOUNT,
+            "deposit amount larger than limit"
+        );
+
+        // deposit token or ether
+        if (loadAmount > 0) {
+            if (tokenID == 0) {
+                require(loadAmount == msg.value, "loadAmount != msg.value");
+            } else {
+                // permit and transfer tokens
+                _permitAndTransfer(
+                    tokenList[tokenID],
+                    msg.sender,
+                    address(this),
+                    loadAmount,
+                    deadline,
+                    v,
+                    r,
+                    s
                 );
             }
         }
@@ -602,89 +646,6 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     }
 
     //////////////
-    // ERC777 tokensReceived
-    /////////////
-    /**
-     * @notice function that is triggered every time this smartcontract receives HEZ tokens (ERC777)
-     * @dev This function will process the l1tx deposits from ERC777 tokens or the addTokens functions
-     * Use a ERC777 as a ERC20 using "approve" and "transferFrom" is not supported
-     * @param operator - not used
-     * @param from - not used
-     * @param to - not used
-     * @param amount the amount of tokens that have been sent
-     * @param userData contains the raw call of the method to invoke (bid or multiBid)
-     * @param operatorData - not used
-     */
-    function tokensReceived(
-        // solhint-disable no-unused-vars
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData
-    ) external override {
-        require(userData.length != 0, "Send ERC777 without data");
-        // decode the signature
-        bytes4 sig = abi.decode(userData, (bytes4));
-
-        // perform a l1 user tx
-        if (sig == _PERFORM_L1_USER_TX_SIGNATURE) {
-            // Extract params
-            (
-                uint256 babyPubKey,
-                uint48 fromIdx,
-                uint16 loadAmountF,
-                uint16 amountF,
-                uint32 tokenID,
-                uint48 toIdx
-            ) = abi.decode(
-                userData[4:],
-                (uint256, uint48, uint16, uint16, uint32, uint48)
-            );
-
-            // check tokenID
-            require(
-                (tokenList[tokenID] == msg.sender),
-                "token ID does not match"
-            );
-
-            uint256 granularity = _getGranularity(msg.sender);
-
-            // check loadAmount, loadAmount will be send divided by the granularity
-            if (loadAmountF != 0) {
-                uint256 loadAmount = _float2Fix(loadAmountF);
-                require(
-                    loadAmount < _LIMIT_LOAD_AMOUNT,
-                    "deposit amount larger than limit"
-                );
-                require(
-                    loadAmount == amount / granularity,
-                    "loadAmount != token amount"
-                );
-            }
-
-            // perform L1 User Tx
-            _addL1Transaction(
-                from,
-                babyPubKey,
-                fromIdx,
-                loadAmountF,
-                amountF,
-                tokenID,
-                toIdx
-            );
-        } else if (sig == _ADD_TOKEN_SIGNATURE) {
-            // handle addToken
-            require((tokenHEZ == msg.sender), "must pay in HEZ");
-            require((amount == feeAddToken), "not enough HEZ");
-            _addToken(abi.decode(userData[4:], (address)));
-        } else {
-            revert("Not valid calldata");
-        }
-    }
-
-    //////////////
     // Governance methods
     /////////////
     /**
@@ -732,15 +693,32 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
 
     /**
      * @dev Inclusion of a new token to the rollup
-     * Internal function, called by ERC777 tokensReceived
      * @param tokenAddress Smart contract token address
      * Events: `AddToken`
      */
-    function _addToken(address tokenAddress) internal {
+    function addToken(
+        address tokenAddress,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
         uint256 currentTokens = tokenList.length;
         require(currentTokens < _LIMIT_TOKENS, "token list is full");
         require(tokenAddress != address(0), "can't be address 0");
         require(tokenMap[tokenAddress] == 0, "token address already added");
+
+        // permit and transfer HEZ tokens
+        _permitAndTransfer(
+            tokenHEZ,
+            msg.sender,
+            address(this),
+            feeAddToken,
+            deadline,
+            v,
+            r,
+            s
+        );
 
         tokenList.push(tokenAddress);
         tokenMap[tokenAddress] = currentTokens;
@@ -1071,48 +1049,52 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
                 );
             } else {
                 address tokenAddress = tokenList[tokenID];
-                // check if the contract is ERC777, granularity has no inputs, it's cheaper to check
-                bool isERC777 = _ERC1820.getInterfaceImplementer(
+                // check if contract implements permit?¿
+
+                _safeApprove(
                     tokenAddress,
-                    keccak256("ERC777Token")
-                ) != address(0x0)
-                    ? true
-                    : false;
+                    address(withdrawDelayerContract),
+                    amount
+                );
 
-                // In case that the token is an ERC777 we use send instead of transfer
-                if (isERC777) {
-                    uint256 granularity = _getGranularity(tokenAddress);
-
-                    /* solhint-disable avoid-low-level-calls */
-                    (bool success, ) = tokenAddress.call(
-                        abi.encodeWithSelector(
-                            _SEND_SIGNATURE,
-                            address(withdrawDelayerContract),
-                            amount * granularity,
-                            abi.encodeWithSelector(
-                                _WITHDRAWAL_DELAYER_DEPOSIT,
-                                msg.sender,
-                                tokenAddress,
-                                amount * granularity
-                            )
-                        )
-                    );
-                    require(success, "withdrawal delayer deposit fail");
-                } else {
-                    _safeApprove(
-                        tokenAddress,
-                        address(withdrawDelayerContract),
-                        amount
-                    );
-
-                    withdrawDelayerContract.deposit(
-                        msg.sender,
-                        tokenAddress,
-                        amount
-                    );
-                }
+                withdrawDelayerContract.deposit(
+                    msg.sender,
+                    tokenAddress,
+                    amount
+                );
             }
         }
+    }
+
+    /**
+     * @dev Approve ERC20 tokens through permit signature and transfer to the SC
+     * @param token Token address
+     * @param owner Address wich has the tokens
+     * @param spender Spender of the tokens
+     * @param amount amount of tokens
+     * @param deadline deadline for the permit
+     * @param v Signature parameter
+     * @param r Signature parameter
+     * @param s Signature parameter
+     */
+    function _permitAndTransfer(
+        address token,
+        address owner,
+        address spender,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal {
+        // check if there's already enough approved tokens
+        // this check avoid some kind of DoS where someone steal the permit signature and send it before
+        // another approach could be send a permit Tx and continue the execution even if it fails
+        uint256 approvedTokens = _allowance(token, owner, spender);
+        if (approvedTokens < amount) {
+            _safePermit(token, owner, spender, amount, deadline, v, r, s);
+        }
+        _safeTransferFrom(token, owner, spender, amount);
     }
 
     ///////////
@@ -1120,7 +1102,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     ///////////
 
     /**
-     * @dev Approve IERC20 / IERC77 tokens
+     * @dev Approve ERC20
      * @param token Token address
      * @param to Recievers
      * @param value Quantity of tokens to approve
@@ -1141,7 +1123,7 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     }
 
     /**
-     * @dev transfer tokens or ether from the smart contract
+     * @dev Transfer tokens or ether from the smart contract
      * @param token Token address
      * @param to Address to recieve the tokens
      * @param value Quantity to transfer
@@ -1157,46 +1139,19 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
             (bool success, ) = msg.sender.call{value: value}(new bytes(0));
             require(success, "ETH transfer failed");
         } else {
-            // check if the contract is ERC777, granularity has no inputs, it's cheaper to check
-            bool isERC777 = _ERC1820.getInterfaceImplementer(
-                token,
-                keccak256("ERC777Token")
-            ) != address(0x0)
-                ? true
-                : false;
-
-            // In case that the token is an ERC777 we use send instead of transfer
-            if (isERC777) {
-                uint256 granularity = _getGranularity(token);
-
-                /* solhint-disable avoid-low-level-calls */
-                (bool success, bytes memory data) = token.call(
-                    abi.encodeWithSelector(
-                        _SEND_SIGNATURE,
-                        to,
-                        value * granularity,
-                        new bytes(0)
-                    )
-                );
-                require(
-                    success && (data.length == 0 || abi.decode(data, (bool))),
-                    "ERC777 send failed"
-                );
-            } else {
-                /* solhint-disable avoid-low-level-calls */
-                (bool success, bytes memory data) = token.call(
-                    abi.encodeWithSelector(_TRANSFER_SIGNATURE, to, value)
-                );
-                require(
-                    success && (data.length == 0 || abi.decode(data, (bool))),
-                    "ERC20 transfer failed"
-                );
-            }
+            /* solhint-disable avoid-low-level-calls */
+            (bool success, bytes memory data) = token.call(
+                abi.encodeWithSelector(_TRANSFER_SIGNATURE, to, value)
+            );
+            require(
+                success && (data.length == 0 || abi.decode(data, (bool))),
+                "ERC20 transfer failed"
+            );
         }
     }
 
     /**
-     * @dev transferFrom IERC20 / IERC777
+     * @dev transferFrom ERC20
      * Require approve tokens for this contract previously
      * @param token Token address
      * @param from Sender
@@ -1219,18 +1174,61 @@ contract Hermez is InstantWithdrawManager, IERC777Recipient {
     }
 
     /**
-     * @dev Get granularity of a ERC777 token
-     * // All the ERC777 tokens amounts are stored in the SC divided by the granularity
-     * // When withdrawn the amount is multiplied by the granularity
-     * // In this way we assure that the granularity is always accomplished
+     * @dev Approve tokens through permit signature
      * @param token Token address
+     * @param owner Address wich has the tokens
+     * @param spender Spender of the tokens
      */
-    function _getGranularity(address token) internal view returns (uint256) {
-        // get granularity
+    function _allowance(
+        address token,
+        address owner,
+        address spender
+    ) internal view returns (uint256) {
         (bool success, bytes memory data) = token.staticcall(
-            abi.encodeWithSelector(_ERC777_GRANULARITY)
+            abi.encodeWithSelector(_ALLOWANCE_SIGNATURE, owner, spender)
         );
-        require(success, "ERC777 don't implement granularity");
+        require(success, "ERC20 allowance failed");
         return abi.decode(data, (uint256));
+    }
+
+    ///////////
+    // helpers ERC20 extension functions
+    ///////////
+
+    /**
+     * @dev Approve ERC20 tokens through permit signature
+     * @param token Token address
+     * @param owner Address wich has the tokens
+     * @param spender Spender of the tokens
+     * @param amount amount of tokens
+     * @param deadline deadline for the permit
+     * @param v Signature parameter
+     * @param r Signature parameter
+     * @param s Signature parameter
+     */
+    function _safePermit(
+        address token,
+        address owner,
+        address spender,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal {
+        /* solhint-disable avoid-low-level-calls */
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSelector(
+                _PERMIT_SIGNATURE,
+                owner,
+                spender,
+                amount,
+                deadline,
+                v,
+                r,
+                s
+            )
+        );
+        require(success && (data.length == 0), "ERC20 permit failed");
     }
 }

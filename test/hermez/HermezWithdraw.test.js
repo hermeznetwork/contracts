@@ -42,7 +42,7 @@ describe("Hermez instant withdraw manager", function () {
 
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -86,7 +86,7 @@ describe("Hermez instant withdraw manager", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    await registerERC1820(owner);
+
 
     buidlerTokenERC20Mock = await TokenERC20Mock.deploy(
       "tokenname",
@@ -95,12 +95,11 @@ describe("Hermez instant withdraw manager", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
@@ -214,7 +213,7 @@ describe("Hermez instant withdraw manager", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       const addressArray = [buidlerTokenERC20Mock.address];
@@ -288,7 +287,7 @@ describe("Hermez instant withdraw manager", function () {
       expect(bucketSC.withdrawals).to.be.equal(2);
     });
 
-    it("test instant withdraw with buckets full, and erc777", async function () {
+    it("test instant withdraw with buckets full, and ERC20Permit", async function () {
       const numBuckets = 5;
       const tokenAddress = buidlerHEZ.address;
 
@@ -327,7 +326,7 @@ describe("Hermez instant withdraw manager", function () {
         buidlerHermez,
         buidlerHEZ,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       const addressArray = [buidlerHEZ.address];

@@ -275,25 +275,13 @@ contract InstantWithdrawManager is HermezHelpers {
             uint256(tokenExchange[tokenAddress])) / _EXCHANGE_MULTIPLIER;
 
         uint8 decimals;
-        // check if the contract is ERC777
-        bool isERC777 = _ERC1820.getInterfaceImplementer(
-            tokenAddress,
-            keccak256("ERC777Token")
-        ) != address(0x0)
-            ? true
-            : false;
 
-        // In case that the token is an ERC777 we assume 18 decimals
-        if (isERC777) {
-            decimals = 18;
-        } else {
-            // if decimals() is not implemented 0 decimals are assumed
-            (bool success, bytes memory data) = tokenAddress.staticcall(
-                abi.encodeWithSelector(_ERC20_DECIMALS)
-            );
-            if (success) {
-                decimals = abi.decode(data, (uint8));
-            }
+        // if decimals() is not implemented 0 decimals are assumed
+        (bool success, bytes memory data) = tokenAddress.staticcall(
+            abi.encodeWithSelector(_ERC20_DECIMALS)
+        );
+        if (success) {
+            decimals = abi.decode(data, (uint8));
         }
 
         require(decimals < 77, "tokenUSD decimals overflow");

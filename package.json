@@ -58,6 +58,7 @@
     "solidity-coverage": "^0.7.9",
     "solidity-docgen": "^0.5.4",
     "web3": "^1.2.11",
-    "yargs": "^16.0.3"
+    "yargs": "^16.0.3",
+    "ethereumjs-util": "^7.0.6"
   }
 }

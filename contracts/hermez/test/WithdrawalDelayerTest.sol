@@ -4,25 +4,13 @@ pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract WithdrawalDelayerTest is ReentrancyGuard, IERC777Recipient {
-    IERC1820Registry private constant _ERC1820_REGISTRY = IERC1820Registry(
-        0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
-    bytes32 private constant _ERC777_RECIPIENT_INTERFACE_HASH = keccak256(
-        "ERC777TokensRecipient"
-    );
-
+contract WithdrawalDelayerTest is ReentrancyGuard {
     address public hermezRollupAddress;
 
     bytes4 private constant _TRANSFERFROM_SIGNATURE = bytes4(
         keccak256(bytes("transferFrom(address,address,uint256)"))
-    );
-
-    bytes4 private constant _DEPOSIT_SIGNATURE = bytes4(
-        keccak256(bytes("deposit(address,address,uint192)"))
     );
 
     event Deposit(
@@ -54,11 +42,6 @@ contract WithdrawalDelayerTest is ReentrancyGuard, IERC777Recipient {
         address payable _initialWhiteHackGroupAddress
     ) public {
         hermezRollupAddress = _initialHermezRollup;
-        _ERC1820_REGISTRY.setInterfaceImplementer(
-            address(this),
-            _ERC777_RECIPIENT_INTERFACE_HASH,
-            address(this)
-        );
     }
 
     /**
@@ -102,44 +85,6 @@ contract WithdrawalDelayerTest is ReentrancyGuard, IERC777Recipient {
             );
         }
         _processDeposit(_owner, _token, _amount);
-    }
-
-    /**
-     * Function to make a deposit in the WithdrawalDelayer smartcontract, with an ERC777
-     * @dev
-     * @param operator - not used
-     * @param from - not used
-     * @param to - not used
-     * @param amount the amount of tokens that have been sent
-     * @param userData contains the raw call of the method to invoke (deposit)
-     * @param operatorData - not used
-     * Events: `Deposit`
-     */
-    function tokensReceived(
-        // solhint-disable no-unused-vars
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData
-    ) external override nonReentrant {
-        require(from == hermezRollupAddress, "Only hermezRollupAddress");
-        require(userData.length != 0, "UserData empty");
-
-        // Decode the signature
-        bytes4 sig = abi.decode(userData, (bytes4));
-        // We only accept "deposit(address,address,uint192)"
-        if (sig == _DEPOSIT_SIGNATURE) {
-            (address _owner, address _token, uint192 _amount) = abi.decode(
-                userData[4:],
-                (address, address, uint192)
-            );
-            require(amount == _amount, "Amount sent different");
-            _processDeposit(_owner, _token, _amount);
-        } else {
-            revert("Not a valid calldata");
-        }
     }
 
     /**

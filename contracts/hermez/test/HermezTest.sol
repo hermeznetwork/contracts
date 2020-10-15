@@ -8,7 +8,9 @@ contract HermezTest is Hermez {
     event ReturnUint256(uint256);
     event ReturnBytes(bytes);
 
-    // withdraw delayed functions
+    function setLastIdx(uint48 newLastIdx) public {
+        lastIdx = newLastIdx;
+    }
 
     function getChainID() public view returns (uint256) {
         uint256 chainID;

@@ -79,7 +79,7 @@ describe("Hermez ETH test", function () {
 
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -119,8 +119,7 @@ describe("Hermez ETH test", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    // deploy registry erc1820
-    await registerERC1820(owner);
+
 
     // factory hermez
     const Hermez = await ethers.getContractFactory("HermezTest");
@@ -133,12 +132,11 @@ describe("Hermez ETH test", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
@@ -190,7 +188,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -229,7 +227,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       // invalid operation in Hermez.sol, test purposes
@@ -270,7 +268,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       // invalid operation in Hermez.sol, test purposes
@@ -315,7 +313,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       // invalid operation in Hermez.sol, test purposes
@@ -381,7 +379,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       // In order to add all the possible l1tx we need 2 accounts created in batchbuilder and rollup:
@@ -498,7 +496,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       // Create account and exit some funds

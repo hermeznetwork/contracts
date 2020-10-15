@@ -68,7 +68,7 @@ describe("Hermez Queue", function () {
 
     // factory helpers
     let TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -107,8 +107,6 @@ describe("Hermez Queue", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    await registerERC1820(owner);
-
     // factory hermez
     let Hermez = await ethers.getContractFactory("HermezTest");
 
@@ -120,12 +118,11 @@ describe("Hermez Queue", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
@@ -187,7 +184,7 @@ describe("Hermez Queue", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       );
       const initialLastForge = await buidlerHermez.nextL1FillingQueue();
@@ -260,7 +257,7 @@ describe("Hermez Queue", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        owner,
         feeAddToken
       ); // add l1-user-tx
       for (let i = 0; i < 128; i++)
