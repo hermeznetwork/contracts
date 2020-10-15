@@ -1,9 +1,7 @@
-// set enviroment variable for buidler
-process.env.BUIDLER_NETWORK = "localhost";
+require("dotenv").config();
 
 const bre = require("@nomiclabs/buidler");
 const {expect} = require("chai");
-require("dotenv").config();
 const {ethers} = require("../../node_modules/@nomiclabs/buidler");
 const {BigNumber} = require("ethers");
 const SMTMemDB = require("circomlib").SMTMemDB;

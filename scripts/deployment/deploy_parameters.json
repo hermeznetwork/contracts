@@ -2,7 +2,7 @@
   "31337": {
     "numAccountsFund": 10,
     "genesisBlock": "",
-    "genesisBlockOffsetCurrent": 10,
+    "genesisBlockOffsetCurrent": 81,
     "feeAddToken": 10,
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelay": 1209600,

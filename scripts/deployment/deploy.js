@@ -1,5 +1,4 @@
-// set enviroment variable for buidler
-process.env.BUIDLER_NETWORK = "localhostMnemonic";
+require("dotenv").config();
 
 const { ethers, upgrades } = require("@nomiclabs/buidler");
 const bre = require("@nomiclabs/buidler");
@@ -14,6 +13,7 @@ const {
   calculateInputMaxTxLevels,
   registerERC1820,
 } = require("../../test/hermez/helpers/helpers");
+const { boolean } = require("yargs");
 
 const maxTxVerifierConstant = 512;
 const nLevelsVeriferConstant = 32;
@@ -107,7 +107,13 @@ async function main() {
   await registerERC1820(deployer);
 
   // get contract factorys
-  const Hermez = await ethers.getContractFactory("Hermez");
+  let Hermez; 
+  if (process.env.TEST == "true") {
+    Hermez = await ethers.getContractFactory("HermezTest");
+  } else {
+    Hermez = await ethers.getContractFactory("Hermez");
+  }
+  
   const HermezAuctionProtocol = await ethers.getContractFactory(
     "HermezAuctionProtocol"
   );
@@ -276,9 +282,10 @@ async function main() {
   let genesisBlock = deployParameters[chainId].genesisBlock;
   if (genesisBlock == "") {
     genesisBlock =
-      (await time.latestBlock()) +
-      deployParameters[chainId].genesisBlockOffsetCurrent;
+      (await time.latestBlock()).toNumber() +
+      parseInt(deployParameters[chainId].genesisBlockOffsetCurrent);
   }
+
   await hermezAuctionProtocol.hermezAuctionProtocolInitializer(
     buidlerHEZToken.address,
     genesisBlock,

@@ -8,22 +8,25 @@ In repository root:
 
 3. If you want to use a custom mnemonic go to the root of the repository and edit `.env.example`, change the variable `MNEMONIC` and save it as `.env`
    The path `m/44'/60'/0'/0` will be used, starting from index '0'
+
 4. Terminal 2: - Enter in `scripts/deployment` folder and edit the `deploy_parameters.json`
    The json contains all the deployment parameters, indexed with a `chainID`
-   The `31337` wich is already included, is the chainId of `buidlerevm`
+   The `31337` which is already included, is the chainId of `buidlerevm`
 
    - The `numAccountsFund` are the number of accounts, starting with index '0' of the mnemonic to fund with ether and HEZ **ether funding only available in evmbuidler enviroment**
    - Then there are some configuration parameters, related with the Smart contracts constructor
-   - Lastly are some parameters wich only has more relevance in testnet:
+   - Lastly are some parameters which only has more relevance in testnet:
 
      - Some address which can perform especial operations in the SC, if empty, the accounts in mnemonic will be used in order
      - Finally libraries, if empty, will be deployed
 
    - A `deploy_output.json` will be created with all the address of the SC created, and the mnemonic index of the relevant accounts
 
-5. Run the deployment script:`node deploy.js`
+5. In `scripts/deployment` folder save the `.env.example` as `.env`
 
-6. Once the deployment is done, you can create ERC20/ERC777 tokens and add it to the rollup with the following script:
+6. Run the deployment script:`node deploy.js`
+
+7. Once the deployment is done, you can create ERC20/ERC777 tokens and add it to the rollup with the following script:
    `node createTokens <options>`
 
    - `numAccountsFund`: number of accounts, starting with index '0' of the mnemonic to fund with tokens of every token contract deployed. Default: 10

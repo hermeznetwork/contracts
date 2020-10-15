@@ -1,5 +1,5 @@
-// set enviroment variable for buidler
-process.env.BUIDLER_NETWORK = "localhostMnemonic";
+require("dotenv").config();
+
 const bre = require("@nomiclabs/buidler");
 const ethers = bre.ethers;
 
@@ -16,19 +16,19 @@ const {argv} = require("yargs") // eslint-disable-line
   .usage(
     `
 node createTokens.js <options>
---numERC777Deployments or -erc777 <number>
+--numERC777Deployments or --erc777 <number>
     Number of ERC777 tokens deployed. Default: 0
---numERC20Deployments or -erc20 <number>
+--numERC20Deployments or --erc20 <number>
     Number of ERC20 tokens deployed. Default: 0
---decimalsERC20 or -dec <number>
+--decimalsERC20 or --dec <number>
     Number of decimals of the ERC20, must be a uint8 (max value 255). Default: 18
---addTokensBool or -add <bool>
+--addTokensBool or --add <bool>
     Boolean, if "true" the token will be added to the rollup. Default: true
---numAccountsFund or -fund <number>
+--numAccountsFund or --fund <number>
     Number of accounts, starting with index '0' of the mnemonic to fund with tokens of every token contract deployed. Default: 10
---tokenListPath or -tklist <path>
+--tokenListPath or --tklist <path>
     Path of the tokenList. Default: ./tokenList.json
---deploymentOutputPath or -depout <path>
+--deploymentOutputPath or --depout <path>
     Path of the deployment output. Default: ./deploy_output.json
 `
   )
