@@ -120,7 +120,7 @@ async function main() {
   const WithdrawalDelayer = await ethers.getContractFactory(
     "WithdrawalDelayer"
   );
-  const HEZToken = await ethers.getContractFactory("ERC777Mock");
+  const HEZToken = await ethers.getContractFactory("ERC20PermitMock");
 
   // hermez libs
   const VerifierRollupHelper = await ethers.getContractFactory(
@@ -183,13 +183,12 @@ async function main() {
 
   console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
-  // deploy HEZ (erc777) token
+  // deploy HEZ (erc20Permit) token
   const buidlerHEZToken = await HEZToken.deploy(
+    "tokenname",
+    "TKN",
     await deployer.getAddress(),
-    tokenInitialAmount,
-    "HEZToken",
-    "HEZ",
-    []
+    tokenInitialAmount
   );
   await buidlerHEZToken.deployed();
   console.log("HEZToken deployed at: ", buidlerHEZToken.address);
@@ -199,10 +198,9 @@ async function main() {
     // fund all accounts with tokens
     const accountToFund = await ethers.getSigners();
     for (let i = 0; i < numAccountsFund; i++) {
-      await buidlerHEZToken.send(
+      await buidlerHEZToken.transfer(
         await accountToFund[i].getAddress(),
-        ethers.utils.parseEther("10000"),
-        ethers.utils.toUtf8Bytes("")
+        ethers.utils.parseEther("10000")
       );
     }
   }

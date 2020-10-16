@@ -16,8 +16,8 @@ const {argv} = require("yargs") // eslint-disable-line
   .usage(
     `
 node createTokens.js <options>
---numERC777Deployments or --erc777 <number>
-    Number of ERC777 tokens deployed. Default: 0
+--numERC20PermitDeployments or --erc20Permit <number>
+    Number of ERC20Permit tokens deployed. Default: 0
 --numERC20Deployments or --erc20 <number>
     Number of ERC20 tokens deployed. Default: 0
 --decimalsERC20 or --dec <number>
@@ -33,7 +33,7 @@ node createTokens.js <options>
 `
   )
   .help("h")
-  .alias("erc777", "numERC777Deployments")
+  .alias("erc20p", "numERC20PermitDeployments")
   .alias("erc20", "numERC20Deployments")
   .alias("dec", "decimalsERC20")
   .alias("add", "addTokensBool")
@@ -45,8 +45,8 @@ async function main() {
   await bre.run("compile");
 
   // load create tokens params
-  const numERC777Deployments = argv.numERC777Deployments
-    ? argv.numERC777Deployments
+  const numERC20PermitDeployments = argv.numERC20PermitDeployments
+    ? argv.numERC20PermitDeployments
     : 0;
   const numERC20Deployments = argv.numERC20Deployments
     ? argv.numERC20Deployments
@@ -75,51 +75,49 @@ async function main() {
   const Hermez = await ethers.getContractFactory("Hermez");
   const buidlerHermez = Hermez.attach(deploymentOutputJson.hermezAddress);
 
-  // get ERC777 factory
-  const ERC777Factory = await ethers.getContractFactory("ERC777Mock");
+  // get ERC20Permit factory
+  const ERC20PermitFactory = await ethers.getContractFactory("ERC20PermitMock");
 
   // load HEZ token
-  const buidlerHeZToken = ERC777Factory.attach(
+  const buidlerHeZToken = ERC20PermitFactory.attach(
     deploymentOutputJson.HEZTokenAddress
   );
 
   const feeAddtoken = await buidlerHermez.feeAddToken();
-  // deploy all the ERC777
-  buidlerERC777 = [];
-  for (let i = 0; i < numERC777Deployments; i++) {
-    buidlerERC777[i] = await ERC777Factory.deploy(
+  // deploy all the ERC20Permit
+  buidlerERC20Permit = [];
+  for (let i = 0; i < numERC20PermitDeployments; i++) {
+    buidlerERC20Permit[i] = await ERC20PermitFactory.deploy(
+      "ERC20Permit_" + i,
+      "20Permit_" + i,
       await owner.getAddress(),
       tokenInitialAmount,
-      "ERC777_" + i,
-      "777_" + i,
-      []
     );
-    await buidlerERC777[i].deployed();
+    await buidlerERC20Permit[i].deployed();
 
     // Send tokens to the other address
     for (let j = 0; j < numAccountsFund - 1; j++) {
-      await buidlerERC777[i].send(
+      await buidlerERC20Permit[i].transfer(
         await addrs[j].getAddress(),
-        ethers.utils.parseEther("10000"),
-        ethers.utils.toUtf8Bytes("")
+        ethers.utils.parseEther("10000")
       );
     }
-    console.log("ERC777 Token deployed at: ", buidlerERC777[i].address);
-
+    console.log("ERC20Permit Token deployed at: ", buidlerERC20Permit[i].address);
+    //console.log({owner}, await ethers.provider.getNetwork());
     if (addTokensBool) {
       const tokenIndex = await AddToken(
         buidlerHermez,
-        buidlerERC777[i],
+        buidlerERC20Permit[i],
         buidlerHeZToken,
-        await owner.getAddress(),
+        owner,
         feeAddtoken
       );
       console.log(
-        `Token added to Hermez with index: ${tokenIndex} and address: ${buidlerERC777[i].address}`
+        `Token added to Hermez with index: ${tokenIndex} and address: ${buidlerERC20Permit[i].address}`
       );
       tokenList[tokenIndex.toString()] = {};
-      tokenList[tokenIndex.toString()].address = buidlerERC777[i].address;
-      tokenList[tokenIndex.toString()].type = "ERC777";
+      tokenList[tokenIndex.toString()].address = buidlerERC20Permit[i].address;
+      tokenList[tokenIndex.toString()].type = "ERC20Permit";
     }
   }
 
@@ -150,7 +148,7 @@ async function main() {
         buidlerHermez,
         buidlerERC20[i],
         buidlerHeZToken,
-        await owner.getAddress(),
+        owner,
         feeAddtoken
       );
       console.log(

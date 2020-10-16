@@ -6,7 +6,6 @@ import "./lib/InstantWithdrawManager.sol";
 import "./interfaces/VerifierRollupInterface.sol";
 import "./interfaces/VerifierWithdrawInterface.sol";
 import "./interfaces/AuctionInterface.sol";
-import "../ERC20/IERC2612Permit.sol";
 
 contract Hermez is InstantWithdrawManager {
     struct VerifierRollup {

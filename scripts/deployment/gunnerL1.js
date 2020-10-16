@@ -10,7 +10,7 @@ const {
   l1UserTxForceTransfer
 } = require("../../test/hermez/helpers/helpers");
 const path = require("path");
-const crypto = require('crypto');
+const crypto = require("crypto");
 const utilsScalar = require("ffjavascript").utils;
 
 const pathDeploymentOutputJson = path.join(__dirname, "./deploy_output.json");
@@ -57,35 +57,35 @@ async function main() {
 
   const buidlerHermez = Hermez.attach(deploymentOutputJson.hermezAddress);
 
-  // get ERC777 factory
-  const ERC777Factory = await ethers.getContractFactory("ERC777Mock");
+  // get ERC20Permit factory
+  const ERC20PermitFactory = await ethers.getContractFactory("ERC20PermitMock");
 
   // load HEZ token
-  const buidlerHeZToken = ERC777Factory.attach(
+  const buidlerHeZToken = ERC20PermitFactory.attach(
     deploymentOutputJson.HEZTokenAddress
   );
 
   const feeAddtoken = await buidlerHermez.feeAddToken();
-  // deploy all the ERC777
 
-  const buidlerERC777 = await ERC777Factory.deploy(
+  // deploy all the ERC20Permit
+  const buidlerERC20Permit = await ERC20PermitFactory.deploy(
+    "ERC20Permit_",
+    "20Permit_",
     await owner.getAddress(),
     tokenInitialAmount,
-    "ERC777_",
-    "777_",
-    []
   );
-  await buidlerERC777.deployed();
+
+  await buidlerERC20Permit.deployed();
 
   const tokenIndex = await AddToken(
     buidlerHermez,
-    buidlerERC777,
+    buidlerERC20Permit,
     buidlerHeZToken,
-    await owner.getAddress(),
+    owner,
     feeAddtoken
   );
   console.log(
-    `Token added to Hermez with index: ${tokenIndex} and address: ${buidlerERC777.address}`
+    `Token added to Hermez with index: ${tokenIndex} and address: ${buidlerERC20Permit.address}`
   );
 
 
@@ -96,41 +96,12 @@ async function main() {
     await buidlerHermez.setLastIdx(newLastIdx);
     // forge boot coordinator
     // advence to genesis block
-
-    // // forge fake batch for set up gunner enviroment, must bid first
-    // await buidlerHermez.forgeBatch(
-    // const newStRoot = 0;
-    // const newExitRoot = '0x10a89d5fe8d488eda1ba371d633515739933c706c210c604f5bd209180daa43b';
-    // const encodedL1CoordinatorTx = "0x"
-    // const l2TxsData = "0x"
-    // const feeIdxCoordinator = "0x"
-    // const verifierIdx = 0;
-    // const l1Batch = true;
-    // const proofA = ["0", "0"];
-    // const proofB = [
-    //   ["0", "0"],
-    //   ["0", "0"],
-    // ];
-    // const proofC = ["0", "0"];
-    // await buidlerHermez.forgeBatch(
-    //   newLastIdx,
-    //   newStRoot,
-    //   newExitRoot,
-    //   encodedL1CoordinatorTx,
-    //   l2TxsData,
-    //   feeIdxCoordinator,
-    //   verifierIdx,
-    //   l1Batch,
-    //   proofA,
-    //   proofB,
-    //   proofC
-    // );
   }
   // create accounts
   for (let i = 0; i < numCreateAccounts; i++) {
     const tokenID = tokenIndex;
     const babyjub = "0x001021212123";
-    const isERC777 = true;
+    const isERC20Permit = true;
     const loadAmount = 10;
     await l1UserTxCreateAccountDeposit(
       loadAmount,
@@ -138,8 +109,8 @@ async function main() {
       babyjub,
       owner,
       buidlerHermez,
-      buidlerERC777,
-      isERC777
+      buidlerERC20Permit,
+      isERC20Permit
     );
     console.log("account created! " + i);
   }
@@ -155,7 +126,7 @@ async function main() {
     const toIdx =  crypto.randomInt(minIdx, maxIdx);
     const amount = utilsScalar.leBuff2int(crypto.randomBytes(14)); // 192 bits (24 bytes) deberia, pero solo agaunta 14.5 
     const amountF = float16.fix2Float(amount);
-    const isERC777 = true;
+    const isERC20Permit = true;
 
     await l1UserTxForceTransfer(
       tokenID,
@@ -164,14 +135,14 @@ async function main() {
       amountF,
       owner,
       buidlerHermez,
-      isERC777
+      isERC20Permit
     );
     console.log("force transfer!" + i);
   }
   // force exits
   for (let i = 0; i < numExits; i++) {
     const tokenID = tokenIndex;
-    const fromIdx =  crypto.randomInt(minIdx, maxIdx);;
+    const fromIdx =  crypto.randomInt(minIdx, maxIdx);
     const amount = utilsScalar.leBuff2int(crypto.randomBytes(14)); // 192 bits
     const amountF = float16.fix2Float(amount);
     await l1UserTxForceExit(
