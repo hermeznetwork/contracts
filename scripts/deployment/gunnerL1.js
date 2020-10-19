@@ -50,8 +50,11 @@ async function main() {
   const numTransfer = argv.numTransfer ? argv.numTransfer : 0;
   const numExits = argv.numExits ? argv.numExits : 0;
 
-  console.log({numCreateAccounts});
   [owner, ...addrs] = await ethers.getSigners();
+
+  //get owner wallet
+  let ownerWallet = ethers.Wallet.fromMnemonic(process.env.MNEMONIC); 
+  ownerWallet = ownerWallet.connect(ethers.provider);
 
   const Hermez = await ethers.getContractFactory("HermezTest");
 
@@ -81,7 +84,7 @@ async function main() {
     buidlerHermez,
     buidlerERC20Permit,
     buidlerHeZToken,
-    owner,
+    ownerWallet,
     feeAddtoken
   );
   console.log(
@@ -107,7 +110,7 @@ async function main() {
       loadAmount,
       tokenID,
       babyjub,
-      owner,
+      ownerWallet,
       buidlerHermez,
       buidlerERC20Permit,
       isERC20Permit
@@ -133,7 +136,7 @@ async function main() {
       fromIdx,
       toIdx,
       amountF,
-      owner,
+      ownerWallet,
       buidlerHermez,
       isERC20Permit
     );
@@ -149,7 +152,7 @@ async function main() {
       tokenID,
       fromIdx,
       amountF,
-      owner,
+      ownerWallet,
       buidlerHermez,
     );
     console.log("force exit! " + i);

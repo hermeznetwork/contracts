@@ -17,6 +17,7 @@ describe("Hermez instant withdraw manager", function () {
   let id1;
   let addrs;
   let governance;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -37,6 +38,8 @@ describe("Hermez instant withdraw manager", function () {
       id1,
       ...addrs
     ] = await ethers.getSigners();
+
+    ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
 
     const hermezGovernanceDAOAddress = await governance.getAddress();
 
@@ -213,7 +216,7 @@ describe("Hermez instant withdraw manager", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
       const addressArray = [buidlerTokenERC20Mock.address];
@@ -326,7 +329,7 @@ describe("Hermez instant withdraw manager", function () {
         buidlerHermez,
         buidlerHEZ,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
       const addressArray = [buidlerHEZ.address];

@@ -24,6 +24,7 @@ async function main() {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const tokenInitialAmount = ethers.utils.parseEther("100000");
   const maxTx = 512;

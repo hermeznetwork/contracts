@@ -45,6 +45,7 @@ describe("Hermez ERC 20", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -70,7 +71,7 @@ describe("Hermez ERC 20", function () {
     ] = await ethers.getSigners();
 
     hermezGovernanceDAOAddress = governance.getAddress();
-
+    ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
     const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
@@ -199,7 +200,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
     });
@@ -212,7 +213,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -234,7 +235,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -258,7 +259,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -286,7 +287,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -314,7 +315,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -339,7 +340,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -454,7 +455,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
       const l1TxCoordiatorArray = [];
@@ -535,7 +536,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -579,7 +580,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -754,7 +755,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -871,7 +872,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -959,7 +960,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1048,7 +1049,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1127,7 +1128,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1208,7 +1209,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 

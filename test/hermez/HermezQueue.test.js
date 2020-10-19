@@ -40,6 +40,7 @@ describe("Hermez Queue", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -65,6 +66,7 @@ describe("Hermez Queue", function () {
     ] = await ethers.getSigners();
 
     hermezGovernanceDAOAddress = governance.getAddress();
+    ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
 
     // factory helpers
     let TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
@@ -184,7 +186,7 @@ describe("Hermez Queue", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       );
       const initialLastForge = await buidlerHermez.nextL1FillingQueue();
@@ -257,7 +259,7 @@ describe("Hermez Queue", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        owner,
+        ownerWallet,
         feeAddToken
       ); // add l1-user-tx
       for (let i = 0; i < 128; i++)

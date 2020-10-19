@@ -740,7 +740,7 @@ async function l1UserTxForceExit(
   const currentIndex = (lastQueueBytes.length - 2) / 2 / L1_USER_BYTES; // -2 --> 0x, /2 --> 2 hex digits = 1 byte
 
   await expect(
-    buidlerHermez.connect(owner).addL1Transaction(
+    buidlerHermez.addL1Transaction(
       babyjub0,
       fromIdx,
       loadAmountF0,
@@ -910,7 +910,9 @@ async function createPermitSignature(buidlerToken, owner, spenderAddress, value,
     deadline
   );
 
-  const ownerPrivateKey = "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
+  // must be a wallet not a signer!
+  const ownerPrivateKey = owner.privateKey;
+  
   let {
     r,
     s,

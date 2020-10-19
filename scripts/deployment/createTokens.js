@@ -60,9 +60,8 @@ async function main() {
 
   const deploymentOutputJson = require(pathDeploymentOutputJson);
   
-  // get chain ID
-  const chainId = (await ethers.provider.getNetwork()).chainId;
-
+  //get owner wallet
+  const ownerWallet = ethers.Wallet.fromMnemonic(process.env.MNEMONIC); 
   // get signers
   [owner, ...addrs] = await ethers.getSigners();
 
@@ -109,7 +108,7 @@ async function main() {
         buidlerHermez,
         buidlerERC20Permit[i],
         buidlerHeZToken,
-        owner,
+        ownerWallet,
         feeAddtoken
       );
       console.log(
@@ -148,7 +147,7 @@ async function main() {
         buidlerHermez,
         buidlerERC20[i],
         buidlerHeZToken,
-        owner,
+        ownerWallet,
         feeAddtoken
       );
       console.log(

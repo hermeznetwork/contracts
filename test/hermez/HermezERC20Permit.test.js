@@ -43,6 +43,7 @@ describe("Hermez ERC 777", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -68,6 +69,7 @@ describe("Hermez ERC 777", function () {
     ] = await ethers.getSigners();
 
     hermezGovernanceDAOAddress = governance.getAddress();
+    ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
 
     // factory helpers
     const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
@@ -187,7 +189,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
     });
@@ -200,7 +202,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -213,7 +215,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         true
@@ -245,7 +247,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -260,7 +262,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         fromIdx,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         true
@@ -271,7 +273,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -291,7 +293,7 @@ describe("Hermez ERC 777", function () {
         fromIdx,
         toIdx,
         amountF,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         true
@@ -302,7 +304,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -322,7 +324,7 @@ describe("Hermez ERC 777", function () {
         toIdx,
         amountF,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         true
@@ -333,7 +335,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -349,7 +351,7 @@ describe("Hermez ERC 777", function () {
         fromIdx,
         toIdx,
         amountF,
-        owner,
+        ownerWallet,
         buidlerHermez
       );
     });
@@ -358,7 +360,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -473,7 +475,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
       const l1TxCoordiatorArray = [];
@@ -554,7 +556,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -598,7 +600,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -609,7 +611,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,
@@ -622,7 +624,7 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           tokenID,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -633,7 +635,7 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           tokenID,
           fromIdx,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -646,7 +648,7 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -659,7 +661,7 @@ describe("Hermez ERC 777", function () {
           toIdx,
           amountF,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -671,12 +673,12 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez
         )
       );
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch, now the current queue is filled with the L1-User-Tx
@@ -686,7 +688,7 @@ describe("Hermez ERC 777", function () {
       const cordinatorTxEth = await l1CoordinatorTxEth(
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez
       );
 
@@ -778,7 +780,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -789,7 +791,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,
@@ -802,7 +804,7 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           tokenID,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -814,7 +816,7 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           tokenID,
           fromIdx,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -827,7 +829,7 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -840,7 +842,7 @@ describe("Hermez ERC 777", function () {
           toIdx,
           amountF,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -852,12 +854,12 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez
         )
       );
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch
@@ -867,7 +869,7 @@ describe("Hermez ERC 777", function () {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez)
       );
 
       l1TxCoordiatorArray.push(
@@ -901,7 +903,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -912,7 +914,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,
@@ -990,7 +992,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1001,7 +1003,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,
@@ -1080,7 +1082,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1091,7 +1093,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,
@@ -1160,7 +1162,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1171,7 +1173,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,
@@ -1242,7 +1244,7 @@ describe("Hermez ERC 777", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        owner,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1253,7 +1255,7 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,

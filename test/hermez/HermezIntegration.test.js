@@ -57,6 +57,7 @@ describe("Hermez integration", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -264,7 +265,7 @@ describe("Hermez integration", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -275,7 +276,7 @@ describe("Hermez integration", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,
@@ -288,7 +289,7 @@ describe("Hermez integration", function () {
           loadAmount,
           tokenID,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -300,7 +301,7 @@ describe("Hermez integration", function () {
           loadAmount,
           tokenID,
           fromIdx,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -313,7 +314,7 @@ describe("Hermez integration", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -326,7 +327,7 @@ describe("Hermez integration", function () {
           toIdx,
           amountF,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20PermitMock,
           true
@@ -338,12 +339,12 @@ describe("Hermez integration", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez
         )
       );
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch
@@ -353,7 +354,7 @@ describe("Hermez integration", function () {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez)
       );
 
       l1TxCoordiatorArray.push(
@@ -420,7 +421,7 @@ describe("Hermez integration", function () {
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         buidlerTokenERC20PermitMock,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -431,7 +432,7 @@ describe("Hermez integration", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20PermitMock,
         numAccounts,
@@ -439,7 +440,7 @@ describe("Hermez integration", function () {
       );
 
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       const initialOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
