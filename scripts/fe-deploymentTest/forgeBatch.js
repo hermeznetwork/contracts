@@ -112,11 +112,29 @@ async function main() {
     proofC
   );
 
-  console.log("batch forged!");
-  console.log(`${l1TxForged.length} trasnsaction forged`);
+  await rollupDB.consolidate(bbCurrent);
+  
+  const batchFoged = rollupDB.lastBatch;
+
+  console.log(`batch ${batchFoged} forged!`);
+  console.log(`${l1TxForged.length} transactions forged`);
   if (l1TxForged.length != 0) {
-    console.log(l1TxForged);
+    for(let i = 0; i < l1TxForged.length; i++ )
+    {
+      console.log(l1TxForged[i]);
+      if(l1TxForged[i].toIdx == 1) {
+        const exitInfo = await rollupDB.getExitTreeInfo(l1TxForged[i].fromIdx, batchFoged);
+        console.log("/////////////////////////////////////////////////////////////////");
+        console.log("withdraw con be performed with the following params:");
+        console.log("numExitRoot:" + batchFoged);
+        console.log("sibilings: ");
+        console.log(exitInfo.siblings);  
+        console.log("/////////////////////////////////////////////////////////////////");
+
+      }
+    }
   }
+  
 }
 
 // We recommend this pattern to be able to use async/await everywhere
