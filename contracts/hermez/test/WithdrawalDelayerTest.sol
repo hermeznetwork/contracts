@@ -4,25 +4,14 @@ pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 
-contract WithdrawalDelayerTest is ReentrancyGuard, IERC777Recipient {
-    IERC1820Registry private constant _ERC1820_REGISTRY = IERC1820Registry(
-        0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
-    bytes32 private constant _ERC777_RECIPIENT_INTERFACE_HASH = keccak256(
-        "ERC777TokensRecipient"
-    );
-
+contract WithdrawalDelayerTest is ReentrancyGuard, Initializable {
     address public hermezRollupAddress;
 
     bytes4 private constant _TRANSFERFROM_SIGNATURE = bytes4(
         keccak256(bytes("transferFrom(address,address,uint256)"))
-    );
-
-    bytes4 private constant _DEPOSIT_SIGNATURE = bytes4(
-        keccak256(bytes("deposit(address,address,uint192)"))
     );
 
     event Deposit(
@@ -38,27 +27,14 @@ contract WithdrawalDelayerTest is ReentrancyGuard, IERC777Recipient {
     }
     mapping(bytes32 => DepositState) public deposits;
 
-    /**
-     * @notice withdrawalDelayerInitializer (Constructor)
-     * @param _initialWithdrawalDelay Initial withdrawal delay time in seconds to be able to withdraw the funds
-     * @param _initialHermezRollup Smart contract responsible of making deposits and it's able to change the delay
-     * @param _initialHermezKeeperAddress can enable emergency mode and modify the delay to make a withdrawal
-     * @param _initialHermezGovernanceDAOAddress can claim the funds in an emergency mode
-     * @param _initialWhiteHackGroupAddress can claim the funds in an emergency and MAX_EMERGENCY_MODE_TIME exceeded
-     */
-    constructor(
+    function withdrawalDelayerInitializer(
         uint64 _initialWithdrawalDelay,
         address _initialHermezRollup,
         address _initialHermezKeeperAddress,
         address _initialHermezGovernanceDAOAddress,
         address payable _initialWhiteHackGroupAddress
-    ) public {
+    ) public initializer {
         hermezRollupAddress = _initialHermezRollup;
-        _ERC1820_REGISTRY.setInterfaceImplementer(
-            address(this),
-            _ERC777_RECIPIENT_INTERFACE_HASH,
-            address(this)
-        );
     }
 
     /**
@@ -76,15 +52,24 @@ contract WithdrawalDelayerTest is ReentrancyGuard, IERC777Recipient {
         address _token,
         uint192 _amount
     ) external payable nonReentrant {
-        require(msg.sender == hermezRollupAddress, "Only hermezRollupAddress");
+        require(
+            msg.sender == hermezRollupAddress,
+            "WithdrawalDelayer::deposit: ONLY_ROLLUP"
+        );
         if (msg.value != 0) {
-            require(_token == address(0x0), "ETH should be the 0x0 address");
-            require(_amount == msg.value, "Different amount and msg.value");
+            require(
+                _token == address(0x0),
+                "WithdrawalDelayer::deposit: WRONG_TOKEN_ADDRESS"
+            );
+            require(
+                _amount == msg.value,
+                "WithdrawalDelayer::deposit: WRONG_AMOUNT"
+            );
         } else {
             require(
                 IERC20(_token).allowance(hermezRollupAddress, address(this)) >=
                     _amount,
-                "Doesn't have enough allowance"
+                "WithdrawalDelayer::deposit: NOT_ENOUGH_ALLOWANCE"
             );
             /* solhint-disable avoid-low-level-calls */
             (bool success, bytes memory data) = address(_token).call(
@@ -98,48 +83,10 @@ contract WithdrawalDelayerTest is ReentrancyGuard, IERC777Recipient {
             // `transferFrom` method may return (bool) or nothing.
             require(
                 success && (data.length == 0 || abi.decode(data, (bool))),
-                "Token Transfer Failed"
+                "WithdrawalDelayer::deposit: TOKEN_TRANSFER_FAILED"
             );
         }
         _processDeposit(_owner, _token, _amount);
-    }
-
-    /**
-     * Function to make a deposit in the WithdrawalDelayer smartcontract, with an ERC777
-     * @dev
-     * @param operator - not used
-     * @param from - not used
-     * @param to - not used
-     * @param amount the amount of tokens that have been sent
-     * @param userData contains the raw call of the method to invoke (deposit)
-     * @param operatorData - not used
-     * Events: `Deposit`
-     */
-    function tokensReceived(
-        // solhint-disable no-unused-vars
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData
-    ) external override nonReentrant {
-        require(from == hermezRollupAddress, "Only hermezRollupAddress");
-        require(userData.length != 0, "UserData empty");
-
-        // Decode the signature
-        bytes4 sig = abi.decode(userData, (bytes4));
-        // We only accept "deposit(address,address,uint192)"
-        if (sig == _DEPOSIT_SIGNATURE) {
-            (address _owner, address _token, uint192 _amount) = abi.decode(
-                userData[4:],
-                (address, address, uint192)
-            );
-            require(amount == _amount, "Amount sent different");
-            _processDeposit(_owner, _token, _amount);
-        } else {
-            revert("Not a valid calldata");
-        }
     }
 
     /**
@@ -157,7 +104,10 @@ contract WithdrawalDelayerTest is ReentrancyGuard, IERC777Recipient {
         // We identify a deposit with the keccak of its owner and the token
         bytes32 depositId = keccak256(abi.encodePacked(_owner, _token));
         uint192 newAmount = deposits[depositId].amount + _amount;
-        require(newAmount >= deposits[depositId].amount, "Deposit overflow");
+        require(
+            newAmount >= deposits[depositId].amount,
+            "WithdrawalDelayer::_processDeposit: DEPOSIT_OVERFLOW"
+        );
 
         deposits[depositId].amount = newAmount;
         deposits[depositId].depositTimestamp = uint64(now);

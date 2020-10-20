@@ -9,10 +9,13 @@ const {
   time
 } = require("@openzeppelin/test-helpers");
 
+const {
+  ecsign,
+} = require("ethereumjs-util");
 
-const ERC1820_REGISTRY_ADDRESS = "0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24";
-const ERC1820_REGISTRY_DEPLOY_TX =
-  "0xf90a388085174876e800830c35008080b909e5608060405234801561001057600080fd5b506109c5806100206000396000f3fe608060405234801561001057600080fd5b50600436106100a5576000357c010000000000000000000000000000000000000000000000000000000090048063a41e7d5111610078578063a41e7d51146101d4578063aabbb8ca1461020a578063b705676514610236578063f712f3e814610280576100a5565b806329965a1d146100aa5780633d584063146100e25780635df8122f1461012457806365ba36c114610152575b600080fd5b6100e0600480360360608110156100c057600080fd5b50600160a060020a038135811691602081013591604090910135166102b6565b005b610108600480360360208110156100f857600080fd5b5035600160a060020a0316610570565b60408051600160a060020a039092168252519081900360200190f35b6100e06004803603604081101561013a57600080fd5b50600160a060020a03813581169160200135166105bc565b6101c26004803603602081101561016857600080fd5b81019060208101813564010000000081111561018357600080fd5b82018360208201111561019557600080fd5b803590602001918460018302840111640100000000831117156101b757600080fd5b5090925090506106b3565b60408051918252519081900360200190f35b6100e0600480360360408110156101ea57600080fd5b508035600160a060020a03169060200135600160e060020a0319166106ee565b6101086004803603604081101561022057600080fd5b50600160a060020a038135169060200135610778565b61026c6004803603604081101561024c57600080fd5b508035600160a060020a03169060200135600160e060020a0319166107ef565b604080519115158252519081900360200190f35b61026c6004803603604081101561029657600080fd5b508035600160a060020a03169060200135600160e060020a0319166108aa565b6000600160a060020a038416156102cd57836102cf565b335b9050336102db82610570565b600160a060020a031614610339576040805160e560020a62461bcd02815260206004820152600f60248201527f4e6f7420746865206d616e616765720000000000000000000000000000000000604482015290519081900360640190fd5b6103428361092a565b15610397576040805160e560020a62461bcd02815260206004820152601a60248201527f4d757374206e6f7420626520616e204552433136352068617368000000000000604482015290519081900360640190fd5b600160a060020a038216158015906103b85750600160a060020a0382163314155b156104ff5760405160200180807f455243313832305f4143434550545f4d4147494300000000000000000000000081525060140190506040516020818303038152906040528051906020012082600160a060020a031663249cb3fa85846040518363ffffffff167c01000000000000000000000000000000000000000000000000000000000281526004018083815260200182600160a060020a0316600160a060020a031681526020019250505060206040518083038186803b15801561047e57600080fd5b505afa158015610492573d6000803e3d6000fd5b505050506040513d60208110156104a857600080fd5b5051146104ff576040805160e560020a62461bcd02815260206004820181905260248201527f446f6573206e6f7420696d706c656d656e742074686520696e74657266616365604482015290519081900360640190fd5b600160a060020a03818116600081815260208181526040808320888452909152808220805473ffffffffffffffffffffffffffffffffffffffff19169487169485179055518692917f93baa6efbd2244243bfee6ce4cfdd1d04fc4c0e9a786abd3a41313bd352db15391a450505050565b600160a060020a03818116600090815260016020526040812054909116151561059a5750806105b7565b50600160a060020a03808216600090815260016020526040902054165b919050565b336105c683610570565b600160a060020a031614610624576040805160e560020a62461bcd02815260206004820152600f60248201527f4e6f7420746865206d616e616765720000000000000000000000000000000000604482015290519081900360640190fd5b81600160a060020a031681600160a060020a0316146106435780610646565b60005b600160a060020a03838116600081815260016020526040808220805473ffffffffffffffffffffffffffffffffffffffff19169585169590951790945592519184169290917f605c2dbf762e5f7d60a546d42e7205dcb1b011ebc62a61736a57c9089d3a43509190a35050565b600082826040516020018083838082843780830192505050925050506040516020818303038152906040528051906020012090505b92915050565b6106f882826107ef565b610703576000610705565b815b600160a060020a03928316600081815260208181526040808320600160e060020a031996909616808452958252808320805473ffffffffffffffffffffffffffffffffffffffff19169590971694909417909555908152600284528181209281529190925220805460ff19166001179055565b600080600160a060020a038416156107905783610792565b335b905061079d8361092a565b156107c357826107ad82826108aa565b6107b85760006107ba565b815b925050506106e8565b600160a060020a0390811660009081526020818152604080832086845290915290205416905092915050565b6000808061081d857f01ffc9a70000000000000000000000000000000000000000000000000000000061094c565b909250905081158061082d575080155b1561083d576000925050506106e8565b61084f85600160e060020a031961094c565b909250905081158061086057508015155b15610870576000925050506106e8565b61087a858561094c565b909250905060018214801561088f5750806001145b1561089f576001925050506106e8565b506000949350505050565b600160a060020a0382166000908152600260209081526040808320600160e060020a03198516845290915281205460ff1615156108f2576108eb83836107ef565b90506106e8565b50600160a060020a03808316600081815260208181526040808320600160e060020a0319871684529091529020549091161492915050565b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff161590565b6040517f01ffc9a7000000000000000000000000000000000000000000000000000000008082526004820183905260009182919060208160248189617530fa90519096909550935050505056fea165627a7a72305820377f4a2d4301ede9949f163f319021a6e9c687c292a5e2b2c4734c126b524e6c00291ba01820182018201820182018201820182018201820182018201820182018201820a01820182018201820182018201820182018201820182018201820182018201820";
+const {
+  createPermitDigest
+} = require("./helpers/erc2612.js");
 
 const COORDINATOR_1_URL = "https://hermez.io";
 const COORDINATOR_2_URL = "https://second.hermez.io";
@@ -20,10 +23,12 @@ const COORDINATOR_2_URL = "https://second.hermez.io";
 const TIMEOUT = 40000;
 const MIN_BLOCKS = 81;
 
-
 let ABIbid = [
   "function bid(uint128 slot, uint128 bidAmount)",
   "function multiBid(uint128 startingSlot,uint128 endingSlot,bool[6] slotEpoch,uint128 maxBid,uint128 minBid)",
+  "function permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+  "function permitFake(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+  "function processBid(uint128, uint128, uint128, bytes)"
 ];
 let iface = new ethers.utils.Interface(ABIbid);
 
@@ -41,13 +46,14 @@ describe("Consensus Protocol Bidding", function() {
     hermezRollup,
     donation,
     bootCoordinator,
-    governance;
+    governance,
+    erc2612Wallet;
 
   let governanceAddress, hermezRollupAddress, donationAddress;
 
   // Deploy
   before(async function() {
-    const HEZToken = await ethers.getContractFactory("ERC777Mock");
+    const HEZToken = await ethers.getContractFactory("HEZTokenMockFake");
 
     [
       owner,
@@ -67,23 +73,29 @@ describe("Consensus Protocol Bidding", function() {
     bootCoordinator = await governance.getAddress();
     hermezRollupAddress = await hermezRollup.getAddress();
     donationAddress = await donation.getAddress();
+    coordinator1Address = await coordinator1.getAddress();
 
-    if ((await ethers.provider.getCode(ERC1820_REGISTRY_ADDRESS)) == "0x") {
-      await registryFunder.sendTransaction({
-        to: "0xa990077c3205cbDf861e17Fa532eeB069cE9fF96",
-        value: ethers.utils.parseEther("0.08"),
-      });
-      await ethers.provider.sendTransaction(ERC1820_REGISTRY_DEPLOY_TX);
+    buidlerHEZToken = await HEZToken.deploy(await owner.getAddress());
+    await buidlerHEZToken.deployed();
+   
+    const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
+    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+      const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
+      let erc2612WalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      // erc2612WalletTest = erc2612Wallet.connect(ethers.provider);
+      erc2612Wallet = owner;
+      erc2612Wallet.privateKey = erc2612WalletTest.privateKey;
+    } 
+    else {
+      erc2612Wallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
 
-    buidlerHEZToken = await HEZToken.deploy(
-      await owner.getAddress(),
-      ethers.utils.parseEther("1000000"),
-      "HEZToken",
-      "HEZ",
-      []
-    );
-    await buidlerHEZToken.deployed();
+    // erc2612Wallet = new ethers.Wallet("0x0123456789012345678901234567890123456789012345678901234567890123",ethers.provider);
+
+    await owner.sendTransaction({
+      to: await erc2612Wallet.getAddress(),
+      value: ethers.utils.parseEther("1"),
+    });
   });
 
   beforeEach(async function() {
@@ -117,18 +129,22 @@ describe("Consensus Protocol Bidding", function() {
     // Send tokens to coordinators addresses
     await buidlerHEZToken
       .connect(owner)
-      .send(
+      .transfer(
         await coordinator1.getAddress(),
-        ethers.utils.parseEther("10000"),
-        ethers.utils.toUtf8Bytes("")
+        ethers.utils.parseEther("100000")
       );
 
     await buidlerHEZToken
       .connect(owner)
-      .send(
+      .transfer(
         await coordinator2.getAddress(),
-        ethers.utils.parseEther("10000"),
-        ethers.utils.toUtf8Bytes("")
+        ethers.utils.parseEther("100000")
+      );
+    await buidlerHEZToken
+      .connect(owner)
+      .transfer(
+        await erc2612Wallet.getAddress(),
+        ethers.utils.parseEther("100000")
       );
   });
 
@@ -141,61 +157,31 @@ describe("Consensus Protocol Bidding", function() {
       await buidlerHermezAuctionProtocol
         .connect(coordinator2)
         .setCoordinator(await forger2.getAddress(), COORDINATOR_2_URL);
+        
+      await buidlerHEZToken.connect(coordinator1).approve(
+        buidlerHermezAuctionProtocol.address,
+        ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+      await buidlerHEZToken.connect(coordinator2).approve(
+        buidlerHermezAuctionProtocol.address,
+        ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
     });
     it("should revert if getMinBidBySlot for an already closed bid", async function() {
       // Try to consult the minBid of a slot with closed auction
       await expect(
         buidlerHermezAuctionProtocol.getMinBidBySlot(0)
-      ).to.be.revertedWith("Auction has already been closed");
-    });
-
-    it("should revert when send HEZ without data", async function() {
-      // Send tokens without data about bid method
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("11"),
-          ethers.utils.toUtf8Bytes("")
-        )
-      ).to.be.revertedWith("Sent HEZ without data");
-    });
-
-    it("should revert when amount send is different to the call amount", async function() {
-      // Encode bid data
-      let data = iface.encodeFunctionData("bid", [
-        2,
-        ethers.utils.parseEther("12"),
-      ]);
-      // Send tokens and bid data (amount != call amount)
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("11"),
-          data
-        )
-      ).to.be.revertedWith("Do not have enough balance");
+      ).to.be.revertedWith("HermezAuctionProtocol::getMinBidBySlot: AUCTION_CLOSED");
     });
 
     it("should revert when the coordinator is not registered", async function() {
-      // Encode bid data with unregistered coordinator address
-      let data = iface.encodeFunctionData("bid", [
-        2,
-        ethers.utils.parseEther("11"),
-      ]);
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+      let permit = ethers.utils.toUtf8Bytes("");
       // Try to send a bid with an unregistered coordinator address
       await expect(
-        buidlerHEZToken
-        .connect(owner)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("11"),
-          data
-        )
-      ).to.be.revertedWith("Coordinator not registered");
+        buidlerHermezAuctionProtocol
+          .connect(owner)
+          .processBid(amount,slot,amount,permit)
+      ).to.be.revertedWith("HermezAuctionProtocol::processBid: COORDINATOR_NOT_REGISTERED");
     });
 
     it("should call bid 11HEZ@2 ", async function() {
@@ -211,66 +197,46 @@ describe("Consensus Protocol Bidding", function() {
           reject(new Error("timeout while waiting for event"));
         }, TIMEOUT);
       });
-      // Encode bid data
-      let data = iface.encodeFunctionData("bid", [
-        2,
-        ethers.utils.parseEther("11"),
-      ]);
-      // Send tokens with bid data
-      await buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("11"),
-          data
-        );
-      await eventNewBid;
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+      let permit = ethers.utils.toUtf8Bytes("");
+
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(amount,slot,amount,permit)
+      ).to.emit(buidlerHermezAuctionProtocol,"NewBid")
+        .withArgs(slot,amount,coordinator1Address);
     });
 
     it("should call multiBid 11HEZ@5-10 ", async function() {
-      // Encode multibid data
-      let data = iface.encodeFunctionData("multiBid", [
-        5,
-        10,
-        [false, true, false, true, false, true],
-        ethers.utils.parseEther("11"),
-        ethers.utils.parseEther("11"),
-      ]);
-      let overrides = {
-        // The maximum units of gas for the transaction to use
-        gasLimit: 10000000,
-      };
-      // Send tokens with multibid data
-      await buidlerHEZToken
+      let amount = ethers.utils.parseEther("10000");
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 5;
+      let slotMax = 10;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+
+      await expect(); 
+      buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("10000"),
-          data,
-          overrides
-        );
+        .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit);
     });
 
     it("should revert when call multiBid without enough balanace", async function() {
-      // Info multibid data: multiBid(uint128 startingSlot,uint128 endingSlot, bool[6] memory slotEpochs, uint128 maxBid, uint128 closedMinBid, address forgerAddress)
-      // Encode multibid data
-      let data = iface.encodeFunctionData("multiBid", [
-        5,
-        10,
-        [true, true, true, true, true, true],
-        ethers.utils.parseEther("11"),
-        ethers.utils.parseEther("11"),
-      ]);
-      // Send tokens with multibid data without enough balance
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("10"),
-          data
-        )
-      ).to.be.revertedWith("Do not have enough balance");
+      let amount = ethers.utils.parseEther("10");
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 5;
+      let slotMax = 10;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processMultiBid NOT_ENOUGH_BALANCE");
     });
 
     it("should make a complex bidding with multiBid", async function() {
@@ -280,22 +246,20 @@ describe("Consensus Protocol Bidding", function() {
         coordinator1Address
       );
       expect(prevBalance).to.be.equal(0);
-      // Encode multibid data
-      let data = iface.encodeFunctionData("multiBid", [
-        10,
-        20,
-        [true, false, true, false, true, false],
-        ethers.utils.parseEther("30"),
-        ethers.utils.parseEther("20"),
-      ]);
-      // Send tokens with multibid data
-      await buidlerHEZToken
+
+      let amount = ethers.utils.parseEther("1000");
+      let bidMin = ethers.utils.parseEther("20");
+      let bidMax = ethers.utils.parseEther("30");
+      let slotMin = 10;
+      let slotMax = 20;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, false, true, false, true, false];
+
+      await
+      buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("1000"),
-          data
-        );
+        .processMultiBid(amount,slotMin,slotMax,slotSet,bidMax,bidMin,permit);
+
       // Get how much HEZ tokens are pending to be claimed for coordinator1Address
       let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
         coordinator1Address
@@ -304,42 +268,44 @@ describe("Consensus Protocol Bidding", function() {
       // 10 * [ 1 , 0 , 1 , 0 , 1 , 0 ] => 6 slots -> 6 * 20 = 120 HEZ
       // 1000 HEZ - 120 HEZ = 880 HEZ
       expect(postBalance).to.be.equal(ethers.utils.parseEther("880"));
-      // Encode multibid data
-      data = iface.encodeFunctionData("multiBid", [
-        10,
-        20,
-        [true, false, true, false, true, false],
-        ethers.utils.parseEther("30"),
-        ethers.utils.parseEther("20"),
-      ]);
-      // Send tokens with multibid data
-      await buidlerHEZToken
+
+      amount = ethers.utils.parseEther("0");
+      bidMin = ethers.utils.parseEther("20");
+      bidMax = ethers.utils.parseEther("30");
+      slotMin = 10;
+      slotMax = 20;
+      permit = ethers.utils.toUtf8Bytes("");
+      slotSet = [true, false, true, false, true, false];
+
+      await
+      buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("0"),
-          data
-        );
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bidMax, bidMin, permit);
+
       // Get how much HEZ tokens are pending to be claimed for coordinator1Address
       postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
         coordinator1Address
       );
 
-
       // 20 * 1.1 * [ 1 , 0 , 1 , 0 , 1 , 0 ] => 6 slots -> 6 * 22 = 132 HEZ
       // Diff: 132 HEZ - 120 HEZ = 12 HEZ -> 880 HEZ - 12 HEZ -> 868 HEZ
       expect(postBalance).to.be.equal(ethers.utils.parseEther("868"));
-      // Send tokens with multibid data
-      await buidlerHEZToken
+
+      await
+      buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
+        .processMultiBid(amount,slotMin,slotMax,slotSet,bidMax,bidMin,permit);
+
+      await
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processBid(
           ethers.utils.parseEther("0"),
-          iface.encodeFunctionData("bid", [
-            11,
-            ethers.utils.parseEther("800"),
-          ])
+          11,
+          ethers.utils.parseEther("800"),
+          ethers.utils.toUtf8Bytes("")
         );
+
       // Get how much HEZ tokens are pending to be claimed for coordinator1Address
       postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
         coordinator1Address
@@ -358,64 +324,49 @@ describe("Consensus Protocol Bidding", function() {
     });
 
     it("should revert when call multiBid for a slot already closed", async function() {
-      // Encode multibid data with slot already closed
-      let data = iface.encodeFunctionData("multiBid", [
-        1,
-        2,
-        [true, true, true, true, true, true],
-        ethers.utils.parseEther("11"),
-        ethers.utils.parseEther("11"),
-      ]);
-      // Send tokens and multibid data
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("10000"),
-          data
-        )
-      ).to.be.revertedWith("Auction has already been closed");
+      let amount = ethers.utils.parseEther("10000");
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 1;
+      let slotMax = 2;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processMultiBid AUCTION_CLOSED");
     });
 
     it("should revert when call multiBid for a slot that is not open yet", async function() {
-      // Encode multibid data with slot that is not open yet
-      let data = iface.encodeFunctionData("multiBid", [
-        10000,
-        10001,
-        [true, true, true, true, true, true],
-        ethers.utils.parseEther("11"),
-        ethers.utils.parseEther("11"),
-      ]);
-      // Send tokens and multibid data
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("10000"),
-          data
-        )
-      ).to.be.revertedWith("Bid has not been opened yet");
+      let amount = ethers.utils.parseEther("10000");
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 10000;
+      let slotMax = 10001;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processMultiBid AUCTION_NOT_OPEN");
     });
 
     it("should set the minbid for a multiBid", async function() {
-      // Encode multibid data
-      let data = iface.encodeFunctionData("multiBid", [
-        5,
-        10,
-        [true, true, true, true, true, true],
-        ethers.utils.parseEther("15"),
-        ethers.utils.parseEther("0"),
-      ]);
-      // Send tokens and multibid data
-      await buidlerHEZToken
+
+      let amount = ethers.utils.parseEther("100");
+      let maxBid = ethers.utils.parseEther("15");
+      let minBid = ethers.utils.parseEther("0");
+      let slotMin = 5;
+      let slotMax = 10;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("100"),
-          data
-        );
+        .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit);
+
       for (let i = 5; i < 10; i++) {
         // Check that the minBid of the slots 5-10 has been updated
         expect(
@@ -431,22 +382,19 @@ describe("Consensus Protocol Bidding", function() {
       await buidlerHermezAuctionProtocol
         .connect(governance)
         .changeDefaultSlotSetBid(0, ethers.utils.parseEther("123456789"));
-      // Encode multibid data
-      let data = iface.encodeFunctionData("multiBid", [
-        5,
-        11,
-        [true, true, true, true, true, true],
-        ethers.utils.parseEther("15"),
-        ethers.utils.parseEther("0"),
-      ]);
-      // Send tokens and multibid data
-      await buidlerHEZToken
+
+      let amount = ethers.utils.parseEther("100");
+      let maxBid = ethers.utils.parseEther("15");
+      let minBid = ethers.utils.parseEther("0");
+      let slotMin = 5;
+      let slotMax = 11;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("100"),
-          data
-        );
+        .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit);
+
       // Check that bidder is producer
       expect((await buidlerHermezAuctionProtocol.slots(5)).bidder).to.be.equal(
         producer
@@ -465,88 +413,54 @@ describe("Consensus Protocol Bidding", function() {
     });
 
     it("should make an exact multiBid", async function() {
-      // Encode multibid data
-      let data = iface.encodeFunctionData("multiBid", [
-        5,
-        5,
-        [true, true, true, true, true, true],
-        ethers.utils.parseEther("15"),
-        ethers.utils.parseEther("15"),
-      ]);
-      // Send exact tokens and multibid data
-      await buidlerHEZToken
+      let amount = ethers.utils.parseEther("15");
+      let maxBid = ethers.utils.parseEther("15");
+      let minBid = ethers.utils.parseEther("15");
+      let slotMin = 5;
+      let slotMax = 5;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("15"),
-          data
-        );
+        .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit);
     });
 
     it("should when maxBid < closedMinBid", async function() {
-      // Encode multibid data with maxBid < closedMinBid
-      let data = iface.encodeFunctionData("multiBid", [
-        5,
-        10,
-        [true, true, true, true, true, true],
-        ethers.utils.parseEther("10"),
-        ethers.utils.parseEther("15"),
-      ]);
-      // Send tokens and multibid data
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("100"),
-          data
-        )
-      ).to.be.revertedWith("maxBid should be >= minBid");
+
+      let amount = ethers.utils.parseEther("100");
+      let maxBid = ethers.utils.parseEther("10");
+      let minBid = ethers.utils.parseEther("15");
+      let slotMin = 5;
+      let slotMax = 10;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processMultiBid MAXBID_GREATER_THAN_MINBID");
+
     });
 
     it("should revert when call multibid from a non registered coordinator", async function() {
-      // Encode multibid data with non registered coordinator
-      let data = iface.encodeFunctionData("multiBid", [
-        5,
-        10,
-        [true, true, true, true, true, true],
-        ethers.utils.parseEther("12"),
-        ethers.utils.parseEther("12"),
-      ]);
-      // Send tokens and multibid data
-      await expect(
-        buidlerHEZToken
-        .connect(owner)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("100"),
-          data
-        )
-      ).to.be.revertedWith("Coordinator not registered");
+      let amount = ethers.utils.parseEther("100");
+      let maxBid = ethers.utils.parseEther("12");
+      let minBid = ethers.utils.parseEther("12");
+      let slotMin = 5;
+      let slotMax = 10;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(owner)
+          .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processMultiBid COORDINATOR_NOT_REGISTERED");
+
     });
 
-    it("should revert when calling to a not valid method", async function() {
-      // Encode invalid bid data
-      let ABIbidFake = [
-        "function newBid(uint256 slot, uint256 bidAmount, address producer)",
-      ];
-      let ifaceFake = new ethers.utils.Interface(ABIbidFake);
-      let data = ifaceFake.encodeFunctionData("newBid", [
-        2,
-        ethers.utils.parseEther("11"),
-        await coordinator1.getAddress(),
-      ]);
-      // Send tokens and invalid bid data
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("11"),
-          data
-        )
-      ).to.be.revertedWith("Not a valid calldata");
-    });
     it("should call bid 12HEZ@2 -> 11HEZ@2 -> 14HEZ@2", async function() {
       // Event NewBid
       let eventNewBid = new Promise((resolve, reject) => {
@@ -560,46 +474,29 @@ describe("Consensus Protocol Bidding", function() {
           reject(new Error("timeout while waiting for event"));
         }, TIMEOUT);
       });
-      // Encode bid data with amount = 12
-      let data = iface.encodeFunctionData("bid", [
-        2,
-        ethers.utils.parseEther("12"),
-      ]);
-      // Send tokens and bid data
-      await buidlerHEZToken
+      let amount = ethers.utils.parseEther("12");
+      let slot = 2;
+      let permit = ethers.utils.toUtf8Bytes("");
+
+      await
+      buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("12"),
-          data
-        );
+        .processBid(amount,slot,amount,permit);
+
       // Send tokens and bid data with amount = 11 (previous bid = 12)
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator2)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("11"),
-          iface.encodeFunctionData("bid", [
-            2,
-            ethers.utils.parseEther("11"),
-          ])
-        )
-      ).to.be.revertedWith("Bid below minimum");
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("11"),2,ethers.utils.parseEther("11"),permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
+
       let prevBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
         await coordinator1.getAddress()
       );
       // Send tokens and bid data with amount = 14
-      await buidlerHEZToken
-        .connect(coordinator2)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("14"),
-          iface.encodeFunctionData("bid", [
-            2,
-            ethers.utils.parseEther("14"),
-          ])
-        );
+      await buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processBid(ethers.utils.parseEther("14"),2,ethers.utils.parseEther("14"),permit);
 
       let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
         await coordinator1.getAddress()
@@ -612,103 +509,62 @@ describe("Consensus Protocol Bidding", function() {
     });
 
     it("should revert when bid 10HEZ@0 and 10HEZ@1", async function() {
+      let permit = ethers.utils.toUtf8Bytes("");
+
       // Send tokens and bid data with slot with closed auction
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("14"),
-          iface.encodeFunctionData("bid", [
-            0,
-            ethers.utils.parseEther("14"),
-          ])
-        )
-      ).to.be.revertedWith("Auction has already been closed");
-      // Send tokens and bid data with slot with closed auction
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("14"),
-          iface.encodeFunctionData("bid", [
-            1,
-            ethers.utils.parseEther("14"),
-          ])
-        )
-      ).to.be.revertedWith("Auction has already been closed");
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("14"),0,ethers.utils.parseEther("14"),permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_CLOSED");
+      
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("14"),1,ethers.utils.parseEther("14"),permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_CLOSED");
     });
 
     it("should revert when bid 10HEZ@(openAuctionSlots + closeAuctionSlots) and 10HEZ@(openAuctionSlots + closeAuctionSlots + 10)", async function() {
+      let permit = ethers.utils.toUtf8Bytes("");
+
       // Send tokens and bid data with slot with auction that has not yet been opened
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("14"),
-          iface.encodeFunctionData("bid", [
-            4322,
-            ethers.utils.parseEther("14"),
-          ])
-        )
-      ).to.be.revertedWith("Bid has not been opened yet");
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("14"),4322,ethers.utils.parseEther("14"),permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_NOT_OPEN");
       // Send tokens and bid data with slot with auction that has not yet been opened
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("14"),
-          iface.encodeFunctionData("bid", [
-            4323,
-            ethers.utils.parseEther("14"),
-          ])
-        )
-      ).to.be.revertedWith("Bid has not been opened yet");
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("14"),4323,ethers.utils.parseEther("14"),permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_NOT_OPEN");
     });
     // Send tokens and bid data with bid below minimum bid
     it("should revert when bid below minimal bid", async function() {
-      await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("10"),
-          iface.encodeFunctionData("bid", [
-            2,
-            ethers.utils.parseEther("10"),
-          ])
-        )
-      ).to.be.revertedWith("Bid below minimum");
+      let permit = ethers.utils.toUtf8Bytes("");
+
+      await expect( 
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("10"),2,ethers.utils.parseEther("10"),permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
     });
 
     it("should revert if claimHEZ revert", async function() {
-      // Encode bid data
-      let data = iface.encodeFunctionData("bid", [
-        2,
-        ethers.utils.parseEther("12"),
-      ]);
-      // Send tokens and bid data
-      await buidlerHEZToken
+      let permit = ethers.utils.toUtf8Bytes("");
+
+      await 
+      buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("12"),
-          data
-        );
-      // Send tokens and bid data
-      await buidlerHEZToken
+        .processBid(ethers.utils.parseEther("12"),2,ethers.utils.parseEther("12"),permit);
+
+      await 
+      buidlerHermezAuctionProtocol
         .connect(coordinator2)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("14"),
-          iface.encodeFunctionData("bid", [
-            2,
-            ethers.utils.parseEther("14"),
-          ])
-        );
+        .processBid(ethers.utils.parseEther("14"),2,ethers.utils.parseEther("14"),permit);
+
       // Check that the coordinator can withdraw the tokens from the previous bid
       expect(
         await buidlerHermezAuctionProtocol.getClaimableHEZ(
@@ -720,12 +576,14 @@ describe("Consensus Protocol Bidding", function() {
 
       await expect(
         buidlerHermezAuctionProtocol.connect(coordinator1).claimHEZ()
-      ).to.be.revertedWith("Token Transfer Failed");
+      ).to.be.revertedWith("Transfer reverted");
       await buidlerHEZToken.connect(coordinator1).setTransferRevert(false);
 
     });
 
     it("should change the min bid price", async function() {
+      let permit = ethers.utils.toUtf8Bytes("");
+
       for (i = 0; i < 6; i++) {
         // Change minBids
         await buidlerHermezAuctionProtocol
@@ -740,53 +598,306 @@ describe("Consensus Protocol Bidding", function() {
       }
       // Send tokens and bid data with amount < minBid
       await expect(
-        buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("10"),
-          iface.encodeFunctionData("bid", [
-            2,
-            ethers.utils.parseEther("10"),
-          ])
-        )
-      ).to.be.revertedWith("Bid below minimum");
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("10"),2,ethers.utils.parseEther("10"),permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
+
       // Send tokens and bid data with amount > minBid
-      await buidlerHEZToken
+      await
+      buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("330"),
-          iface.encodeFunctionData("bid", [
-            2,
-            ethers.utils.parseEther("330"),
-          ])
-        );
+        .processBid(ethers.utils.parseEther("330"),2,ethers.utils.parseEther("330"),permit);
 
       // Check same behavior next slot set
       await expect(
-        buidlerHEZToken
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("10"), 2 + 6,ethers.utils.parseEther("10"),permit))
+        .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
+
+      await
+      buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("10"),
-          iface.encodeFunctionData("bid", [
-            2 + 6,
-            ethers.utils.parseEther("10"),
-          ])
-        )
-      ).to.be.revertedWith("Bid below minimum");
-      buidlerHEZToken
-        .connect(coordinator1)
-        .send(
-          buidlerHermezAuctionProtocol.address,
-          ethers.utils.parseEther("330"),
-          iface.encodeFunctionData("bid", [
-            2 + 6,
-            ethers.utils.parseEther("330"),
-          ])
-        );
+        .processBid(ethers.utils.parseEther("330"),2 + 6,ethers.utils.parseEther("330"),permit);
+
     });
+  });
+
+  describe("Bids with permit", function() {
+    // Register Coordinator
+    beforeEach(async function() {
+      await buidlerHermezAuctionProtocol
+        .connect(erc2612Wallet)
+        .setCoordinator(await erc2612Wallet.getAddress(), "NONE");
+      await buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .setCoordinator(await erc2612Wallet.getAddress(), "NONE");
+    });
+    it("should be able to bid with permit", async function() {
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+
+      const deadline = ethers.constants.MaxUint256;
+      const nonce = await buidlerHEZToken.nonces(await erc2612Wallet.getAddress());
+
+      const {v,r,s} = await createPermitSignature(
+        buidlerHEZToken,
+        erc2612Wallet,
+        buidlerHermezAuctionProtocol.address,
+        amount,
+        nonce,
+        deadline
+      );
+
+      const data = iface.encodeFunctionData("permit", [
+        await erc2612Wallet.getAddress(),
+        buidlerHermezAuctionProtocol.address,
+        amount,
+        deadline,
+        v,
+        r,
+        s
+      ]);
+
+      await expect(
+        buidlerHermezAuctionProtocol.connect(coordinator1)
+          .processBid(amount,slot,amount,data)
+      ).to.revertedWith("HermezAuctionProtocol::_permit: OWNER_NOT_EQUAL_SENDER");
+
+
+      await expect(
+        buidlerHermezAuctionProtocol.connect(erc2612Wallet)
+          .processBid(amount,slot,amount,data)
+      ).to.emit(buidlerHermezAuctionProtocol,"NewBid");
+  
+    });
+
+    it("shouldn't be able to bid with a different permit call", async function() {
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+
+      const deadline = ethers.constants.MaxUint256;
+      const nonce = await buidlerHEZToken.nonces(await erc2612Wallet.getAddress());
+
+      const {v,r,s} = await createPermitSignature(
+        buidlerHEZToken,
+        erc2612Wallet,
+        buidlerHermezAuctionProtocol.address,
+        amount,
+        nonce,
+        deadline
+      );
+
+      const data = iface.encodeFunctionData("permitFake", [
+        await erc2612Wallet.getAddress(),
+        buidlerHermezAuctionProtocol.address,
+        amount,
+        deadline,
+        v,
+        r,
+        s
+      ]);
+
+      await expect(
+        buidlerHermezAuctionProtocol.connect(erc2612Wallet)
+          .processBid(amount,slot,amount,data)
+      ).to.revertedWith("HermezAuctionProtocol::_permit: NOT_VALID_CALL");
+  
+    });
+
+    it("should be able to multiBid with permit", async function() {
+      const addressOwner = await erc2612Wallet.getAddress();
+      const deadline = ethers.constants.MaxUint256;
+      const value = ethers.utils.parseEther("200");
+      const nonce = await buidlerHEZToken.nonces(addressOwner);
+
+      const {v,r,s} = await createPermitSignature(
+        buidlerHEZToken,
+        erc2612Wallet,
+        buidlerHermezAuctionProtocol.address,
+        value,
+        nonce,
+        deadline
+      );
+
+      const data = iface.encodeFunctionData("permit", [
+        await erc2612Wallet.getAddress(),
+        buidlerHermezAuctionProtocol.address,
+        value,
+        deadline,
+        v,
+        r,
+        s
+      ]);
+
+      let amount = ethers.utils.parseEther("200");
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 5;
+      let slotMax = 6;
+      let slotSet = [true, true, true, true, true, true];
+
+      await
+      buidlerHermezAuctionProtocol
+        .connect(erc2612Wallet)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, data);
+    });
+
+    it("shouldn't be able to bid with permit if SPENDER_NOT_EQUAL_THIS", async function() {
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+  
+      const addressOwner = await erc2612Wallet.getAddress();
+      const deadline = ethers.constants.MaxUint256;
+      const value = ethers.utils.parseEther("11");
+      const nonce = await buidlerHEZToken.nonces(addressOwner);
+  
+      const {v,r,s} = await createPermitSignature(
+        buidlerHEZToken,
+        erc2612Wallet,
+        buidlerHEZToken.address,
+        value,
+        nonce,
+        deadline
+      );
+  
+      const data = iface.encodeFunctionData("permit", [
+        await erc2612Wallet.getAddress(),
+        buidlerHEZToken.address,
+        value,
+        deadline,
+        v,
+        r,
+        s
+      ]);
+  
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(erc2612Wallet)
+          .processBid(amount,slot,amount,data)
+      ).to.revertedWith("HermezAuctionProtocol::_permit: SPENDER_NOT_EQUAL_THIS");
+    });
+
+    it("shouldn't be able to bid with permit if WRONG_AMOUNT", async function() {
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+  
+      const addressOwner = await erc2612Wallet.getAddress();
+      const deadline = ethers.constants.MaxUint256;
+      const value = ethers.utils.parseEther("11");
+      const nonce = await buidlerHEZToken.nonces(addressOwner);
+
+      const {v,r,s} = await createPermitSignature(
+        buidlerHEZToken,
+        erc2612Wallet,
+        buidlerHermezAuctionProtocol.address,
+        value.add(1),
+        nonce,
+        deadline
+      );
+  
+      const data = iface.encodeFunctionData("permit", [
+        await erc2612Wallet.getAddress(),
+        buidlerHermezAuctionProtocol.address,
+        value.add(1),
+        deadline,
+        v,
+        r,
+        s
+      ]);
+  
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(erc2612Wallet)
+          .processBid(amount,slot,amount,data)
+      ).to.revertedWith("HermezAuctionProtocol::_permit: WRONG_AMOUNT");
+    });
+    it("shouldn't be able to bid without NOT_ENOUGH_BALANCE", async function() {
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+  
+      const addressOwner = await erc2612Wallet.getAddress();
+      const deadline = ethers.constants.MaxUint256;
+      const value = ethers.utils.parseEther("11");
+      const nonce = await buidlerHEZToken.nonces(addressOwner);
+
+      const {v,r,s} = await createPermitSignature(
+        buidlerHEZToken,
+        erc2612Wallet,
+        buidlerHermezAuctionProtocol.address,
+        value,
+        nonce,
+        deadline
+      );
+  
+      const data = iface.encodeFunctionData("permit", [
+        await erc2612Wallet.getAddress(),
+        buidlerHermezAuctionProtocol.address,
+        value,
+        deadline,
+        v,
+        r,
+        s
+      ]);
+  
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(erc2612Wallet)
+          .processBid(amount,slot,amount.add(1),data)
+      ).to.revertedWith("HermezAuctionProtocol::processBid: NOT_ENOUGH_BALANCE");
+    });
+
+    it("should revert if token transfer fail", async function() {
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+  
+      const addressOwner = await erc2612Wallet.getAddress();
+      const deadline = ethers.constants.MaxUint256;
+      const value = ethers.utils.parseEther("11");
+      const nonce = await buidlerHEZToken.nonces(addressOwner);
+
+      const {v,r,s} = await createPermitSignature(
+        buidlerHEZToken,
+        erc2612Wallet,
+        buidlerHermezAuctionProtocol.address,
+        value,
+        nonce,
+        deadline
+      );
+  
+      const data = iface.encodeFunctionData("permit", [
+        await erc2612Wallet.getAddress(),
+        buidlerHermezAuctionProtocol.address,
+        value,
+        deadline,
+        v,
+        r,
+        s
+      ]);
+      await buidlerHEZToken.setTransferFromResult(false);
+
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(erc2612Wallet)
+          .processBid(amount,slot,amount,data)
+      ).to.revertedWith("HermezAuctionProtocol::processBid: TOKEN_TRANSFER_FAILED");
+
+
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 5;
+      let slotMax = 6;
+      let slotSet = [true, true, true, true, true, true];
+
+      await expect(
+        buidlerHermezAuctionProtocol
+        .connect(erc2612Wallet)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, data)
+      ).to.revertedWith("HermezAuctionProtocol::processMultiBid: TOKEN_TRANSFER_FAILED");
+
+      await buidlerHEZToken.setTransferFromResult(true);
+
+    });
+
   });
 });
 
@@ -794,4 +905,27 @@ function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+async function createPermitSignature(buidlerToken, owner, spenderAddress, value, nonce, deadline) {
+  const digest = await createPermitDigest(
+    buidlerToken,
+    await owner.getAddress(),
+    spenderAddress,
+    value,
+    nonce,
+    deadline
+  );
+
+  let {
+    v,
+    r,
+    s
+  } = new ethers.utils.SigningKey(owner.privateKey).signDigest(digest);
+  
+  return {
+    v,
+    r,
+    s,
+  };
 }

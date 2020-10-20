@@ -2,9 +2,6 @@
 
 pragma solidity ^0.6.0;
 
-import "@openzeppelin/contracts/introspection/IERC1820Registry.sol";
-import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
-
 interface IWithdrawalDelayer {
     function changeDisputeResolutionAddress() external;
 
@@ -19,23 +16,8 @@ interface IWithdrawalDelayer {
     function setWhiteHackGroupAddress(address payable newAddress) external;
 }
 
-contract PayableRevert is IERC777Recipient {
+contract PayableRevert {
     bool public paymentEnable = true;
-
-    IERC1820Registry private constant _ERC1820 = IERC1820Registry(
-        0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
-    bytes32 private constant _TOKENS_RECIPIENT_INTERFACE_HASH = keccak256(
-        "ERC777TokensRecipient"
-    );
-
-    constructor() public {
-        _ERC1820.setInterfaceImplementer(
-            address(this),
-            _TOKENS_RECIPIENT_INTERFACE_HASH,
-            address(this)
-        );
-    }
 
     function disablePayment() public {
         paymentEnable = false;
@@ -88,16 +70,5 @@ contract PayableRevert is IERC777Recipient {
         IWithdrawalDelayer(withdrawalDelayerAddress).setWhiteHackGroupAddress(
             newAddress
         );
-    }
-
-    function tokensReceived(
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData
-    ) external override {
-        require(paymentEnable, "Not payable");
     }
 }

@@ -18,8 +18,7 @@ const {
   AddToken,
   createAccounts,
   ForgerTest,
-  calculateInputMaxTxLevels,
-  registerERC1820,
+  calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
   float16,
@@ -45,6 +44,7 @@ describe("Hermez ERC 20", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -58,7 +58,8 @@ describe("Hermez ERC 20", function () {
   let chainID;
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
-
+  const INITIAL_DELAY = 0;
+  
   beforeEach(async function () {
     [
       owner,
@@ -71,9 +72,29 @@ describe("Hermez ERC 20", function () {
 
     hermezGovernanceDAOAddress = governance.getAddress();
 
+    const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
+    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+      const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      // ownerWalletTest = ownerWallet.connect(ethers.provider);
+      ownerWallet = owner;
+      ownerWallet.privateKey = ownerWalletTest.privateKey;
+    } 
+    else {
+      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+    }
+   
+    // const privateKeyBuidler =
+    //   "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
+    // ownerWallet = new ethers.Wallet(
+    //   privateKeyBuidler,
+    //   ethers.provider
+    // );
+    //ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -113,8 +134,7 @@ describe("Hermez ERC 20", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    // deploy registry erc1820
-    await registerERC1820(owner);
+
 
     // factory hermez
     const Hermez = await ethers.getContractFactory("HermezTest");
@@ -127,12 +147,11 @@ describe("Hermez ERC 20", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     // deploy helpers
@@ -144,9 +163,10 @@ describe("Hermez ERC 20", function () {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
-
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
-      0,
+    
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+      INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceDAOAddress,
       hermezGovernanceDAOAddress,
@@ -156,7 +176,7 @@ describe("Hermez ERC 20", function () {
     // deploy hermez
     await buidlerHermez.initializeHermez(
       [buidlerVerifierRollupHelper.address],
-      [calculateInputMaxTxLevels(maxTx, nLevels)],
+      calculateInputMaxTxLevels([maxTx], [nLevels]),
       buidlerVerifierWithdrawHelper.address,
       buidlerHermezAuctionTest.address,
       buidlerHEZ.address,
@@ -201,7 +221,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
     });
@@ -214,7 +234,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -236,7 +256,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -260,7 +280,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -288,7 +308,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -316,7 +336,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -341,7 +361,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -368,8 +388,8 @@ describe("Hermez ERC 20", function () {
       const newLastIdx = 255; // first idx
       const newStateRoot = 0;
       const newExitRoot = 0;
-      const compressedL1CoordinatorTx = `0x00`;
-      const L2TxsData = `0x00`;
+      const compressedL1CoordinatorTx = "0x00";
+      const L2TxsData = "0x00";
       const feeIdxCoordinator = `0x${utils.padZeros(
         "",
         ((nLevels * 64) / 8) * 2
@@ -396,7 +416,7 @@ describe("Hermez ERC 20", function () {
           proofB,
           proofC
         )
-      ).to.be.revertedWith("L1L2Batch required");
+      ).to.be.revertedWith("Hermez::forgeBatch: L1L2BATCH_REQUIRED");
 
       // must forge an L1 batch
       await buidlerHermez.forgeBatch(
@@ -444,7 +464,7 @@ describe("Hermez ERC 20", function () {
           proofB,
           proofC
         )
-      ).to.be.revertedWith("L1L2Batch required");
+      ).to.be.revertedWith("Hermez::forgeBatch: L1L2BATCH_REQUIRED");
     });
 
     it("handle L1 Coordinator Queue Test", async function () {
@@ -456,7 +476,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       const l1TxCoordiatorArray = [];
@@ -537,7 +557,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -581,7 +601,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -756,7 +776,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -873,7 +893,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -961,7 +981,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -1050,7 +1070,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -1129,7 +1149,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -1210,7 +1230,7 @@ describe("Hermez ERC 20", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
 
@@ -1284,7 +1304,7 @@ describe("Hermez ERC 20", function () {
       );
     });
   });
-  describe("Governance udpate aprameters", function () {
+  describe("Governance update aprameters", function () {
     it("update forgeL1L2BatchTimeout", async function () {
       const newForgeL1Timeout = 100;
 
@@ -1305,7 +1325,7 @@ describe("Hermez ERC 20", function () {
 
       await expect(
         buidlerHermez.connect(governance).updateForgeL1L2BatchTimeout(241)
-      ).to.be.revertedWith("forge timeout exceded");
+      ).to.be.revertedWith("Hermez::updateForgeL1L2BatchTimeout: MAX_FORGETIMEOUT_EXCEED");
     });
 
     it("update FeeAddToken", async function () {

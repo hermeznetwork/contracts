@@ -14,8 +14,7 @@ const {
   l1CoordinatorTxBjj,
   AddToken,
   ForgerTest,
-  calculateInputMaxTxLevels,
-  registerERC1820,
+  calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
   float16,
@@ -29,6 +28,7 @@ const {
   RollupDB,
   BatchBuilder,
 } = require("@hermeznetwork/commonjs");
+const INITIAL_DELAY = 0;
 
 describe("Hermez gas performance", function () {
   let buidlerTokenERC20Mock;
@@ -40,6 +40,7 @@ describe("Hermez gas performance", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -65,10 +66,22 @@ describe("Hermez gas performance", function () {
     ] = await ethers.getSigners();
 
     hermezGovernanceDAOAddress = governance.getAddress();
+    
+    const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
+    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+      const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      // ownerWalletTest = ownerWallet.connect(ethers.provider);
+      ownerWallet = owner;
+      ownerWallet.privateKey = ownerWalletTest.privateKey;
+    } 
+    else {
+      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+    }
 
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -107,8 +120,7 @@ describe("Hermez gas performance", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    // deploy registry erc1820
-    await registerERC1820(owner);
+
 
     // factory hermez
     const Hermez = await ethers.getContractFactory("HermezTest");
@@ -121,12 +133,11 @@ describe("Hermez gas performance", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
@@ -136,9 +147,9 @@ describe("Hermez gas performance", function () {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
-
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
-      0,
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+      INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceDAOAddress,
       hermezGovernanceDAOAddress,
@@ -149,7 +160,7 @@ describe("Hermez gas performance", function () {
 
     await buidlerHermez.initializeHermez(
       [buidlerVerifierRollupHelper.address],
-      [calculateInputMaxTxLevels(maxTx, nLevels)],
+      calculateInputMaxTxLevels([maxTx], [nLevels]),
       buidlerVerifierWithdrawHelper.address,
       buidlerHermezAuctionTest.address,
       buidlerHEZ.address,
@@ -181,7 +192,7 @@ describe("Hermez gas performance", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       const proofA = ["0", "0"];
@@ -194,7 +205,7 @@ describe("Hermez gas performance", function () {
       const newLastIdx = 257;
       const newStateRoot = 123;
       const newExitRoot = 456;
-      const compressedL1CoordinatorTx = `0x00`;
+      const compressedL1CoordinatorTx = "0x00";
 
       const L2TxsData = `0x${"1".repeat(((nLevels / 8) * 2 + 3) * maxTx * 2)}`;
       // const L2TxsData = `0x${utils.padZeros(
@@ -289,7 +300,7 @@ describe("Hermez gas performance", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       const proofA = ["0", "0"];
@@ -325,7 +336,7 @@ describe("Hermez gas performance", function () {
             loadAmount,
             tokenID,
             babyjub,
-            owner,
+            ownerWallet,
             buidlerHermez,
             buidlerTokenERC20Mock
           );
