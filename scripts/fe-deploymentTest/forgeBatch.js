@@ -62,7 +62,7 @@ async function main() {
     const lastChar = i * l1TxBytes * 2;
     const currentHexChar = (i + 1) * l1TxBytes * 2;
     const currenTx = SCL1TxData.slice(lastChar, currentHexChar);
-    const decodedTx = txUtils.decodeL1Tx(currenTx)
+    const decodedTx = txUtils.decodeL1Tx(currenTx);
     l1TxForged.push(decodedTx);
     bbCurrent.addTx(decodedTx);
   }
@@ -78,7 +78,7 @@ async function main() {
   const newLastIdx = bbCurrent.getNewLastIdx();
   const newStateRoot = bbCurrent.getNewStateRoot();
   const newExitRoot = bbCurrent.getNewExitRoot();
-  const compressedL1CoordinatorTx = `0x`;
+  const compressedL1CoordinatorTx = "0x";
   const L2TxsData = bbCurrent.getL2TxsDataSM();
   const feeIdxCoordinator = bbCurrent.getFeeTxsDataSM();
   const verifierIdx = 0;

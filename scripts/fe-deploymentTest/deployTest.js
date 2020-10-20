@@ -24,7 +24,6 @@ async function main() {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
-  let ownerWallet;
 
   const tokenInitialAmount = ethers.utils.parseEther("100000");
   const maxTx = 512;
@@ -45,9 +44,19 @@ async function main() {
 
   hermezGovernanceDAOAddress = governance.getAddress();
 
+  // load default account 0 from buidlerEvm
+  // Account #0: 0xc783df8a850f42e7f7e57013759c285caa701eb6 (10000 ETH)
+  // Private Key: 0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122
+  const privateKeyBuidler =
+    "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
+  const ownerWallet = new ethers.Wallet(
+    privateKeyBuidler,
+    ethers.provider
+  );
+
   // factory helpers
   const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-  const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+  const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
   const VerifierRollupHelper = await ethers.getContractFactory(
     "VerifierRollupHelper"
@@ -101,12 +110,11 @@ async function main() {
     tokenInitialAmount
   );
 
-  buidlerHEZ = await TokenERC777Mock.deploy(
-    await owner.getAddress(),
-    tokenInitialAmount,
+  buidlerHEZ = await TokenERC20PermitMock.deploy(
     "tokenname",
     "TKN",
-    []
+    await owner.getAddress(),
+    tokenInitialAmount
   );
 
   // deploy helpers
@@ -150,20 +158,19 @@ async function main() {
   // wait until is deployed
   await buidlerTokenERC20Mock.deployed();
   await buidlerHEZ.deployed();
-  const addressOwner = await owner.getAddress();
 
   await AddToken(
     buidlerHermez,
     buidlerTokenERC20Mock,
     buidlerHEZ,
-    addressOwner,
+    ownerWallet,
     feeAddToken
   );
   await AddToken(
     buidlerHermez,
     buidlerHEZ,
     buidlerHEZ,
-    addressOwner,
+    ownerWallet,
     feeAddToken
   );
 
@@ -175,10 +182,9 @@ async function main() {
     ethers.utils.parseEther("10000")
   );
 
-  await buidlerHEZ.send(
+  await buidlerHEZ.transfer(
     process.env.ETH_ADDRESS,
-    ethers.utils.parseEther("10000"),
-    ethers.utils.toUtf8Bytes("")
+    ethers.utils.parseEther("10000")
   );
 
   let tx = {
@@ -202,7 +208,7 @@ async function main() {
   console.log("account with tokens and funds:", process.env.ETH_ADDRESS);
   console.log("hermez SC deployed in; ", buidlerHermez.address);
   console.log("token ERC20 Contract Address: ", buidlerTokenERC20Mock.address);
-  console.log("(ERC777) HEZ deployed in; ", buidlerHEZ.address);
+  console.log("(ERC20Permit) HEZ deployed in; ", buidlerHEZ.address);
   console.log();
   console.log(
     "/////////////////////////////////////////////////////////////////"
