@@ -8,7 +8,9 @@ contract HermezTest is Hermez {
     event ReturnUint256(uint256);
     event ReturnBytes(bytes);
 
-    // withdraw delayed functions
+    function setLastIdx(uint48 newLastIdx) public {
+        lastIdx = newLastIdx;
+    }
 
     function getChainID() public view returns (uint256) {
         uint256 chainID;
@@ -40,7 +42,7 @@ contract HermezTest is Hermez {
     {
         require(
             _processInstantWithdrawal(tokenAddress, amount),
-            "instant withdrawals wasted for this USD range"
+            "Hermez::withdrawMerkleProof: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
         );
     }
 

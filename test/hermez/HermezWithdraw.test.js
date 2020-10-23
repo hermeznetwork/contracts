@@ -6,7 +6,6 @@ const {HermezAccount} = require("@hermeznetwork/commonjs");
 const {
   AddToken,
   calculateInputMaxTxLevels,
-  registerERC1820,
 } = require("./helpers/helpers");
 
 describe("Hermez instant withdraw manager", function () {
@@ -17,6 +16,7 @@ describe("Hermez instant withdraw manager", function () {
   let id1;
   let addrs;
   let governance;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -29,6 +29,9 @@ describe("Hermez instant withdraw manager", function () {
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
 
+  const INITIAL_DELAY = 0;
+
+  
   this.beforeEach(async function () {
     [
       owner,
@@ -38,11 +41,23 @@ describe("Hermez instant withdraw manager", function () {
       ...addrs
     ] = await ethers.getSigners();
 
+    const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
+    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+      const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      // ownerWalletTest = ownerWallet.connect(ethers.provider);
+      ownerWallet = owner;
+      ownerWallet.privateKey = ownerWalletTest.privateKey;
+    } 
+    else {
+      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+    }
+
     const hermezGovernanceDAOAddress = await governance.getAddress();
 
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -86,7 +101,7 @@ describe("Hermez instant withdraw manager", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    await registerERC1820(owner);
+
 
     buidlerTokenERC20Mock = await TokenERC20Mock.deploy(
       "tokenname",
@@ -95,12 +110,11 @@ describe("Hermez instant withdraw manager", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
@@ -110,9 +124,9 @@ describe("Hermez instant withdraw manager", function () {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
-
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
-      0,
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+      INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceDAOAddress,
       hermezGovernanceDAOAddress,
@@ -121,7 +135,7 @@ describe("Hermez instant withdraw manager", function () {
 
     await buidlerHermez.initializeHermez(
       [buidlerVerifierRollupHelper.address],
-      [calculateInputMaxTxLevels(maxTx, nLevels)],
+      calculateInputMaxTxLevels([maxTx], [nLevels]),
       buidlerVerifierWithdrawHelper.address,
       buidlerHermezAuctionTest.address,
       buidlerHEZ.address,
@@ -206,7 +220,7 @@ describe("Hermez instant withdraw manager", function () {
       }
 
       await expect(buidlerHermez.findBucketIdxTest(6000)).to.be.revertedWith(
-        "exceed max amount"
+        "InstantWithdrawManager::_findBucketIdx: EXCEED_MAX_AMOUNT"
       );
 
       // add withdrawals and price
@@ -214,7 +228,7 @@ describe("Hermez instant withdraw manager", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       const addressArray = [buidlerTokenERC20Mock.address];
@@ -248,7 +262,7 @@ describe("Hermez instant withdraw manager", function () {
 
       await expect(
         buidlerHermez.instantWithdrawalTest(tokenAddress, tokenAmountDecimals)
-      ).to.be.revertedWith("instant withdrawals wasted for this USD range");
+      ).to.be.revertedWith("Hermez::withdrawMerkleProof: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE");
 
       let bucketSC = await buidlerHermez.buckets(bucketIdx);
       expect(bucketSC.withdrawals).to.be.equal(0);
@@ -288,7 +302,7 @@ describe("Hermez instant withdraw manager", function () {
       expect(bucketSC.withdrawals).to.be.equal(2);
     });
 
-    it("test instant withdraw with buckets full, and erc777", async function () {
+    it("test instant withdraw with buckets full, and ERC20Permit", async function () {
       const numBuckets = 5;
       const tokenAddress = buidlerHEZ.address;
 
@@ -327,7 +341,7 @@ describe("Hermez instant withdraw manager", function () {
         buidlerHermez,
         buidlerHEZ,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       const addressArray = [buidlerHEZ.address];
@@ -370,7 +384,7 @@ describe("Hermez instant withdraw manager", function () {
 
       await expect(
         buidlerHermez.instantWithdrawalTest(tokenAddress, tokenAmountDecimals)
-      ).to.be.revertedWith("instant withdrawals wasted for this USD range");
+      ).to.be.revertedWith("Hermez::withdrawMerkleProof: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE");
 
       let bucketSC = await buidlerHermez.buckets(bucketIdx);
       expect(bucketSC.withdrawals).to.be.equal(0);
@@ -502,7 +516,7 @@ describe("Hermez instant withdraw manager", function () {
 
     it("update WithdrawalDelay", async function () {
       await expect(buidlerHermez.safeMode()).to.be.revertedWith(
-        "Only safe bot or goverance"
+        "InstantWithdrawManager::safeMode: ONY_SAFETYADDRESS_OR_GOVERNANCE"
       );
 
       const numBuckets = 5;

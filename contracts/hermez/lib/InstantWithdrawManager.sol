@@ -41,9 +41,9 @@ contract InstantWithdrawManager is HermezHelpers {
     uint64 public withdrawalDelay;
 
     // ERC20 decimals signature
-    bytes4 private constant _ERC20_DECIMALS = bytes4(
-        keccak256(bytes("decimals()"))
-    );
+    //  bytes4(keccak256(bytes("decimals()")))
+    bytes4 private constant _ERC20_DECIMALS = 0x313ce567;
+
     uint256 private constant _MAX_WITHDRAWAL_DELAY = 2 weeks;
 
     // Withdraw delayer interface
@@ -76,7 +76,7 @@ contract InstantWithdrawManager is HermezHelpers {
     modifier onlyGovernance {
         require(
             msg.sender == hermezGovernanceDAOAddress,
-            "Only goverance address"
+            "InstantWithdrawManager::onlyGovernance: ONLY_GOVERNANCE_ADDRESS"
         );
         _;
     }
@@ -163,7 +163,7 @@ contract InstantWithdrawManager is HermezHelpers {
             uint256 maxWithdrawals = arrayBuckets[i][3];
             require(
                 withdrawals <= maxWithdrawals,
-                "withdrawals must be less than maxWithdrawals"
+                "InstantWithdrawManager::updateBucketsParameters: WITHDRAWALS_MUST_BE_LESS_THAN_MAXWITHDRAWALS"
             );
             buckets[i] = Bucket(
                 ceilUSD,
@@ -186,7 +186,7 @@ contract InstantWithdrawManager is HermezHelpers {
     ) external onlyGovernance {
         require(
             addressArray.length == valueArray.length,
-            "different array length "
+            "InstantWithdrawManager::updateTokenExchange: INVALID_ARRAY_LENGTH"
         );
         for (uint256 i = 0; i < addressArray.length; i++) {
             tokenExchange[addressArray[i]] = valueArray[i];
@@ -204,7 +204,7 @@ contract InstantWithdrawManager is HermezHelpers {
     {
         require(
             newWithdrawalDelay <= _MAX_WITHDRAWAL_DELAY,
-            "Exceeds MAX_WITHDRAWAL_DELAY"
+            "InstantWithdrawManager::updateWithdrawalDelay: EXCEED_MAX_WITHDRAWAL_DELAY"
         );
         withdrawalDelay = newWithdrawalDelay;
     }
@@ -217,7 +217,7 @@ contract InstantWithdrawManager is HermezHelpers {
         require(
             (msg.sender == safetyAddress) ||
                 (msg.sender == hermezGovernanceDAOAddress),
-            "Only safe bot or goverance"
+            "InstantWithdrawManager::safeMode: ONY_SAFETYADDRESS_OR_GOVERNANCE"
         );
 
         // all buckets to 0
@@ -275,28 +275,19 @@ contract InstantWithdrawManager is HermezHelpers {
             uint256(tokenExchange[tokenAddress])) / _EXCHANGE_MULTIPLIER;
 
         uint8 decimals;
-        // check if the contract is ERC777
-        bool isERC777 = _ERC1820.getInterfaceImplementer(
-            tokenAddress,
-            keccak256("ERC777Token")
-        ) != address(0x0)
-            ? true
-            : false;
 
-        // In case that the token is an ERC777 we assume 18 decimals
-        if (isERC777) {
-            decimals = 18;
-        } else {
-            // if decimals() is not implemented 0 decimals are assumed
-            (bool success, bytes memory data) = tokenAddress.staticcall(
-                abi.encodeWithSelector(_ERC20_DECIMALS)
-            );
-            if (success) {
-                decimals = abi.decode(data, (uint8));
-            }
+        // if decimals() is not implemented 0 decimals are assumed
+        (bool success, bytes memory data) = tokenAddress.staticcall(
+            abi.encodeWithSelector(_ERC20_DECIMALS)
+        );
+        if (success) {
+            decimals = abi.decode(data, (uint8));
         }
 
-        require(decimals < 77, "tokenUSD decimals overflow");
+        require(
+            decimals < 77,
+            "InstantWithdrawManager::_token2USD: TOKEN_DECIMALS_OVERFLOW"
+        );
         return baseUnitTokenUSD / (10**uint256(decimals));
     }
 
@@ -311,6 +302,6 @@ contract InstantWithdrawManager is HermezHelpers {
                 return i;
             }
         }
-        revert("exceed max amount");
+        revert("InstantWithdrawManager::_findBucketIdx: EXCEED_MAX_AMOUNT");
     }
 }

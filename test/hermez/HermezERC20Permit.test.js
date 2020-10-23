@@ -19,7 +19,6 @@ const {
   createAccounts,
   ForgerTest,
   calculateInputMaxTxLevels,
-  registerERC1820,
 } = require("./helpers/helpers");
 const {
   float16,
@@ -34,8 +33,9 @@ const {
   BatchBuilder,
 } = require("@hermeznetwork/commonjs");
 
-describe("Hermez ERC 777", function () {
-  let buidlerTokenERC777Mock;
+const INITIAL_DELAY = 0;
+describe("Hermez ERC20 Permit", function () {
+  let buidlerTokenERC20PermitMock;
   let buidlerHermez;
   let buidlerWithdrawalDelayer;
 
@@ -44,6 +44,7 @@ describe("Hermez ERC 777", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -57,6 +58,7 @@ describe("Hermez ERC 777", function () {
   let chainID;
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
+  const emptyPermit = "0x";
 
   beforeEach(async function () {
     [
@@ -69,9 +71,21 @@ describe("Hermez ERC 777", function () {
     ] = await ethers.getSigners();
 
     hermezGovernanceDAOAddress = governance.getAddress();
+    
+    const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
+    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+      const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      // ownerWalletTest = ownerWallet.connect(ethers.provider);
+      ownerWallet = owner;
+      ownerWallet.privateKey = ownerWalletTest.privateKey;
+    } 
+    else {
+      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+    }
 
     // factory helpers
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
     );
@@ -91,7 +105,7 @@ describe("Hermez ERC 777", function () {
       owner
     );
 
-    const Poseidon3Elements = new ethers.ContractFactory(
+    const Poseidon3Elements = new ethers.ContractFactory( 
       poseidonUnit.abi,
       poseidonUnit.createCode(3),
       owner
@@ -110,22 +124,18 @@ describe("Hermez ERC 777", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    // deploy registry erc1820
-    await registerERC1820(owner);
-
     // factory hermez
     const Hermez = await ethers.getContractFactory("HermezTest");
 
-    buidlerTokenERC777Mock = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerTokenERC20PermitMock = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     // deploy helpers
-    await buidlerTokenERC777Mock.deployed();
+    await buidlerTokenERC20PermitMock.deployed();
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
     let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
 
@@ -134,9 +144,9 @@ describe("Hermez ERC 777", function () {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
-
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
-      0,
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+      INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceDAOAddress,
       hermezGovernanceDAOAddress,
@@ -146,10 +156,10 @@ describe("Hermez ERC 777", function () {
     // deploy hermez
     await buidlerHermez.initializeHermez(
       [buidlerVerifierRollupHelper.address],
-      [calculateInputMaxTxLevels(maxTx, nLevels)],
+      calculateInputMaxTxLevels([maxTx], [nLevels]),
       buidlerVerifierWithdrawHelper.address,
       buidlerHermezAuctionTest.address,
-      buidlerTokenERC777Mock.address,
+      buidlerTokenERC20PermitMock.address,
       forgeL1L2BatchTimeout,
       feeAddToken,
       poseidonAddr2,
@@ -162,7 +172,7 @@ describe("Hermez ERC 777", function () {
     );
 
     // wait until is deployed
-    await buidlerTokenERC777Mock.deployed();
+    await buidlerTokenERC20PermitMock.deployed();
 
     const chainSC = await buidlerHermez.getChainID();
     chainID = chainSC.toNumber();
@@ -170,34 +180,29 @@ describe("Hermez ERC 777", function () {
 
   describe("test tokens contract", function () {
     it("Should share tokens", async function () {
-      await buidlerTokenERC777Mock.transfer(await id1.getAddress(), 50);
-      const id1Balance = await buidlerTokenERC777Mock.balanceOf(
+      await buidlerTokenERC20PermitMock.transfer(await id1.getAddress(), 50);
+      const id1Balance = await buidlerTokenERC20PermitMock.balanceOf(
         await id1.getAddress()
       );
       expect(id1Balance).to.equal(50);
 
-      await buidlerTokenERC777Mock.transfer(await id2.getAddress(), 50);
+      await buidlerTokenERC20PermitMock.transfer(await id2.getAddress(), 50);
 
-      const id2Balance = await buidlerTokenERC777Mock.balanceOf(
+      const id2Balance = await buidlerTokenERC20PermitMock.balanceOf(
         await id2.getAddress()
       );
       expect(id2Balance).to.equal(50);
     });
 
-    it("Should revert for unauthorized token", async function () {
-      await expect(
-        buidlerTokenERC777Mock.transfer(await buidlerHermez.address, 50)
-      ).to.be.revertedWith("Send ERC777 without data");
-    });
   });
 
   describe("Utils", function () {
     it("Add Token", async function () {
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
     });
@@ -208,9 +213,9 @@ describe("Hermez ERC 777", function () {
     it("createAccountDeposit", async function () {
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -218,21 +223,21 @@ describe("Hermez ERC 777", function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
 
-      // using ERC77 approach: recieveTokens()
+      // using erc20permit approach:
       await l1UserTxCreateAccountDeposit(
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         true
       );
 
       // using ERC20 approach: approve and transferFrom, shoudl revert
       await expect(
-        buidlerTokenERC777Mock.approve(buidlerHermez.address, loadAmount)
-      ).to.emit(buidlerTokenERC777Mock, "Approval");
+        buidlerTokenERC20PermitMock.approve(buidlerHermez.address, loadAmount)
+      ).to.emit(buidlerTokenERC20PermitMock, "Approval");
 
       const fromIdx0 = 0;
       const amountF0 = 0;
@@ -245,17 +250,18 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           amountF0,
           tokenID,
-          toIdx0
+          toIdx0,
+          emptyPermit
         )
-      ).to.be.revertedWith("safe transfer from failed");
+      );
     });
 
     it("deposit", async function () {
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -265,23 +271,23 @@ describe("Hermez ERC 777", function () {
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
       const tokenID = 1;
       const fromIdx = 256;
-      // using ERC77 approach: recieveTokens()
+      // using erc20permit approach:
       await l1UserTxDeposit(
         loadAmount,
         tokenID,
         fromIdx,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         true
       );
     });
     it("depositTransfer", async function () {
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -294,25 +300,25 @@ describe("Hermez ERC 777", function () {
       const toIdx = 257;
       const amountF = float16.fix2Float(10);
 
-      // using ERC77 approach: recieveTokens()
+      // using erc20permit approach:
       await l1UserTxDepositTransfer(
         loadAmount,
         tokenID,
         fromIdx,
         toIdx,
         amountF,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         true
       );
     });
     it("createAccountDepositTransfer", async function () {
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -325,25 +331,25 @@ describe("Hermez ERC 777", function () {
       const amountF = float16.fix2Float(10);
       const babyjub = `0x${accounts[0].bjjCompressed}`;
 
-      // using ERC77 approach: recieveTokens()
+      // using erc20permit approach:
       await l1UserTxCreateAccountDepositTransfer(
         loadAmount,
         tokenID,
         toIdx,
         amountF,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         true
       );
     });
     it("forceTransfer", async function () {
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -359,16 +365,16 @@ describe("Hermez ERC 777", function () {
         fromIdx,
         toIdx,
         amountF,
-        owner,
+        ownerWallet,
         buidlerHermez
       );
     });
     it("forceExit", async function () {
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -379,15 +385,6 @@ describe("Hermez ERC 777", function () {
       const fromIdx = 256;
       const amountF = float16.fix2Float(10);
       await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez);
-    });
-    it("invalid signature", async function () {
-      const randomData =
-        "0x010203048bfca700000000000000000000000065a7d8d33e148d5bf9fe11fd1425d31a4bf3d9e1";
-      const amount = 1000;
-      // Send data and amount
-      await expect(
-        buidlerTokenERC777Mock.send(buidlerHermez.address, amount, randomData)
-      ).to.be.revertedWith("Not valid calldata");
     });
   });
 
@@ -404,8 +401,8 @@ describe("Hermez ERC 777", function () {
       const newLastIdx = 255; // first idx
       const newStateRoot = 0;
       const newExitRoot = 0;
-      const compressedL1CoordinatorTx = `0x00`;
-      const L2TxsData = `0x00`;
+      const compressedL1CoordinatorTx = "0x00";
+      const L2TxsData = "0x00";
       const feeIdxCoordinator = `0x${utils.padZeros(
         "",
         ((nLevels * 64) / 8) * 2
@@ -432,7 +429,7 @@ describe("Hermez ERC 777", function () {
           proofB,
           proofC
         )
-      ).to.be.revertedWith("L1L2Batch required");
+      ).to.be.revertedWith("Hermez::forgeBatch: L1L2BATCH_REQUIRED");
 
       // must forge an L1 batch
       await buidlerHermez.forgeBatch(
@@ -480,7 +477,7 @@ describe("Hermez ERC 777", function () {
           proofB,
           proofC
         )
-      ).to.be.revertedWith("L1L2Batch required");
+      ).to.be.revertedWith("Hermez::forgeBatch: L1L2BATCH_REQUIRED");
     });
 
     it("handle L1 Coordinator Queue Test", async function () {
@@ -490,9 +487,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
       const l1TxCoordiatorArray = [];
@@ -571,9 +568,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -615,9 +612,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -628,9 +625,9 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -641,9 +638,9 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           tokenID,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -652,9 +649,9 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           tokenID,
           fromIdx,
-          owner,
+          ownerWallet,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -665,9 +662,9 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -678,9 +675,9 @@ describe("Hermez ERC 777", function () {
           toIdx,
           amountF,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -690,12 +687,12 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez
         )
       );
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch, now the current queue is filled with the L1-User-Tx
@@ -705,7 +702,7 @@ describe("Hermez ERC 777", function () {
       const cordinatorTxEth = await l1CoordinatorTxEth(
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez
       );
 
@@ -795,9 +792,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -808,9 +805,9 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -821,9 +818,9 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           tokenID,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -833,9 +830,9 @@ describe("Hermez ERC 777", function () {
           loadAmount,
           tokenID,
           fromIdx,
-          owner,
+          ownerWallet,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -846,9 +843,9 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -859,9 +856,9 @@ describe("Hermez ERC 777", function () {
           toIdx,
           amountF,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
-          buidlerTokenERC777Mock,
+          buidlerTokenERC20PermitMock,
           true
         )
       );
@@ -871,12 +868,12 @@ describe("Hermez ERC 777", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez
         )
       );
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch
@@ -886,7 +883,7 @@ describe("Hermez ERC 777", function () {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez)
       );
 
       l1TxCoordiatorArray.push(
@@ -918,9 +915,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -931,9 +928,9 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -942,7 +939,7 @@ describe("Hermez ERC 777", function () {
         await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
       );
 
-      const initialOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const initialOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         await owner.getAddress()
       );
 
@@ -979,7 +976,7 @@ describe("Hermez ERC 777", function () {
       )
         .to.emit(buidlerHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
-      const finalOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const finalOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         await owner.getAddress()
       );
       expect(parseInt(finalOwnerBalance)).to.equal(
@@ -1007,9 +1004,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1020,9 +1017,9 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -1031,7 +1028,7 @@ describe("Hermez ERC 777", function () {
         await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
       );
 
-      const initialOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const initialOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         buidlerWithdrawalDelayer.address
       );
 
@@ -1069,7 +1066,7 @@ describe("Hermez ERC 777", function () {
         .to.emit(buidlerHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
 
-      const finalOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const finalOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         buidlerWithdrawalDelayer.address
       );
       expect(parseInt(finalOwnerBalance)).to.equal(
@@ -1097,9 +1094,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1110,9 +1107,9 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -1121,7 +1118,7 @@ describe("Hermez ERC 777", function () {
         await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
       );
 
-      const initialOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const initialOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         await owner.getAddress()
       );
 
@@ -1149,7 +1146,7 @@ describe("Hermez ERC 777", function () {
       )
         .to.emit(buidlerHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
-      const finalOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const finalOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         await owner.getAddress()
       );
       expect(parseInt(finalOwnerBalance)).to.equal(
@@ -1177,9 +1174,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1190,9 +1187,9 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -1201,7 +1198,7 @@ describe("Hermez ERC 777", function () {
         await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
       );
 
-      const initialOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const initialOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         buidlerWithdrawalDelayer.address
       );
 
@@ -1230,7 +1227,7 @@ describe("Hermez ERC 777", function () {
       )
         .to.emit(buidlerHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
-      const finalOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const finalOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         buidlerWithdrawalDelayer.address
       );
       expect(parseInt(finalOwnerBalance)).to.equal(
@@ -1259,9 +1256,9 @@ describe("Hermez ERC 777", function () {
 
       await AddToken(
         buidlerHermez,
-        buidlerTokenERC777Mock,
-        buidlerTokenERC777Mock,
-        await owner.getAddress(),
+        buidlerTokenERC20PermitMock,
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
         feeAddToken
       );
 
@@ -1272,9 +1269,9 @@ describe("Hermez ERC 777", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
-        buidlerTokenERC777Mock,
+        buidlerTokenERC20PermitMock,
         numAccounts,
         true
       );
@@ -1300,7 +1297,7 @@ describe("Hermez ERC 777", function () {
           buidlerHermez
         )
       );
-      const initialOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const initialOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         await owner.getAddress()
       );
 
@@ -1328,7 +1325,7 @@ describe("Hermez ERC 777", function () {
       )
         .to.emit(buidlerHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
-      const finalOwnerBalance = await buidlerTokenERC777Mock.balanceOf(
+      const finalOwnerBalance = await buidlerTokenERC20PermitMock.balanceOf(
         await owner.getAddress()
       );
       expect(parseInt(finalOwnerBalance)).to.equal(

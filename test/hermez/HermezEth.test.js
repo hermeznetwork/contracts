@@ -18,8 +18,7 @@ const {
   AddToken,
   createAccounts,
   ForgerTest,
-  calculateInputMaxTxLevels,
-  registerERC1820,
+  calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
   float16,
@@ -40,6 +39,8 @@ const loadAmountF0 = 0;
 const amountF0 = 0;
 const tokenID0 = 0;
 const toIdx0 = 0;
+const emptyPermit = "0x";
+const INITIAL_DELAY = 0;
 
 describe("Hermez ETH test", function () {
   let buidlerTokenERC20Mock;
@@ -51,6 +52,7 @@ describe("Hermez ETH test", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -76,10 +78,22 @@ describe("Hermez ETH test", function () {
     ] = await ethers.getSigners();
 
     hermezGovernanceDAOAddress = governance.getAddress();
+    
+    const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
+    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+      const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      // ownerWalletTest = ownerWallet.connect(ethers.provider);
+      ownerWallet = owner;
+      ownerWallet.privateKey = ownerWalletTest.privateKey;
+    } 
+    else {
+      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+    }
 
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -119,8 +133,7 @@ describe("Hermez ETH test", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    // deploy registry erc1820
-    await registerERC1820(owner);
+
 
     // factory hermez
     const Hermez = await ethers.getContractFactory("HermezTest");
@@ -133,12 +146,11 @@ describe("Hermez ETH test", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
@@ -149,9 +161,9 @@ describe("Hermez ETH test", function () {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
-
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
-      0,
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+      INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceDAOAddress,
       hermezGovernanceDAOAddress,
@@ -161,7 +173,7 @@ describe("Hermez ETH test", function () {
     // deploy hermez
     await buidlerHermez.initializeHermez(
       [buidlerVerifierRollupHelper.address],
-      [calculateInputMaxTxLevels(maxTx, nLevels)],
+      calculateInputMaxTxLevels([maxTx], [nLevels]),
       buidlerVerifierWithdrawHelper.address,
       buidlerHermezAuctionTest.address,
       buidlerHEZ.address,
@@ -190,7 +202,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -207,18 +219,19 @@ describe("Hermez ETH test", function () {
           amountF0,
           tokenID,
           toIdx0,
+          emptyPermit,
           {
             value: loadAmount - Scalar.e(1),
             gasPrice: 0,
           }
         )
-      ).to.be.revertedWith("loadAmount != msg.value");
+      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH");
 
       await l1UserTxCreateAccountDeposit(
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20Mock
       );
@@ -229,7 +242,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       // invalid operation in Hermez.sol, test purposes
@@ -249,18 +262,19 @@ describe("Hermez ETH test", function () {
           amountF0,
           tokenID,
           toIdx0,
+          emptyPermit,
           {
             value: loadAmount - Scalar.e(1),
             gasPrice: 0,
           }
         )
-      ).to.be.revertedWith("loadAmount != msg.value");
+      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH");
 
       await l1UserTxDeposit(
         loadAmount,
         tokenID,
         fromIdx,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20Mock
       );
@@ -270,7 +284,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       // invalid operation in Hermez.sol, test purposes
@@ -292,12 +306,13 @@ describe("Hermez ETH test", function () {
           amountF,
           tokenID,
           toIdx,
+          emptyPermit,
           {
             value: loadAmount - Scalar.e(1),
             gasPrice: 0,
           }
         )
-      ).to.be.revertedWith("loadAmount != msg.value");
+      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH");
 
       await l1UserTxDepositTransfer(
         loadAmount,
@@ -305,7 +320,7 @@ describe("Hermez ETH test", function () {
         fromIdx,
         toIdx,
         amountF,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20Mock
       );
@@ -315,7 +330,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       // invalid operation in Hermez.sol, test purposes
@@ -337,12 +352,13 @@ describe("Hermez ETH test", function () {
           amountF,
           tokenID,
           toIdx,
+          emptyPermit,
           {
             value: loadAmount - Scalar.e(1),
             gasPrice: 0,
           }
         )
-      ).to.be.revertedWith("loadAmount != msg.value");
+      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH");
 
       await l1UserTxCreateAccountDepositTransfer(
         loadAmount,
@@ -350,7 +366,7 @@ describe("Hermez ETH test", function () {
         toIdx,
         amountF,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20Mock
       );
@@ -381,7 +397,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       // In order to add all the possible l1tx we need 2 accounts created in batchbuilder and rollup:
@@ -391,7 +407,7 @@ describe("Hermez ETH test", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20Mock,
         numAccounts
@@ -403,7 +419,7 @@ describe("Hermez ETH test", function () {
           loadAmount,
           tokenID,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20Mock
         )
@@ -414,7 +430,7 @@ describe("Hermez ETH test", function () {
           loadAmount,
           tokenID,
           fromIdx,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20Mock
         )
@@ -426,7 +442,7 @@ describe("Hermez ETH test", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20Mock
         )
@@ -438,7 +454,7 @@ describe("Hermez ETH test", function () {
           toIdx,
           amountF,
           babyjub,
-          owner,
+          ownerWallet,
           buidlerHermez,
           buidlerTokenERC20Mock
         )
@@ -449,12 +465,12 @@ describe("Hermez ETH test", function () {
           fromIdx,
           toIdx,
           amountF,
-          owner,
+          ownerWallet,
           buidlerHermez
         )
       );
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch
@@ -464,7 +480,7 @@ describe("Hermez ETH test", function () {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez)
       );
 
       l1TxCoordiatorArray.push(
@@ -498,7 +514,7 @@ describe("Hermez ETH test", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       // Create account and exit some funds
@@ -508,14 +524,14 @@ describe("Hermez ETH test", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         buidlerTokenERC20Mock,
         numAccounts
       );
 
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
       // forge empty batch
       await forgerTest.forgeBatch(true, [], []);
@@ -588,14 +604,14 @@ describe("Hermez ETH test", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         null, // token contract but ether is used
         numAccounts
       );
 
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch
@@ -674,14 +690,14 @@ describe("Hermez ETH test", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         null, // token contract but ether is used
         numAccounts
       );
 
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch
@@ -747,14 +763,14 @@ describe("Hermez ETH test", function () {
         loadAmount,
         tokenID,
         babyjub,
-        owner,
+        ownerWallet,
         buidlerHermez,
         null, // token contract but ether is used
         numAccounts
       );
 
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
       );
 
       // forge empty batch

@@ -5,14 +5,8 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC777/IERC777Recipient.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 
-contract WithdrawalDelayer is
-    Initializable,
-    ReentrancyGuardUpgradeSafe,
-    IERC777Recipient
-{
+contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
     struct DepositState {
         uint192 amount;
         uint64 depositTimestamp;
@@ -23,19 +17,10 @@ contract WithdrawalDelayer is
     bytes4 private constant _TRANSFERFROM_SIGNATURE = bytes4(
         keccak256(bytes("transferFrom(address,address,uint256)"))
     );
-    bytes4 private constant _SEND_SIGNATURE = bytes4(
-        keccak256(bytes("send(address,uint256,bytes)"))
-    );
     bytes4 private constant _DEPOSIT_SIGNATURE = bytes4(
         keccak256(bytes("deposit(address,address,uint192)"))
     );
 
-    IERC1820Registry private constant _ERC1820_REGISTRY = IERC1820Registry(
-        0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
-    bytes32 private constant _ERC777_RECIPIENT_INTERFACE_HASH = keccak256(
-        "ERC777TokensRecipient"
-    );
     uint64 public constant MAX_WITHDRAWAL_DELAY = 2 weeks; // Maximum time that the return of funds can be delayed
     uint64 public constant MAX_EMERGENCY_MODE_TIME = 26 weeks; // Maximum time in a state of emergency before a
     // resolution and after which the WHG can redeem the funds
@@ -94,11 +79,6 @@ contract WithdrawalDelayer is
         _hermezGovernanceDAOAddress = _initialHermezGovernanceDAOAddress;
         _whiteHackGroupAddress = _initialWhiteHackGroupAddress;
         _emergencyMode = false;
-        _ERC1820_REGISTRY.setInterfaceImplementer(
-            address(this),
-            _ERC777_RECIPIENT_INTERFACE_HASH,
-            address(this)
-        );
     }
 
     /**
@@ -116,7 +96,7 @@ contract WithdrawalDelayer is
     function setHermezGovernanceDAOAddress(address newAddress) external {
         require(
             msg.sender == _hermezGovernanceDAOAddress,
-            "Only Hermez Governance DAO"
+            "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_GOVERNANCE"
         );
         _hermezGovernanceDAOAddress = newAddress;
         emit NewHermezGovernanceDAOAddress(_hermezGovernanceDAOAddress);
@@ -137,7 +117,7 @@ contract WithdrawalDelayer is
     function setHermezKeeperAddress(address newAddress) external {
         require(
             msg.sender == _hermezKeeperAddress,
-            "Only Hermez Keeper Address"
+            "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_KEEPER"
         );
         _hermezKeeperAddress = newAddress;
         emit NewHermezKeeperAddress(_hermezKeeperAddress);
@@ -156,7 +136,10 @@ contract WithdrawalDelayer is
      * @param newAddress new `_whiteHackGroupAddress`
      */
     function setWhiteHackGroupAddress(address payable newAddress) external {
-        require(msg.sender == _whiteHackGroupAddress, "Only WHG address");
+        require(
+            msg.sender == _whiteHackGroupAddress,
+            "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_WHG"
+        );
         _whiteHackGroupAddress = newAddress;
         emit NewWhiteHackGroupAddress(_whiteHackGroupAddress);
     }
@@ -193,8 +176,14 @@ contract WithdrawalDelayer is
      * Events: `EmergencyModeEnabled` event.
      */
     function enableEmergencyMode() external {
-        require(msg.sender == _hermezKeeperAddress, "Only hermezKeeperAddress");
-        require(!_emergencyMode, "Emergency mode already enabled");
+        require(
+            msg.sender == _hermezKeeperAddress,
+            "WithdrawalDelayer::enableEmergencyMode: ONLY_KEEPER"
+        );
+        require(
+            !_emergencyMode,
+            "WithdrawalDelayer::enableEmergencyMode: ALREADY_ENABLED"
+        );
         _emergencyMode = true;
         /* solhint-disable not-rely-on-time */
         _emergencyModeStartingTime = uint64(now);
@@ -256,15 +245,24 @@ contract WithdrawalDelayer is
         address _token,
         uint192 _amount
     ) external payable nonReentrant {
-        require(msg.sender == hermezRollupAddress, "Only hermezRollupAddress");
+        require(
+            msg.sender == hermezRollupAddress,
+            "WithdrawalDelayer::deposit: ONLY_ROLLUP"
+        );
         if (msg.value != 0) {
-            require(_token == address(0x0), "ETH should be the 0x0 address");
-            require(_amount == msg.value, "Different amount and msg.value");
+            require(
+                _token == address(0x0),
+                "WithdrawalDelayer::deposit: WRONG_TOKEN_ADDRESS"
+            );
+            require(
+                _amount == msg.value,
+                "WithdrawalDelayer::deposit: WRONG_AMOUNT"
+            );
         } else {
             require(
                 IERC20(_token).allowance(hermezRollupAddress, address(this)) >=
                     _amount,
-                "Doesn't have enough allowance"
+                "WithdrawalDelayer::deposit: NOT_ENOUGH_ALLOWANCE"
             );
             /* solhint-disable avoid-low-level-calls */
             (bool success, bytes memory data) = address(_token).call(
@@ -278,48 +276,10 @@ contract WithdrawalDelayer is
             // `transferFrom` method may return (bool) or nothing.
             require(
                 success && (data.length == 0 || abi.decode(data, (bool))),
-                "Token Transfer Failed"
+                "WithdrawalDelayer::deposit: TOKEN_TRANSFER_FAILED"
             );
         }
         _processDeposit(_owner, _token, _amount);
-    }
-
-    /**
-     * Function to make a deposit in the WithdrawalDelayer smartcontract, with an ERC777
-     * @dev
-     * @param operator - not used
-     * @param from - not used
-     * @param to - not used
-     * @param amount the amount of tokens that have been sent
-     * @param userData contains the raw call of the method to invoke (deposit)
-     * @param operatorData - not used
-     * Events: `Deposit`
-     */
-    function tokensReceived(
-        // solhint-disable no-unused-vars
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData
-    ) external override nonReentrant {
-        require(from == hermezRollupAddress, "Only hermezRollupAddress");
-        require(userData.length != 0, "UserData empty");
-
-        // Decode the signature
-        bytes4 sig = abi.decode(userData, (bytes4));
-        // We only accept "deposit(address,address,uint192)"
-        if (sig == _DEPOSIT_SIGNATURE) {
-            (address _owner, address _token, uint192 _amount) = abi.decode(
-                userData[4:],
-                (address, address, uint192)
-            );
-            require(amount == _amount, "Amount sent different");
-            _processDeposit(_owner, msg.sender, _amount);
-        } else {
-            revert("Not a valid calldata");
-        }
     }
 
     /**
@@ -337,7 +297,10 @@ contract WithdrawalDelayer is
         // We identify a deposit with the keccak of its owner and the token
         bytes32 depositId = keccak256(abi.encodePacked(_owner, _token));
         uint192 newAmount = deposits[depositId].amount + _amount;
-        require(newAmount >= deposits[depositId].amount, "Deposit overflow");
+        require(
+            newAmount >= deposits[depositId].amount,
+            "WithdrawalDelayer::_processDeposit: DEPOSIT_OVERFLOW"
+        );
 
         deposits[depositId].amount = newAmount;
         deposits[depositId].depositTimestamp = uint64(now);
@@ -362,15 +325,15 @@ contract WithdrawalDelayer is
         external
         nonReentrant
     {
-        require(!_emergencyMode, "Emergency mode");
+        require(!_emergencyMode, "WithdrawalDelayer::deposit: EMERGENCY_MODE");
         // We identify a deposit with the keccak of its owner and the token
         bytes32 depositId = keccak256(abi.encodePacked(_owner, _token));
         uint192 amount = deposits[depositId].amount;
-        require(amount > 0, "No funds to withdraw");
+        require(amount > 0, "WithdrawalDelayer::withdrawal: NO_FUNDS");
         require(
             uint64(now) >=
                 deposits[depositId].depositTimestamp + _withdrawalDelay,
-            "Withdrawal not allowed yet"
+            "WithdrawalDelayer::withdrawal: WITHDRAWAL_NOT_ALLOWED"
         );
 
         // Update the state
@@ -402,17 +365,20 @@ contract WithdrawalDelayer is
         address _token,
         uint256 _amount
     ) external nonReentrant {
-        require(_emergencyMode, "Only Emergency Mode");
+        require(
+            _emergencyMode,
+            "WithdrawalDelayer::escapeHatchWithdrawal: ONLY_EMODE"
+        );
         require(
             msg.sender == _whiteHackGroupAddress ||
                 msg.sender == _hermezGovernanceDAOAddress,
-            "Only GovernanceDAO or WHG"
+            "WithdrawalDelayer::escapeHatchWithdrawal: ONLY_GOVERNANCE_WHG"
         );
         if (msg.sender == _whiteHackGroupAddress) {
             require(
                 uint64(now) >=
                     _emergencyModeStartingTime + MAX_EMERGENCY_MODE_TIME,
-                "NO MAX_EMERGENCY_MODE_TIME"
+                "WithdrawalDelayer::escapeHatchWithdrawal: NO_MAX_EMERGENCY_MODE_TIME"
             );
         }
         if (_token == address(0x0)) {
@@ -431,7 +397,7 @@ contract WithdrawalDelayer is
     function _ethWithdrawal(address to, uint256 amount) internal {
         /* solhint-disable avoid-low-level-calls */
         (bool success, ) = to.call{value: amount}("");
-        require(success, "ETH transfer failed");
+        require(success, "WithdrawalDelayer::_ethWithdrawal: TRANSFER_FAILED");
     }
 
     /**
@@ -445,34 +411,14 @@ contract WithdrawalDelayer is
         address to,
         uint256 amount
     ) internal {
-        bool success;
-        bytes memory data;
-
-        // Check if the token is an ERC777
-        bool isERC777 = _ERC1820_REGISTRY.getInterfaceImplementer(
-            tokenAddress,
-            keccak256("ERC777Token")
-        ) != address(0x0)
-            ? true
-            : false;
-
-        // In case that the token is an ERC777 we use send instead of transfer
-        // Since an ERC777 is not forced to be ERC20 compatible
-        if (isERC777) {
-            /* solhint-disable avoid-low-level-calls */
-            (success, data) = tokenAddress.call(
-                abi.encodeWithSelector(_SEND_SIGNATURE, to, amount, "")
-            );
-        } else {
-            /* solhint-disable avoid-low-level-calls */
-            (success, data) = tokenAddress.call(
-                abi.encodeWithSelector(_TRANSFER_SIGNATURE, to, amount)
-            );
-        }
+        /* solhint-disable avoid-low-level-calls */
+        (bool success, bytes memory data) = tokenAddress.call(
+            abi.encodeWithSelector(_TRANSFER_SIGNATURE, to, amount)
+        );
 
         require(
             success && (data.length == 0 || abi.decode(data, (bool))),
-            "Token Transfer Failed"
+            "WithdrawalDelayer::_tokenWithdrawal: TOKEN_TRANSFER_FAILED"
         );
     }
 }

@@ -14,8 +14,7 @@ const {
   l1CoordinatorTxBjj,
   AddToken,
   ForgerTest,
-  calculateInputMaxTxLevels,
-  registerERC1820,
+  calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
   float16,
@@ -30,6 +29,8 @@ const {
   BatchBuilder,
 } = require("@hermeznetwork/commonjs");
 
+const INITIAL_DELAY = 0;
+
 describe("Hermez Queue", function () {
   let buidlerTokenERC20Mock;
   let buidlerHermez;
@@ -40,6 +41,7 @@ describe("Hermez Queue", function () {
   let id2;
   let addrs;
   let hermezGovernanceDAOAddress;
+  let ownerWallet;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -66,9 +68,21 @@ describe("Hermez Queue", function () {
 
     hermezGovernanceDAOAddress = governance.getAddress();
 
+    const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
+    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+      const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      // ownerWalletTest = ownerWallet.connect(ethers.provider);
+      ownerWallet = owner;
+      ownerWallet.privateKey = ownerWalletTest.privateKey;
+    } 
+    else {
+      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+    }
+    
     // factory helpers
     let TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
-    const TokenERC777Mock = await ethers.getContractFactory("ERC777Mock");
+    const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierRollupHelper"
@@ -107,8 +121,6 @@ describe("Hermez Queue", function () {
     const poseidonAddr3 = buidlerPoseidon3Elements.address;
     const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-    await registerERC1820(owner);
-
     // factory hermez
     let Hermez = await ethers.getContractFactory("HermezTest");
 
@@ -120,12 +132,11 @@ describe("Hermez Queue", function () {
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC777Mock.deploy(
-      await owner.getAddress(),
-      tokenInitialAmount,
+    buidlerHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
-      []
+      await owner.getAddress(),
+      tokenInitialAmount
     );
 
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
@@ -136,9 +147,9 @@ describe("Hermez Queue", function () {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
-
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
-      0,
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+      INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceDAOAddress,
       hermezGovernanceDAOAddress,
@@ -147,7 +158,7 @@ describe("Hermez Queue", function () {
 
     await buidlerHermez.initializeHermez(
       [buidlerVerifierRollupHelper.address],
-      [calculateInputMaxTxLevels(maxTx, nLevels)],
+      calculateInputMaxTxLevels([maxTx], [nLevels]),
       buidlerVerifierWithdrawHelper.address,
       buidlerHermezAuctionTest.address,
       buidlerHEZ.address,
@@ -187,7 +198,7 @@ describe("Hermez Queue", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       );
       const initialLastForge = await buidlerHermez.nextL1FillingQueue();
@@ -260,7 +271,7 @@ describe("Hermez Queue", function () {
         buidlerHermez,
         buidlerTokenERC20Mock,
         buidlerHEZ,
-        await owner.getAddress(),
+        ownerWallet,
         feeAddToken
       ); // add l1-user-tx
       for (let i = 0; i < 128; i++)
@@ -318,7 +329,7 @@ describe("Hermez Queue", function () {
           proofB,
           proofC
         )
-      ).to.be.revertedWith("L1 TX overflow");
+      ).to.be.revertedWith("Hermez::_buildL1Data: L1_TX_OVERFLOW");
     });
   });
 });
