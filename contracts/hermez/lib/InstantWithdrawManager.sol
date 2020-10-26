@@ -2,7 +2,6 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "../interfaces/WithdrawalDelayerInterface.sol";
 import "./HermezHelpers.sol";
 
@@ -19,11 +18,6 @@ contract InstantWithdrawManager is HermezHelpers {
         uint256 blockWithdrawalRate; // every `blockWithdrawalRate` blocks add 1 withdrawal
         uint256 maxWithdrawals; // max withdrawals the bucket can hold
     }
-
-    // ERC1820Registry interface
-    IERC1820Registry constant _ERC1820 = IERC1820Registry(
-        0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
 
     // Number of buckets
     uint256 private constant _NUM_BUCKETS = 5;
