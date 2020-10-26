@@ -127,8 +127,7 @@ async function main() {
         console.log("/////////////////////////////////////////////////////////////////");
         console.log("withdraw con be performed with the following params:");
         console.log("numExitRoot:" + batchFoged);
-        console.log("sibilings: ");
-        console.log(exitInfo.siblings);  
+        console.log("sibilings: ", exitInfo.siblings);
         console.log("/////////////////////////////////////////////////////////////////");
 
       }

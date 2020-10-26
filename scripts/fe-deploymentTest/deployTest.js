@@ -7,7 +7,6 @@ const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {BigNumber} = require("ethers");
 const {
   calculateInputMaxTxLevels,
-  registerERC1820,
   AddToken,
 } = require("../../test/hermez/helpers/helpers");
 
@@ -96,9 +95,6 @@ async function main() {
   const poseidonAddr3 = buidlerPoseidon3Elements.address;
   const poseidonAddr4 = buidlerPoseidon4Elements.address;
 
-  // deploy registry erc1820
-  await registerERC1820(owner);
-
   // factory hermez
   const Hermez = await ethers.getContractFactory("HermezTest");
 
@@ -127,13 +123,15 @@ async function main() {
   buidlerHermez = await Hermez.deploy();
   await buidlerHermez.deployed();
 
-  buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+  buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+  await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
     0,
     buidlerHermez.address,
     hermezGovernanceDAOAddress,
     hermezGovernanceDAOAddress,
     hermezGovernanceDAOAddress
   );
+
 
   // initialize hermez
   await buidlerHermez.initializeHermez(
