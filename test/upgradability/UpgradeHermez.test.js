@@ -22,22 +22,13 @@ const TIMEOUT = 400000;
 
 describe("upgradability test", function() {
   this.timeout(TIMEOUT);
-  let deployer,
-    hermezKeeperEthers,
-    hermezGovernanceEthers,
-    whiteHackGroupEthers,
-    donationEthers,
-    bootCoordinatorEthers;
 
-  let hermezKeeperAddress,
-    whiteHackGroupAddress,
-    hermezGovernanceAddress,
-    donationAddress,
-    bootCoordinatorAddress;
+  let hermez, libVerifiersAddress, maxTxVerifier, nLevelsVerifer, libverifiersWithdrawAddress,
+    hermezAuctionProtocol, buidlerHEZToken, libposeidonsAddress, hermezGovernanceAddress, 
+    hermezKeeperAddress, withdrawalDelayer;
+  
+  beforeEach(async function() {
 
-  let hermezAuctionProtocol, withdrawalDelayer, hermez;
-
-  before(async function() {
     [
       deployer,
       hermezKeeperEthers,
@@ -46,6 +37,7 @@ describe("upgradability test", function() {
       donationEthers,
       bootCoordinatorEthers,
     ] = await ethers.getSigners();
+
     hermezKeeperAddress = await hermezKeeperEthers.getAddress();
     whiteHackGroupAddress = await whiteHackGroupEthers.getAddress();
     hermezGovernanceAddress = await hermezGovernanceEthers.getAddress();
@@ -70,7 +62,7 @@ describe("upgradability test", function() {
       "WithdrawalDelayer"
     );
     const HEZToken = await ethers.getContractFactory("HEZ");
-    let Hermez = await ethers.getContractFactory("Hermez");
+    const Hermez = await ethers.getContractFactory("Hermez");
 
     // hermez libs
     const VerifierRollupHelper = await ethers.getContractFactory(
@@ -128,7 +120,7 @@ describe("upgradability test", function() {
     console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
     // deploy HEZ (erc20Permit) token
-    const buidlerHEZToken = await HEZToken.deploy(
+    buidlerHEZToken = await HEZToken.deploy(
       await deployer.getAddress(),
     );
     await buidlerHEZToken.deployed();
@@ -158,7 +150,7 @@ describe("upgradability test", function() {
 
     let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
     await buidlerVerifierWithdrawHelper.deployed();
-    let libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
+    libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
     console.log("libverifiersWithdrawAddress at: ", buidlerVerifierWithdrawHelper.address);
 
     // initialize withdrawal delayer
@@ -171,7 +163,7 @@ describe("upgradability test", function() {
     );
 
     let genesisBlock =
-            (await time.latestBlock()).toNumber() + 100;
+          (await time.latestBlock()).toNumber() + 100;
 
     await hermezAuctionProtocol.hermezAuctionProtocolInitializer(
       buidlerHEZToken.address,
@@ -185,8 +177,8 @@ describe("upgradability test", function() {
     console.log("hermezAuctionProtocol Initialized");
 
     // initialize Hermez
-    let maxTxVerifier = [];
-    let nLevelsVerifer = [];
+    maxTxVerifier = [];
+    nLevelsVerifer = [];
     libVerifiersAddress.forEach(() => {
       maxTxVerifier.push(maxTxVerifierConstant);
       nLevelsVerifer.push(nLevelsVeriferConstant);
@@ -209,36 +201,99 @@ describe("upgradability test", function() {
     );
 
     console.log("hermez Initialized");
+  });
+  it("should be able to upgrade Hermez", async () => {
 
+    const HermezV2 = await ethers.getContractFactory("HermezV2");
+    const newHermezV2 = HermezV2.attach(hermez.address);
+
+    await expect(newHermezV2.getVersion()).to.be.reverted;
+
+    await upgrades.upgradeProxy(hermez.address, HermezV2, {
+      unsafeAllowCustomTypes: true
+    });
+
+    await expect(newHermezV2.initializeHermez(
+      libVerifiersAddress,
+      calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
+      libverifiersWithdrawAddress,
+      hermezAuctionProtocol.address,
+      buidlerHEZToken.address,
+      10,
+      10,
+      libposeidonsAddress[0],
+      libposeidonsAddress[1],
+      libposeidonsAddress[2],
+      hermezGovernanceAddress,
+      hermezKeeperAddress,
+      1209600,
+      withdrawalDelayer.address
+    )).to.be.revertedWith("Contract instance has already been initialized");
+
+    await newHermezV2.setVersion();
+    expect(await newHermezV2.getVersion()).to.be.equal(2);
 
   });
-  it("should be able to upgrade all", async () => {
-    const HermezAuctionProtocolV2 = await ethers.getContractFactory("HermezAuctionProtocolV2");
-    const Timelock = await ethers.getContractFactory("Timelock");
+  it("should be able to upgrade Hermez with prepareUpgrade", async () => {
     const HermezV2 = await ethers.getContractFactory("HermezV2");
 
-    const newHermezAuctionProtocolV2 = HermezAuctionProtocolV2.attach(hermezAuctionProtocol.address);
-    await expect(newHermezAuctionProtocolV2.getVersion()).to.be.reverted;
+    const hermezV2 = await upgrades.prepareUpgrade(hermez.address, HermezV2, {
+      unsafeAllowCustomTypes: true
+    });
+
+    const AdminFactory = await getProxyAdminFactory();
+    const admin = AdminFactory.attach(await getAdminAddress(ethers.provider, hermez.address));
+    const proxyAdminAddress = await getAdminAddress(ethers.provider, hermez.address);
+
+    await admin.upgrade(hermez.address, hermezV2);
+    const newHermezV2 = HermezV2.attach(hermez.address);
+    await newHermezV2.setVersion();
+    expect(await newHermezV2.getVersion()).to.be.equal(2);
+  });
+
+  it("should be able to upgrade Hermez with prepareUpgrade after transferProxyAdminOwnership", async () => {
+    const HermezV2 = await ethers.getContractFactory("HermezV2");
+
+    const hermezV2 = await upgrades.prepareUpgrade(hermez.address, HermezV2, {
+      unsafeAllowCustomTypes: true
+    });
+
+
+    await upgrades.admin.transferProxyAdminOwnership(hermezGovernanceAddress);
+
+    const AdminFactory = await getProxyAdminFactory();
+    const admin = AdminFactory.attach(await getAdminAddress(ethers.provider, hermez.address));
+    const proxyAdminAddress = await getAdminAddress(ethers.provider, hermez.address);
+
+    await admin.connect(hermezGovernanceEthers).upgrade(hermez.address, hermezV2);
+    const newHermezV2 = HermezV2.attach(hermez.address);
+    await newHermezV2.setVersion();
+    expect(await newHermezV2.getVersion()).to.be.equal(2);
+  });
+
+
+  it("should be able to upgrade using Timelock Hermez with prepareUpgrade", async () => {
+    const HermezV2 = await ethers.getContractFactory("HermezV2");
+    const Timelock = await ethers.getContractFactory("Timelock");
 
     const newHermezV2 = HermezV2.attach(hermez.address);
     await expect(newHermezV2.getVersion()).to.be.reverted;
 
-
     const AdminFactory = await getProxyAdminFactory();
-    let adminAddress = await getAdminAddress(ethers.provider, hermezAuctionProtocol.address);
+    let adminAddress = await getAdminAddress(ethers.provider, hermez.address);
     const admin = AdminFactory.attach(adminAddress);
+
 
     // Deploy Timelock
     const TimelockBuidler = await Timelock.deploy(hermezGovernanceAddress, 604800);
     await TimelockBuidler.deployed();
-    await admin.transferOwnership(TimelockBuidler.address);
+    await admin.connect(hermezGovernanceEthers).transferOwnership(TimelockBuidler.address);
 
-    const hermezAuctionProtocolV2 = await upgrades.prepareUpgrade(hermezAuctionProtocol.address, HermezAuctionProtocolV2, {
-      unsafeAllowCustomTypes: true
-    });
     const hermezV2 = await upgrades.prepareUpgrade(hermez.address, HermezV2, {
       unsafeAllowCustomTypes: true
     });
+
+    const proxyAdminAddress = await getAdminAddress(ethers.provider, hermez.address);
 
     let iface = new ethers.utils.Interface(ProxyAdmin.abi);
     let latest = await ethers.provider.getBlockNumber();
@@ -248,17 +303,17 @@ describe("upgradability test", function() {
       adminAddress,
       0,
       "",
-      iface.encodeFunctionData("upgrade", [hermezAuctionProtocol.address, hermezAuctionProtocolV2]),
+      iface.encodeFunctionData("upgrade", [hermez.address, hermezV2]),
       eta
     );
 
-    await TimelockBuidler.connect(hermezGovernanceEthers).queueTransaction(
+    await expect(TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
       adminAddress,
       0,
       "",
       iface.encodeFunctionData("upgrade", [hermez.address, hermezV2]),
       eta
-    );
+    )).to.be.revertedWith("Timelock::executeTransaction: Transaction hasn't surpassed time lock.");
 
     await ethers.provider.send("evm_setNextBlockTimestamp", [eta]);
 
@@ -266,23 +321,13 @@ describe("upgradability test", function() {
       adminAddress,
       0,
       "",
-      iface.encodeFunctionData("upgrade", [hermezAuctionProtocol.address, hermezAuctionProtocolV2]),
-      eta
-    );
-    await TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
-      adminAddress,
-      0,
-      "",
       iface.encodeFunctionData("upgrade", [hermez.address, hermezV2]),
       eta
     );
-
-    await newHermezAuctionProtocolV2.setVersion();
-    expect(await newHermezAuctionProtocolV2.getVersion()).to.be.equal(2);
-
     await newHermezV2.setVersion();
     expect(await newHermezV2.getVersion()).to.be.equal(2);
   });
+
 
 });
 
