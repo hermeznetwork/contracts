@@ -73,6 +73,8 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
     // Mapping to register all the coordinators. The address used for the mapping is the bidder address
     mapping(address => Coordinator) public coordinators;
 
+    uint256 public version;
+
     event NewBid(
         uint128 indexed slot,
         uint128 bidAmount,
@@ -154,16 +156,20 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
         _bootCoordinator = bootCoordinatorAddress;
     }
 
+    function setVersion() public {
+        version = 2;
+    }
+
+    function getVersion() external view returns (uint256) {
+        return version;
+    }
+
     /**
      * @notice Getter of the current `_slotDeadline`
      * @return The `_slotDeadline` value
      */
     function getSlotDeadline() external view returns (uint8) {
         return _slotDeadline;
-    }
-
-    function isNewVersion() external pure returns (bool) {
-        return true;
     }
 
     /**
