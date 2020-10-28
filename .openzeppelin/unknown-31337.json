@@ -1,0 +1,597 @@
+{
+  "manifestVersion": "3.1",
+  "impls": {
+    "6ea29e40d04e360ff713628adaa0d8cefa3190f5a0baba14dcb18179d3dcad1c": {
+      "address": "0x7c2C195CD6D34B8F845992d380aADB2730bB9C6F",
+      "txHash": "0x1cc310e6c6198115155ce6c0e40c8ad2edb7091f5ea51b332e8f64cf9338fcf4",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:61"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeSafe",
+            "label": "_notEntered",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol:21"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeSafe",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol:63"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "tokenHEZ",
+            "type": "t_contract(IHEZToken)14971",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:44"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "hermezRollup",
+            "type": "t_address",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:46"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_governanceAddress",
+            "type": "t_address",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:48"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_donationAddress",
+            "type": "t_address",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:50"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_bootCoordinator",
+            "type": "t_address",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:52"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_defaultSlotSetBid",
+            "type": "t_array(t_uint128)6_storage",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:54"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "genesisBlock",
+            "type": "t_uint128",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:56"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_closedAuctionSlots",
+            "type": "t_uint16",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:58"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_openAuctionSlots",
+            "type": "t_uint16",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:60"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_allocationRatio",
+            "type": "t_array(t_uint16)3_storage",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:62"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_outbidding",
+            "type": "t_uint16",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:64"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "_slotDeadline",
+            "type": "t_uint8",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:67"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "slots",
+            "type": "t_mapping(t_uint128,t_struct(SlotState)9434_storage)",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:70"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "pendingBalances",
+            "type": "t_mapping(t_address,t_uint128)",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:72"
+          },
+          {
+            "contract": "HermezAuctionProtocol",
+            "label": "coordinators",
+            "type": "t_mapping(t_address,t_struct(Coordinator)9425_storage)",
+            "src": "contracts/auction/HermezAuctionProtocol.sol:74"
+          }
+        ],
+        "types": {
+          "t_contract(IHEZToken)14971": {
+            "label": "contract IHEZToken"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint128)6_storage": {
+            "label": "uint128[6]"
+          },
+          "t_uint128": {
+            "label": "uint128"
+          },
+          "t_uint16": {
+            "label": "uint16"
+          },
+          "t_array(t_uint16)3_storage": {
+            "label": "uint16[3]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_mapping(t_uint128,t_struct(SlotState)9434_storage)": {
+            "label": "mapping(uint128 => struct HermezAuctionProtocol.SlotState)"
+          },
+          "t_mapping(t_address,t_uint128)": {
+            "label": "mapping(address => uint128)"
+          },
+          "t_mapping(t_address,t_struct(Coordinator)9425_storage)": {
+            "label": "mapping(address => struct HermezAuctionProtocol.Coordinator)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "288555157728a4db2c44c369e762eb4f4d164a9b3da879b1977c0371d38525df": {
+      "address": "0xf4e77E5Da47AC3125140c470c71cBca77B5c638c",
+      "txHash": "0x5f13433ce0e8b9477f757b013844b5d63113133b09cbc2ae75044abb8d9517ce",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:61"
+          },
+          {
+            "contract": "HermezHelpers",
+            "label": "_insPoseidonUnit2",
+            "type": "t_contract(PoseidonUnit)12911",
+            "src": "contracts/hermez/lib/HermezHelpers.sol:18"
+          },
+          {
+            "contract": "HermezHelpers",
+            "label": "_insPoseidonUnit3",
+            "type": "t_contract(PoseidonUnit)12911",
+            "src": "contracts/hermez/lib/HermezHelpers.sol:19"
+          },
+          {
+            "contract": "HermezHelpers",
+            "label": "_insPoseidonUnit4",
+            "type": "t_contract(PoseidonUnit)12911",
+            "src": "contracts/hermez/lib/HermezHelpers.sol:20"
+          },
+          {
+            "contract": "InstantWithdrawManager",
+            "label": "buckets",
+            "type": "t_array(t_struct(Bucket)13425_storage)5_storage",
+            "src": "contracts/hermez/lib/InstantWithdrawManager.sol:25"
+          },
+          {
+            "contract": "InstantWithdrawManager",
+            "label": "hermezGovernanceDAOAddress",
+            "type": "t_address",
+            "src": "contracts/hermez/lib/InstantWithdrawManager.sol:28"
+          },
+          {
+            "contract": "InstantWithdrawManager",
+            "label": "safetyAddress",
+            "type": "t_address",
+            "src": "contracts/hermez/lib/InstantWithdrawManager.sol:32"
+          },
+          {
+            "contract": "InstantWithdrawManager",
+            "label": "withdrawalDelay",
+            "type": "t_uint64",
+            "src": "contracts/hermez/lib/InstantWithdrawManager.sol:35"
+          },
+          {
+            "contract": "InstantWithdrawManager",
+            "label": "withdrawDelayerContract",
+            "type": "t_contract(WithdrawalDelayerInterface)12897",
+            "src": "contracts/hermez/lib/InstantWithdrawManager.sol:44"
+          },
+          {
+            "contract": "InstantWithdrawManager",
+            "label": "tokenExchange",
+            "type": "t_mapping(t_address,t_uint64)",
+            "src": "contracts/hermez/lib/InstantWithdrawManager.sol:52"
+          },
+          {
+            "contract": "Hermez",
+            "label": "rollupVerifiers",
+            "type": "t_array(t_struct(VerifierRollup)11086_storage)dyn_storage",
+            "src": "contracts/hermez/Hermez.sol:86"
+          },
+          {
+            "contract": "Hermez",
+            "label": "withdrawVerifier",
+            "type": "t_contract(VerifierWithdrawInterface)12876",
+            "src": "contracts/hermez/Hermez.sol:89"
+          },
+          {
+            "contract": "Hermez",
+            "label": "lastIdx",
+            "type": "t_uint48",
+            "src": "contracts/hermez/Hermez.sol:92"
+          },
+          {
+            "contract": "Hermez",
+            "label": "lastForgedBatch",
+            "type": "t_uint64",
+            "src": "contracts/hermez/Hermez.sol:95"
+          },
+          {
+            "contract": "Hermez",
+            "label": "stateRootMap",
+            "type": "t_mapping(t_uint64,t_uint256)",
+            "src": "contracts/hermez/Hermez.sol:98"
+          },
+          {
+            "contract": "Hermez",
+            "label": "exitRootsMap",
+            "type": "t_mapping(t_uint64,t_uint256)",
+            "src": "contracts/hermez/Hermez.sol:101"
+          },
+          {
+            "contract": "Hermez",
+            "label": "exitNullifierMap",
+            "type": "t_mapping(t_uint64,t_mapping(t_uint48,t_bool))",
+            "src": "contracts/hermez/Hermez.sol:105"
+          },
+          {
+            "contract": "Hermez",
+            "label": "tokenList",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts/hermez/Hermez.sol:109"
+          },
+          {
+            "contract": "Hermez",
+            "label": "tokenMap",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/hermez/Hermez.sol:112"
+          },
+          {
+            "contract": "Hermez",
+            "label": "feeAddToken",
+            "type": "t_uint256",
+            "src": "contracts/hermez/Hermez.sol:115"
+          },
+          {
+            "contract": "Hermez",
+            "label": "hermezAuctionContract",
+            "type": "t_contract(AuctionInterface)12822",
+            "src": "contracts/hermez/Hermez.sol:118"
+          },
+          {
+            "contract": "Hermez",
+            "label": "mapL1TxQueue",
+            "type": "t_mapping(t_uint64,t_bytes_storage)",
+            "src": "contracts/hermez/Hermez.sol:122"
+          },
+          {
+            "contract": "Hermez",
+            "label": "lastL1L2Batch",
+            "type": "t_uint64",
+            "src": "contracts/hermez/Hermez.sol:125"
+          },
+          {
+            "contract": "Hermez",
+            "label": "nextL1ToForgeQueue",
+            "type": "t_uint64",
+            "src": "contracts/hermez/Hermez.sol:128"
+          },
+          {
+            "contract": "Hermez",
+            "label": "nextL1FillingQueue",
+            "type": "t_uint64",
+            "src": "contracts/hermez/Hermez.sol:131"
+          },
+          {
+            "contract": "Hermez",
+            "label": "forgeL1L2BatchTimeout",
+            "type": "t_uint8",
+            "src": "contracts/hermez/Hermez.sol:134"
+          },
+          {
+            "contract": "Hermez",
+            "label": "tokenHEZ",
+            "type": "t_address",
+            "src": "contracts/hermez/Hermez.sol:137"
+          }
+        ],
+        "types": {
+          "t_array(t_struct(VerifierRollup)11086_storage)dyn_storage": {
+            "label": "struct Hermez.VerifierRollup[]"
+          },
+          "t_contract(VerifierWithdrawInterface)12876": {
+            "label": "contract VerifierWithdrawInterface"
+          },
+          "t_uint48": {
+            "label": "uint48"
+          },
+          "t_uint64": {
+            "label": "uint64"
+          },
+          "t_mapping(t_uint64,t_uint256)": {
+            "label": "mapping(uint64 => uint256)"
+          },
+          "t_mapping(t_uint64,t_mapping(t_uint48,t_bool))": {
+            "label": "mapping(uint64 => mapping(uint48 => bool))"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_contract(AuctionInterface)12822": {
+            "label": "contract AuctionInterface"
+          },
+          "t_mapping(t_uint64,t_bytes_storage)": {
+            "label": "mapping(uint64 => bytes)"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_struct(Bucket)13425_storage)5_storage": {
+            "label": "struct InstantWithdrawManager.Bucket[5]"
+          },
+          "t_contract(WithdrawalDelayerInterface)12897": {
+            "label": "contract WithdrawalDelayerInterface"
+          },
+          "t_mapping(t_address,t_uint64)": {
+            "label": "mapping(address => uint64)"
+          },
+          "t_contract(PoseidonUnit)12911": {
+            "label": "contract PoseidonUnit"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "686b73de5e8520904ef4e60c1a1ce2a20d5d84bf81f594a778ba1db0aeb04a0e": {
+      "address": "0xd15468525c35BDBC1eD8F2e09A00F8a173437f2f",
+      "txHash": "0x6120aca6cb0901177e3243db99c5f1ac148b250a2469ab19028bf5593e4af5ea",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:26"
+          },
+          {
+            "contract": "Initializable",
+            "label": "______gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/upgrades/contracts/Initializable.sol:61"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeSafe",
+            "label": "_notEntered",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol:21"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeSafe",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol:63"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "tokenHEZ",
+            "type": "t_contract(IHEZToken)14971",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:44"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "hermezRollup",
+            "type": "t_address",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:46"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_governanceAddress",
+            "type": "t_address",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:48"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_donationAddress",
+            "type": "t_address",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:50"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_bootCoordinator",
+            "type": "t_address",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:52"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_defaultSlotSetBid",
+            "type": "t_array(t_uint128)6_storage",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:54"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "genesisBlock",
+            "type": "t_uint128",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:56"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_closedAuctionSlots",
+            "type": "t_uint16",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:58"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_openAuctionSlots",
+            "type": "t_uint16",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:60"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_allocationRatio",
+            "type": "t_array(t_uint16)3_storage",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:62"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_outbidding",
+            "type": "t_uint16",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:64"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "_slotDeadline",
+            "type": "t_uint8",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:67"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "slots",
+            "type": "t_mapping(t_uint128,t_struct(SlotState)17191_storage)",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:70"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "pendingBalances",
+            "type": "t_mapping(t_address,t_uint128)",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:72"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "coordinators",
+            "type": "t_mapping(t_address,t_struct(Coordinator)17182_storage)",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:74"
+          },
+          {
+            "contract": "HermezAuctionProtocolV2",
+            "label": "version",
+            "type": "t_uint256",
+            "src": "contracts/mock/HermezAuctionProtocolV2.sol:76"
+          }
+        ],
+        "types": {
+          "t_contract(IHEZToken)14971": {
+            "label": "contract IHEZToken"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint128)6_storage": {
+            "label": "uint128[6]"
+          },
+          "t_uint128": {
+            "label": "uint128"
+          },
+          "t_uint16": {
+            "label": "uint16"
+          },
+          "t_array(t_uint16)3_storage": {
+            "label": "uint16[3]"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_mapping(t_uint128,t_struct(SlotState)17191_storage)": {
+            "label": "mapping(uint128 => struct HermezAuctionProtocolV2.SlotState)"
+          },
+          "t_mapping(t_address,t_uint128)": {
+            "label": "mapping(address => uint128)"
+          },
+          "t_mapping(t_address,t_struct(Coordinator)17182_storage)": {
+            "label": "mapping(address => struct HermezAuctionProtocolV2.Coordinator)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    }
+  },
+  "admin": {
+    "address": "0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf",
+    "txHash": "0xb8662a877fa5b5ebf4b0558f5a3c9c50ac4d4d561d86c00ec53667197413ad53"
+  }
+}
