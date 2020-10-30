@@ -3,6 +3,7 @@ require("dotenv").config();
 //usePlugin("buidler-deploy");
 usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
+// usePlugin("@nomiclabs/buidler-ganache");
 usePlugin("@nomiclabs/buidler-web3");
 usePlugin("@nomiclabs/buidler-ethers");
 usePlugin("@nomiclabs/buidler-waffle");
@@ -20,16 +21,27 @@ module.exports = {
     buidlerevm: {
       blockGasLimit: 12500000,
       allowUnlimitedContractSize: true,
+      // accounts: {
+      //   mnemonic:
+      //     DEFAULT_MNEMONIC,
+      //   path: "m/44'/60'/0'/0",
+      //   initialIndex: 0,
+      //   count: 20,
+      // },
+      // mnemonic: DEFAULT_MNEMONIC,
     },
     ganache: {
-      url: "http://localhost:8565",
-      accounts: {
-        mnemonic:
-          "dismiss similar fury minute fantasy boy deputy there taxi salmon body later",
-        path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 20,
-      },
+      url: "http://localhost:8545",
+      blockGasLimit: 12500000,
+      gas: 12500000,
+      gasPrice: 1,
+      // accounts: {
+      //   mnemonic:
+      //     DEFAULT_MNEMONIC,
+      //   path: "m/44'/60'/0'/0",
+      //   initialIndex: 0,
+      //   count: 20,
+      // },
     },
     reporter: {
       gas: 5000000,

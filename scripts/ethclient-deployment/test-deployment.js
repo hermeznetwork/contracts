@@ -139,6 +139,7 @@ async function main() {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
+    // return
 
     await buidlerHermez.initializeHermez(
         [buidlerVerifierRollupHelper.address],
