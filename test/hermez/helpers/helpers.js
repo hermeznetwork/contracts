@@ -1,9 +1,9 @@
-const {expect} = require("chai");
-const {ethers} = require("../../../node_modules/@nomiclabs/buidler");
+const { expect } = require("chai");
+const { ethers } = require("../../../node_modules/@nomiclabs/buidler");
 const Scalar = require("ffjavascript").Scalar;
 
-const {float16, txUtils, utils} = require("@hermeznetwork/commonjs");
-const {BigNumber} = require("ethers");
+const { float16, txUtils, utils } = require("@hermeznetwork/commonjs");
+const { BigNumber } = require("ethers");
 const nLevels = 32;
 const {
   createPermitDigest
@@ -172,7 +172,7 @@ async function l1UserTxCreateAccountDeposit(
       //   "addL1Transaction(uint256,uint48,uint16,uint16,uint32,uint48)"
       // ](babyjub, fromIdx0, loadAmountF, amountF0, tokenID, toIdx0);
       // console.log(gasCost.toNumber());
-      
+
       await expect(
         buidlerHermez.connect(wallet).addL1Transaction(
           babyjub,
@@ -199,11 +199,11 @@ async function l1UserTxCreateAccountDeposit(
       const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
       );
-        
+
       const deadline = ethers.constants.MaxUint256;
       const value = loadAmount;
       const nonce = await buidlerTokenHermez.nonces(await wallet.getAddress());
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerTokenHermez,
         wallet,
         buidlerHermez.address,
@@ -211,7 +211,7 @@ async function l1UserTxCreateAccountDeposit(
         nonce,
         deadline
       );
-        
+
       const data = iface.encodeFunctionData("permit", [
         await wallet.getAddress(),
         buidlerHermez.address,
@@ -221,7 +221,7 @@ async function l1UserTxCreateAccountDeposit(
         r,
         s
       ]);
-      
+
       // send l1tx wth permit signature
       await expect(
         buidlerHermez.connect(wallet).addL1Transaction(
@@ -346,7 +346,7 @@ async function l1UserTxDeposit(
       const deadline = ethers.constants.MaxUint256;
       const value = loadAmount;
       const nonce = await buidlerTokenHermez.nonces(await wallet.getAddress());
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerTokenHermez,
         wallet,
         buidlerHermez.address,
@@ -492,7 +492,7 @@ async function l1UserTxDepositTransfer(
       const deadline = ethers.constants.MaxUint256;
       const value = loadAmount;
       const nonce = await buidlerTokenHermez.nonces(await wallet.getAddress());
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerTokenHermez,
         wallet,
         buidlerHermez.address,
@@ -638,7 +638,7 @@ async function l1UserTxCreateAccountDepositTransfer(
       const deadline = ethers.constants.MaxUint256;
       const value = loadAmount;
       const nonce = await buidlerTokenHermez.nonces(await wallet.getAddress());
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerTokenHermez,
         wallet,
         buidlerHermez.address,
@@ -819,7 +819,7 @@ async function l1CoordinatorTxEth(tokenID, babyjub, wallet, buidlerHermez) {
   )}`;
   const l1TxBytes = `0x${txUtils.encodeL1Tx(l1TxCoordinator)}`;
 
-  return {l1TxBytes, l1TxCoordinatorbytes};
+  return { l1TxBytes, l1TxCoordinatorbytes };
 }
 
 async function l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez) {
@@ -856,7 +856,7 @@ async function AddToken(
   const deadline = ethers.constants.MaxUint256;
   const value = feeAddToken;
   const nonce = await buidlerHEZ.nonces(addressOwner);
-  const {v,r,s} = await createPermitSignature(
+  const { v, r, s } = await createPermitSignature(
     buidlerHEZ,
     wallet,
     buidlerHermez.address,

@@ -1,7 +1,7 @@
-const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const { expect } = require("chai");
+const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const SMTMemDB = require("circomlib").SMTMemDB;
-const {time} = require("@openzeppelin/test-helpers");
+const { time } = require("@openzeppelin/test-helpers");
 const Scalar = require("ffjavascript").Scalar;
 
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
@@ -42,7 +42,7 @@ const toIdx0 = 0;
 const emptyPermit = "0x";
 const INITIAL_DELAY = 0;
 
-describe("Hermez ETH test", function () {
+describe("Hermez ETH test", function() {
   let buidlerTokenERC20Mock;
   let buidlerHermez;
   let buidlerWithdrawalDelayer;
@@ -67,7 +67,7 @@ describe("Hermez ETH test", function () {
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     [
       owner,
       governance,
@@ -78,15 +78,15 @@ describe("Hermez ETH test", function () {
     ] = await ethers.getSigners();
 
     hermezGovernanceDAOAddress = governance.getAddress();
-    
+
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
-    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+    if (chainIdProvider == 1337) { // solcover, must be a jsonRPC wallet
       const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
-      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic);
       // ownerWalletTest = ownerWallet.connect(ethers.provider);
       ownerWallet = owner;
       ownerWallet.privateKey = ownerWalletTest.privateKey;
-    } 
+    }
     else {
       ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
@@ -196,8 +196,8 @@ describe("Hermez ETH test", function () {
   });
 
   // You can nest describe calls to create subsections.
-  describe("L1-user-Tx", function () {
-    it("createAccountDeposit", async function () {
+  describe("L1-user-Tx", function() {
+    it("createAccountDeposit", async function() {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -225,7 +225,7 @@ describe("Hermez ETH test", function () {
             gasPrice: 0,
           }
         )
-      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH");
+      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH");
 
       await l1UserTxCreateAccountDeposit(
         loadAmount,
@@ -237,7 +237,7 @@ describe("Hermez ETH test", function () {
       );
     });
 
-    it("deposit", async function () {
+    it("deposit", async function() {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -268,7 +268,7 @@ describe("Hermez ETH test", function () {
             gasPrice: 0,
           }
         )
-      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH");
+      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH");
 
       await l1UserTxDeposit(
         loadAmount,
@@ -279,7 +279,7 @@ describe("Hermez ETH test", function () {
         buidlerTokenERC20Mock
       );
     });
-    it("depositTransfer", async function () {
+    it("depositTransfer", async function() {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -312,7 +312,7 @@ describe("Hermez ETH test", function () {
             gasPrice: 0,
           }
         )
-      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH");
+      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH");
 
       await l1UserTxDepositTransfer(
         loadAmount,
@@ -325,7 +325,7 @@ describe("Hermez ETH test", function () {
         buidlerTokenERC20Mock
       );
     });
-    it("createAccountDepositTransfer", async function () {
+    it("createAccountDepositTransfer", async function() {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -358,7 +358,7 @@ describe("Hermez ETH test", function () {
             gasPrice: 0,
           }
         )
-      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH");
+      ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH");
 
       await l1UserTxCreateAccountDepositTransfer(
         loadAmount,
@@ -373,8 +373,8 @@ describe("Hermez ETH test", function () {
     });
   });
 
-  describe("Forge Batch", function () {
-    it("forge L1 user & Coordiator Tx batch", async function () {
+  describe("Forge Batch", function() {
+    it("forge L1 user & Coordiator Tx batch", async function() {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -491,7 +491,7 @@ describe("Hermez ETH test", function () {
       await forgerTest.forgeBatch(true, l1TxUserArray, l1TxCoordiatorArray);
     });
 
-    it("test instant withdraw circuit", async function () {
+    it("test instant withdraw circuit", async function() {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -578,7 +578,7 @@ describe("Hermez ETH test", function () {
       );
     });
 
-    it("test delayed withdraw circuit with ether", async function () {
+    it("test delayed withdraw circuit with ether", async function() {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -664,7 +664,7 @@ describe("Hermez ETH test", function () {
         parseInt(initialWithdrawalBalance) + amount
       );
     });
-    it("test instant withdraw merkle proof with ether", async function () {
+    it("test instant withdraw merkle proof with ether", async function() {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -737,7 +737,7 @@ describe("Hermez ETH test", function () {
       );
     });
 
-    it("test delayed withdraw merkle proof with ether", async function () {
+    it("test delayed withdraw merkle proof with ether", async function() {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
