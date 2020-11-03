@@ -6,6 +6,7 @@ import "./lib/InstantWithdrawManager.sol";
 import "./interfaces/VerifierRollupInterface.sol";
 import "./interfaces/VerifierWithdrawInterface.sol";
 import "./interfaces/AuctionInterface.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Hermez is InstantWithdrawManager {
     struct VerifierRollup {
@@ -365,17 +366,31 @@ contract Hermez is InstantWithdrawManager {
             if (tokenID == 0) {
                 require(
                     loadAmount == msg.value,
-                    "Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH"
+                    "Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH"
                 );
             } else {
+                require(
+                    msg.value == 0,
+                    "Hermez::addL1Transaction: MSG_VALUE_NOT_EQUAL_0"
+                );
                 if (permit.length != 0) {
                     _permit(tokenList[tokenID], loadAmount, permit);
                 }
+                uint256 prevBalance = IERC20(tokenList[tokenID]).balanceOf(
+                    address(this)
+                );
                 _safeTransferFrom(
                     tokenList[tokenID],
                     msg.sender,
                     address(this),
                     loadAmount
+                );
+                uint256 postBalance = IERC20(tokenList[tokenID]).balanceOf(
+                    address(this)
+                );
+                require(
+                    postBalance - prevBalance == loadAmount,
+                    "Hermez::addL1Transaction: LOADAMOUNT_ERC20_DOES_NOT_MATCH"
                 );
             }
         }
