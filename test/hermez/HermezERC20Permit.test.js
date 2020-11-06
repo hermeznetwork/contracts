@@ -325,7 +325,7 @@ describe("Hermez ERC20 Permit", function() {
           buidlerTokenERC20PermitMock,
           true
         )
-      ).to.be.revertedWith("function call to a non-contract account");
+      ).to.be.reverted;
     });
 
     it("deposit", async function() {
