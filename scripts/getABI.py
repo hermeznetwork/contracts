@@ -42,7 +42,7 @@ def checkHash(fname):
     return hash_md5.hexdigest()
 
 
-if len(sys.argv) >= 2 :
+if len(sys.argv) >= 3 :
   print("Incorrect command")
   print("Use : ./scripts/getAbi.py [OPTION]")
   print("OPTION :")
