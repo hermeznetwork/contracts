@@ -14,4 +14,9 @@ jobs:
         with:
           python-version: '3.x' 
           architecture: 'x64' 
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          check-latest: true
+      - run: npm install
       - run: ./scripts/getABI.py 1

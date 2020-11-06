@@ -116,9 +116,8 @@ if checkABI:
   
   # Get artifacts
   artifacts = os.listdir('.')
-  #artifacts = os.listdir(artifactsFolder)
   print (artifacts)
-  sys.exit(1)
+  artifacts = os.listdir(artifactsFolder)
   
   # Retrieve abi
   print("Extracting  ABIs...")
