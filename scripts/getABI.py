@@ -114,7 +114,10 @@ if checkABI:
   compileContracts()
   
   # Get artifacts
-  artifacts = os.listdir(artifactsFolder)
+  artifacts = os.listdir('.')
+  #artifacts = os.listdir(artifactsFolder)
+  print (artifacts)
+  sys.exit(1)
   
   # Retrieve abi
   print("Extracting  ABIs...")
