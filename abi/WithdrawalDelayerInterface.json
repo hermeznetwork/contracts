@@ -1,0 +1,41 @@
+{
+"abi" :
+[
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "_newWithdrawalDelay",
+                "type": "uint64"
+            }
+        ],
+        "name": "changeWithdrawalDelay",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "uint192",
+                "name": "amount",
+                "type": "uint192"
+            }
+        ],
+        "name": "deposit",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    }
+]
+}

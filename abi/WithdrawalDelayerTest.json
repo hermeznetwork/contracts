@@ -1,0 +1,142 @@
+{
+"abi" :
+[
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint192",
+                "name": "amount",
+                "type": "uint192"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint64",
+                "name": "depositTimestamp",
+                "type": "uint64"
+            }
+        ],
+        "name": "Deposit",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "_newWithdrawalDelay",
+                "type": "uint64"
+            }
+        ],
+        "name": "changeWithdrawalDelay",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_owner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_token",
+                "type": "address"
+            },
+            {
+                "internalType": "uint192",
+                "name": "_amount",
+                "type": "uint192"
+            }
+        ],
+        "name": "deposit",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "deposits",
+        "outputs": [
+            {
+                "internalType": "uint192",
+                "name": "amount",
+                "type": "uint192"
+            },
+            {
+                "internalType": "uint64",
+                "name": "depositTimestamp",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "hermezRollupAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "_initialWithdrawalDelay",
+                "type": "uint64"
+            },
+            {
+                "internalType": "address",
+                "name": "_initialHermezRollup",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_initialHermezKeeperAddress",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_initialHermezGovernanceDAOAddress",
+                "type": "address"
+            },
+            {
+                "internalType": "address payable",
+                "name": "_initialWhiteHackGroupAddress",
+                "type": "address"
+            }
+        ],
+        "name": "withdrawalDelayerInitializer",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
+}

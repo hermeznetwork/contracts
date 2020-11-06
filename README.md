@@ -56,3 +56,11 @@ $ yarn run test:gas:hermez
 $ yarn run test:gas:auction
 $ yarn run test:gas:withdrawalDelayer
 ```
+
+### Generate ABI
+When requesting a PR to master, it is required to have included the latest contract abis to the `abi` folder. To do this :
+```
+./getABI.py
+```
+This script will generate the ABIs and store them to `abi` folder.  When requesting the PR.  GHA will verify that in fact the 
+published ABIs match with the ones you include.

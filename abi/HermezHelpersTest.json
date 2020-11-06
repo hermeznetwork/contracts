@@ -1,0 +1,296 @@
+{
+"abi" :
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_poseidon2Elements",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_poseidon3Elements",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_poseidon4Elements",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint32",
+                "name": "token",
+                "type": "uint32"
+            },
+            {
+                "internalType": "uint48",
+                "name": "nonce",
+                "type": "uint48"
+            },
+            {
+                "internalType": "uint256",
+                "name": "balance",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "ay",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "ethAddress",
+                "type": "address"
+            }
+        ],
+        "name": "buildTreeStateTest",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "babyjub",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "r",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "s",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint8",
+                "name": "v",
+                "type": "uint8"
+            }
+        ],
+        "name": "checkSigTest",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint16",
+                "name": "float",
+                "type": "uint16"
+            }
+        ],
+        "name": "float2FixTest",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint32",
+                "name": "token",
+                "type": "uint32"
+            },
+            {
+                "internalType": "uint16",
+                "name": "nonce",
+                "type": "uint16"
+            },
+            {
+                "internalType": "uint256",
+                "name": "balance",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "ay",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "ethAddress",
+                "type": "address"
+            }
+        ],
+        "name": "hashTreeStateTest",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "root",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "siblings",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256",
+                "name": "key",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "smtVerifierTest",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "inputs",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "testHash2Elements",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "inputs",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "testHash3Elements",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "inputs",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "testHash4Elements",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "key",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "testHashFinalNode",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "left",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "right",
+                "type": "uint256"
+            }
+        ],
+        "name": "testHashNode",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
+}
