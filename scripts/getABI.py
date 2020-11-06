@@ -30,7 +30,8 @@ def compileContracts():
    process = subprocess.Popen(['npx', 'buidler', 'compile', '--force'],
                        stdout=subprocess.PIPE, 
                        stderr=subprocess.PIPE)
-   process.communicate()
+   stdout, stder = process.communicate()
+   print(stdout, stder)
 
 
 def checkHash(fname):
