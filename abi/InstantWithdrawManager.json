@@ -1,0 +1,190 @@
+{
+"abi" :
+[
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "buckets",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "ceilUSD",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "blockStamp",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "withdrawals",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "blockWithdrawalRate",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "maxWithdrawals",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "hermezGovernanceDAOAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "tokenAddress",
+                "type": "address"
+            },
+            {
+                "internalType": "uint192",
+                "name": "amount",
+                "type": "uint192"
+            }
+        ],
+        "name": "instantWithdrawalViewer",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "safeMode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "safetyAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "tokenExchange",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[4][5]",
+                "name": "arrayBuckets",
+                "type": "uint256[4][5]"
+            }
+        ],
+        "name": "updateBucketsParameters",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address[]",
+                "name": "addressArray",
+                "type": "address[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "valueArray",
+                "type": "uint64[]"
+            }
+        ],
+        "name": "updateTokenExchange",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "newWithdrawalDelay",
+                "type": "uint64"
+            }
+        ],
+        "name": "updateWithdrawalDelay",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "withdrawDelayerContract",
+        "outputs": [
+            {
+                "internalType": "contract WithdrawalDelayerInterface",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "withdrawalDelay",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
+}
