@@ -2,7 +2,7 @@ name: Python check ABI
 
 on: 
    push:
-      branches: [ feature/abi ]
+      branches: [ master ]
   
 jobs:
     abi:

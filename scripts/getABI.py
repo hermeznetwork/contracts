@@ -137,7 +137,7 @@ if checkABI:
     h1 = checkHash(abiFolderTmp+'/'+abi)
     h2 = checkHash(abiFolder+'/'+abi)
     if h1 != h2 :
-      print("ABI of not equal. File : ",abi)
+      print("ABI not equal of file : ",abi)
       sys.exit(1)
 
   shutil.rmtree(abiFolderTmp)
