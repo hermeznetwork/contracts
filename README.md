@@ -56,3 +56,7 @@ $ yarn run test:gas:hermez
 $ yarn run test:gas:auction
 $ yarn run test:gas:withdrawalDelayer
 ```
+
+## License
+
+hermeznetwork/contracts is part of the Hermez project copyright 2020 HermezDAO and published with GPL-3 license. Please check the COPYING file for more details.
