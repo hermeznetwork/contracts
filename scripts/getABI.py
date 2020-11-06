@@ -30,8 +30,7 @@ def compileContracts():
    process = subprocess.Popen(['npx', 'buidler', 'compile', '--force'],
                        stdout=subprocess.PIPE, 
                        stderr=subprocess.PIPE)
-   stdout, stder = process.communicate()
-   print(stdout, stder)
+   process.communicate()
 
 
 def checkHash(fname):
@@ -115,8 +114,6 @@ if checkABI:
   compileContracts()
   
   # Get artifacts
-  artifacts = os.listdir('.')
-  print (artifacts)
   artifacts = os.listdir(artifactsFolder)
   
   # Retrieve abi
