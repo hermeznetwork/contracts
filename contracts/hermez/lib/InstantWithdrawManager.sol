@@ -53,6 +53,11 @@ contract InstantWithdrawManager is HermezHelpers {
 
     uint256 private constant _EXCHANGE_MULTIPLIER = 1e14;
 
+    event UpdateWithdrawalDelay(uint64 newWithdrawalDelay);
+    event UpdateBucketsParameters(uint256[4][_NUM_BUCKETS] arrayBuckets);
+    event UpdateTokenExchange(address[] addressArray, uint64[] valueArray);
+    event SafeMode();
+
     function _initializeWithdraw(
         address _hermezGovernanceDAOAddress,
         address _safetyAddress,
@@ -167,6 +172,7 @@ contract InstantWithdrawManager is HermezHelpers {
                 maxWithdrawals
             );
         }
+        emit UpdateBucketsParameters(arrayBuckets);
     }
 
     /**
@@ -185,6 +191,7 @@ contract InstantWithdrawManager is HermezHelpers {
         for (uint256 i = 0; i < addressArray.length; i++) {
             tokenExchange[addressArray[i]] = valueArray[i];
         }
+        emit UpdateTokenExchange(addressArray, valueArray);
     }
 
     /**
@@ -201,6 +208,7 @@ contract InstantWithdrawManager is HermezHelpers {
             "InstantWithdrawManager::updateWithdrawalDelay: EXCEED_MAX_WITHDRAWAL_DELAY"
         );
         withdrawalDelay = newWithdrawalDelay;
+        emit UpdateWithdrawalDelay(newWithdrawalDelay);
     }
 
     /**
@@ -219,6 +227,7 @@ contract InstantWithdrawManager is HermezHelpers {
             buckets[i] = Bucket(0, 0, 0, 0, 0);
         }
         withdrawDelayerContract.changeWithdrawalDelay(withdrawalDelay);
+        emit SafeMode();
     }
 
     /**
