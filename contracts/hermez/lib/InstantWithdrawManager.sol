@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import "../interfaces/WithdrawalDelayerInterface.sol";
+import "../../interfaces/IWithdrawalDelayer.sol";
 import "./HermezHelpers.sol";
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -41,7 +41,7 @@ contract InstantWithdrawManager is HermezHelpers {
     uint256 private constant _MAX_WITHDRAWAL_DELAY = 2 weeks;
 
     // Withdraw delayer interface
-    WithdrawalDelayerInterface public withdrawDelayerContract;
+    IWithdrawalDelayer public withdrawDelayerContract;
 
     // Mapping tokenAddress --> (USD value)/token , default 0, means that token does not worth
     // 2^64 = 1.8446744e+19
@@ -67,9 +67,7 @@ contract InstantWithdrawManager is HermezHelpers {
         hermezGovernanceDAOAddress = _hermezGovernanceDAOAddress;
         safetyAddress = _safetyAddress;
         withdrawalDelay = _withdrawalDelay;
-        withdrawDelayerContract = WithdrawalDelayerInterface(
-            _withdrawDelayerContract
-        );
+        withdrawDelayerContract = IWithdrawalDelayer(_withdrawDelayerContract);
     }
 
     modifier onlyGovernance {
