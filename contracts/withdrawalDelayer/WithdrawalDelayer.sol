@@ -2,11 +2,16 @@
 
 pragma solidity 0.6.12;
 
+import "../interfaces/IWithdrawalDelayer.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 
-contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
+contract WithdrawalDelayer is
+    Initializable,
+    ReentrancyGuardUpgradeSafe,
+    IWithdrawalDelayer
+{
     struct DepositState {
         uint192 amount;
         uint64 depositTimestamp;
@@ -85,7 +90,12 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_hermezGovernanceDAOAddress`
      * @return The `_hermezGovernanceDAOAddress` value
      */
-    function getHermezGovernanceDAOAddress() external view returns (address) {
+    function getHermezGovernanceDAOAddress()
+        external
+        override
+        view
+        returns (address)
+    {
         return _hermezGovernanceDAOAddress;
     }
 
@@ -93,7 +103,10 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Allows to change the `_hermezGovernanceDAOAddress` if it's called by `_hermezGovernanceDAOAddress`
      * @param newAddress new `_hermezGovernanceDAOAddress`
      */
-    function setHermezGovernanceDAOAddress(address newAddress) external {
+    function setHermezGovernanceDAOAddress(address newAddress)
+        external
+        override
+    {
         require(
             msg.sender == _hermezGovernanceDAOAddress,
             "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_GOVERNANCE"
@@ -106,7 +119,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_hermezKeeperAddress`
      * @return The `_hermezKeeperAddress` value
      */
-    function getHermezKeeperAddress() external view returns (address) {
+    function getHermezKeeperAddress() external override view returns (address) {
         return _hermezKeeperAddress;
     }
 
@@ -114,7 +127,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Allows to change the `_hermezKeeperAddress` if it's called by `_hermezKeeperAddress`
      * @param newAddress `_hermezKeeperAddress`
      */
-    function setHermezKeeperAddress(address newAddress) external {
+    function setHermezKeeperAddress(address newAddress) external override {
         require(
             msg.sender == _hermezKeeperAddress,
             "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_KEEPER"
@@ -127,7 +140,12 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_whiteHackGroupAddress`
      * @return The `_whiteHackGroupAddress` value
      */
-    function getWhiteHackGroupAddress() external view returns (address) {
+    function getWhiteHackGroupAddress()
+        external
+        override
+        view
+        returns (address)
+    {
         return _whiteHackGroupAddress;
     }
 
@@ -135,7 +153,10 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Allows to change the `_whiteHackGroupAddress` if it's called by `_whiteHackGroupAddress`
      * @param newAddress new `_whiteHackGroupAddress`
      */
-    function setWhiteHackGroupAddress(address payable newAddress) external {
+    function setWhiteHackGroupAddress(address payable newAddress)
+        external
+        override
+    {
         require(
             msg.sender == _whiteHackGroupAddress,
             "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_WHG"
@@ -148,7 +169,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_emergencyMode` status to know if the emergency mode is enable or disable
      * @return The `_emergencyMode` value
      */
-    function isEmergencyMode() external view returns (bool) {
+    function isEmergencyMode() external override view returns (bool) {
         return _emergencyMode;
     }
 
@@ -156,7 +177,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter to obtain the current withdrawal delay
      * @return the current withdrawal delay time in seconds: `_withdrawalDelay`
      */
-    function getWithdrawalDelay() external view returns (uint128) {
+    function getWithdrawalDelay() external override view returns (uint128) {
         return _withdrawalDelay;
     }
 
@@ -164,7 +185,12 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter to obtain when emergency mode started
      * @return the emergency mode starting time in seconds: `_emergencyModeStartingTime`
      */
-    function getEmergencyModeStartingTime() external view returns (uint128) {
+    function getEmergencyModeStartingTime()
+        external
+        override
+        view
+        returns (uint128)
+    {
         return _emergencyModeStartingTime;
     }
 
@@ -175,7 +201,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * once if it has not been previously activated.
      * Events: `EmergencyModeEnabled` event.
      */
-    function enableEmergencyMode() external {
+    function enableEmergencyMode() external override {
         require(
             msg.sender == _hermezKeeperAddress,
             "WithdrawalDelayer::enableEmergencyMode: ONLY_KEEPER"
@@ -198,7 +224,10 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      * @param _newWithdrawalDelay new delay time in seconds
      * Events: `NewWithdrawalDelay` event.
      */
-    function changeWithdrawalDelay(uint64 _newWithdrawalDelay) external {
+    function changeWithdrawalDelay(uint64 _newWithdrawalDelay)
+        external
+        override
+    {
         require(
             (msg.sender == _hermezKeeperAddress) ||
                 (msg.sender == hermezRollupAddress),
@@ -221,6 +250,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function depositInfo(address payable _owner, address _token)
         external
+        override
         view
         returns (uint192, uint64)
     {
@@ -244,7 +274,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
         address _owner,
         address _token,
         uint192 _amount
-    ) external payable nonReentrant {
+    ) external override payable nonReentrant {
         require(
             msg.sender == hermezRollupAddress,
             "WithdrawalDelayer::deposit: ONLY_ROLLUP"
@@ -323,6 +353,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function withdrawal(address payable _owner, address _token)
         external
+        override
         nonReentrant
     {
         require(!_emergencyMode, "WithdrawalDelayer::deposit: EMERGENCY_MODE");
@@ -364,7 +395,7 @@ contract WithdrawalDelayer is Initializable, ReentrancyGuardUpgradeSafe {
         address _to,
         address _token,
         uint256 _amount
-    ) external nonReentrant {
+    ) external override nonReentrant {
         require(
             _emergencyMode,
             "WithdrawalDelayer::escapeHatchWithdrawal: ONLY_EMODE"
