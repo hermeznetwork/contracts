@@ -5,7 +5,7 @@ pragma solidity 0.6.12;
 import "./lib/InstantWithdrawManager.sol";
 import "./interfaces/VerifierRollupInterface.sol";
 import "./interfaces/VerifierWithdrawInterface.sol";
-import "./interfaces/AuctionInterface.sol";
+import "../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Hermez is InstantWithdrawManager {
@@ -116,7 +116,7 @@ contract Hermez is InstantWithdrawManager {
     uint256 public feeAddToken;
 
     // Contract interface of the hermez auction
-    AuctionInterface public hermezAuctionContract;
+    IHermezAuctionProtocol public hermezAuctionContract;
 
     // Map of queues of L1-user-tx transactions, the transactions are stored in bytes32 sequentially
     // The coordinator is forced to forge the next queue in the next L1-L2-batch
@@ -186,7 +186,7 @@ contract Hermez is InstantWithdrawManager {
         // set state variables
         _initializeVerifiers(_verifiers, _verifiersParams);
         withdrawVerifier = VerifierWithdrawInterface(_withdrawVerifier);
-        hermezAuctionContract = AuctionInterface(_hermezAuctionContract);
+        hermezAuctionContract = IHermezAuctionProtocol(_hermezAuctionContract);
         tokenHEZ = _tokenHEZ;
         forgeL1L2BatchTimeout = _forgeL1L2BatchTimeout;
         feeAddToken = _feeAddToken;
