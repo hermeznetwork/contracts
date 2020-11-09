@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "clean": "npx buidler clean && rm -rf cache coverage build node_modules yarn.lock coverage.json",
+    "clean": "npx buidler clean && rm -rf cache coverage build node_modules yarn.lock coverage.json .openzeppelin",
     "compile": "npx buidler compile",
     "test": "npx buidler test test/*/*.test.js",
     "test:math": "npx buidler test test/math/*.test.js",

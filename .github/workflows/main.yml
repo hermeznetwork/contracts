@@ -1,0 +1,28 @@
+name: Auction SmartContracts CI
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup SmartContracts
+        run: yarn setup:contracts
+      - name: Test SmartContracts
+        run: yarn test:contracts
+      - name: check artifacts
+        run: |
+          yarn run compile
+          # This line checks that there is no change in the repository after compiling the contracts
+          [[ -z $(git status -s) ]] || exit 1 
