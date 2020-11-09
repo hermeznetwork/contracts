@@ -8,6 +8,11 @@ Implements Hermez smart contracts
 $ yarn install && cp .env.example .env
 ```
 
+#### Add pre-commit hook
+```
+$ git config core.hooksPath .githooks
+```
+
 Optional:
 
 - `cp .env.example .env`
