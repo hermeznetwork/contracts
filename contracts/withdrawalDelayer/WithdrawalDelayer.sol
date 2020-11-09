@@ -39,15 +39,15 @@ contract WithdrawalDelayer is
     mapping(bytes32 => DepositState) public deposits; // Mapping to keep track of deposits
 
     event Deposit(
-        address indexed owner,
-        address indexed token,
-        uint192 amount,
-        uint64 depositTimestamp
+        address indexed owner2,
+        address indexed token2,
+        uint192 amount2,
+        uint64 depositTimestamp2
     );
     event Withdraw(
-        address indexed token,
-        address indexed owner,
-        uint192 amount
+        address indexed token2,
+        address indexed owner2,
+        uint192 amount2
     );
     event EmergencyModeEnabled();
     event NewWithdrawalDelay(uint64 withdrawalDelay);
