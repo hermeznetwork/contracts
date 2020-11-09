@@ -1,10 +1,16 @@
 .env
 cache
 build
-artifacts
 yarn.lock
 node_modules
 coverage.json
 package-lock.json
 coverage
 .coverage_*
+.openzeppelin
+artifacts/*.json
+!artifacts/Hermez.json
+!artifacts/HermezHelpers.json
+!artifacts/WithdrawalDelayer.json
+!artifacts/HermezAuctionProtocol.json
+!artifacts/InstantWithdrawManager.json
