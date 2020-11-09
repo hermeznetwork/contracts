@@ -64,3 +64,7 @@ When requesting a PR to master, it is required to have included the latest contr
 ```
 This script will generate the ABIs and store them to `abi` folder.  When requesting the PR.  GHA will verify that in fact the 
 published ABIs match with the ones you include.
+
+## License
+hermeznetwork/contracts is part of the Hermez project copyright 2020 HermezDAO and published with GPL-3 license. Please check the COPYING file for more details.
+
