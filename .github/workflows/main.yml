@@ -18,11 +18,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Setup SmartContracts
-        run: yarn setup:contracts
+        run: yarn
       - name: Test SmartContracts
-        run: yarn test:contracts
+        run: yarn test
       - name: check artifacts
         run: |
-          yarn run compile
+          yarn compile
           # This line checks that there is no change in the repository after compiling the contracts
           [[ -z $(git status -s) ]] || exit 1 
