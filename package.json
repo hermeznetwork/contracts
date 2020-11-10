@@ -10,6 +10,7 @@
     "test:math": "npx buidler test test/math/*.test.js",
     "test:hermez": "npx buidler test test/hermez/*.test.js",
     "test:auction": "npx buidler test test/auction/*.test.js",
+    "test:upgradability": "npx buidler test test/upgradability/*.test.js",
     "test:withdrawalDelayer": "npx buidler test test/withdrawalDelayer/*.test.js",
     "test:gas": "scripts/run-gas-reporter.sh",
     "test:gas:hermez": "scripts/run-gas-reporter.sh test/hermez/*test.js test/hermez/.solcover.js",

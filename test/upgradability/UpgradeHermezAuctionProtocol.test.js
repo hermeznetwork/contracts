@@ -124,6 +124,7 @@ describe("upgradability test", function() {
     let adminAddress = await getAdminAddress(ethers.provider, hermezAuctionProtocol.address);
     const admin = AdminFactory.attach(adminAddress);
 
+    const deployerAddress = await deployer.getAddress();
 
     // Deploy Timelock
     const TimelockBuidler = await Timelock.deploy(hermezGovernanceAddress, 604800);
@@ -156,6 +157,14 @@ describe("upgradability test", function() {
       eta
     )).to.be.revertedWith("Timelock::executeTransaction: Transaction hasn't surpassed time lock.");
 
+    await TimelockBuidler.connect(hermezGovernanceEthers).queueTransaction(
+      adminAddress,
+      0,
+      "",
+      iface.encodeFunctionData("transferOwnership", [deployerAddress]),
+      eta
+    );
+    
     await ethers.provider.send("evm_setNextBlockTimestamp", [eta]);
 
     await TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
@@ -165,6 +174,16 @@ describe("upgradability test", function() {
       iface.encodeFunctionData("upgrade", [hermezAuctionProtocol.address, hermezAuctionProtocolV2]),
       eta
     );
+
+    // return the ownerwship to the deployer address for future tests!
+    await TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
+      adminAddress,
+      0,
+      "",
+      iface.encodeFunctionData("transferOwnership", [deployerAddress]),
+      eta
+    );
+        
     await newHermezAuctionProtocolV2.setVersion();
     expect(await newHermezAuctionProtocolV2.getVersion()).to.be.equal(2);
   });
