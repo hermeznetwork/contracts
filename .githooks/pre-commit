@@ -1,0 +1,7 @@
+#!/bin/bash
+echo
+## Compile the smart contracts
+yarn run compile
+## Add to the commit the new artifacts
+git add -u artifacts/*.json
+exit
