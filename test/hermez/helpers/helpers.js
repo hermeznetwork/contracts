@@ -35,7 +35,7 @@ class ForgerTest {
     this.L1TxB = 544;
   }
 
-  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray) {
+  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray) {
     const bb = await this.rollupDB.buildBatch(
       this.maxTx,
       this.nLevels,
@@ -54,8 +54,18 @@ class ForgerTest {
 
     expect(SCL1TxData).to.equal(`0x${jsL1TxData}`);
 
-    for (let tx of l1TxCoordiatorArray) {
-      bb.addTx(txUtils.decodeL1Tx(tx.l1TxBytes));
+  
+    if (l1TxCoordiatorArray) {
+      for (let tx of l1TxCoordiatorArray) {
+        bb.addTx(txUtils.decodeL1Tx(tx.l1TxBytes));
+      }
+    }
+
+    
+    if (l2txArray){
+      for (let tx of l2txArray) {
+        bb.addTx(tx);
+      }
     }
 
     await bb.build();
