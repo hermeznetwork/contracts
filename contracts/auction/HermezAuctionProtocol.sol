@@ -290,9 +290,13 @@ contract HermezAuctionProtocol is
         onlyGovernance
     {
         require(
-            (newAllocationRatio[0] +
-                newAllocationRatio[1] +
-                newAllocationRatio[2]) == 10000,
+            newAllocationRatio[0] <= 10000 &&
+                newAllocationRatio[1] <= 10000 &&
+                newAllocationRatio[2] <= 10000 &&
+                newAllocationRatio[0] +
+                    newAllocationRatio[1] +
+                    newAllocationRatio[2] ==
+                10000,
             "HermezAuctionProtocol::setAllocationRatio: ALLOCATION_RATIO_NOT_VALID"
         );
         _allocationRatio = newAllocationRatio;
