@@ -19,3 +19,8 @@ Terminal 2:
      - Enter in scripts folder
      - Edit `.env` adding HERMEZ_ADDRESS from the previous script
      - `node forceExit.js` or `node createAccount.js`
+    
+- Test `withdrawalDelayer`
+     - Perform a non instant withdraw
+     - Advance the `withdrawalDelayer` delay with `node advanceTime.js`
+     - Withdraw funds from `withdrawalDelayer`

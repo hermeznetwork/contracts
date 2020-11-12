@@ -68,7 +68,7 @@ async function main() {
     "HermezAuctionTest"
   );
   const WithdrawalDelayer = await ethers.getContractFactory(
-    "WithdrawalDelayerTest"
+    "WithdrawalDelayer"
   );
   const Poseidon2Elements = new ethers.ContractFactory(
     poseidonUnit.abi,
@@ -124,8 +124,12 @@ async function main() {
   await buidlerHermez.deployed();
 
   buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+  await buidlerWithdrawalDelayer.deployed();
+
+  const delay = parseInt(process.env.DELAY ? process.env.DELAY : 60);
+
   await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
-    0,
+    delay,
     buidlerHermez.address,
     hermezGovernanceDAOAddress,
     hermezGovernanceDAOAddress,
@@ -206,6 +210,7 @@ async function main() {
   console.log("hermez SC deployed in; ", buidlerHermez.address);
   console.log("token ERC20 Contract Address: ", buidlerTokenERC20Mock.address);
   console.log("(ERC20Permit) HEZ deployed in; ", buidlerHEZ.address);
+  console.log("withdrawal delayer deployed in; ", buidlerWithdrawalDelayer.address);
   console.log();
   console.log(
     "/////////////////////////////////////////////////////////////////"
