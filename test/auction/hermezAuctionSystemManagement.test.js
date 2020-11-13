@@ -289,6 +289,11 @@ describe("Auction Protocol Management", function() {
       await expect(
         buidlerHermezAuctionProtocol
           .connect(governance)
+          .setAllocationRatio([1, 10000, 65535])
+      ).to.be.revertedWith("HermezAuctionProtocol::setAllocationRatio: ALLOCATION_RATIO_NOT_VALID");
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(governance)
           .setAllocationRatio([120, 120, 120])
       ).to.be.revertedWith("HermezAuctionProtocol::setAllocationRatio: ALLOCATION_RATIO_NOT_VALID");
     });
@@ -355,7 +360,7 @@ describe("Auction Protocol Management", function() {
         buidlerHermezAuctionProtocol
           .connect(governance)
           .setDonationAddress(ethers.constants.AddressZero))
-      .to.be.revertedWith("HermezAuctionProtocol::setDonationAddress: NOT_VALID_ADDRESS");
+        .to.be.revertedWith("HermezAuctionProtocol::setDonationAddress: NOT_VALID_ADDRESS");
 
       // Set donation address
       await buidlerHermezAuctionProtocol
