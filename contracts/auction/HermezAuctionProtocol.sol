@@ -59,9 +59,9 @@ contract HermezAuctionProtocol is
     uint128[6] private _defaultSlotSetBid;
     // First block where the first slot begins
     uint128 public genesisBlock;
-    // Distance (#slots) to the closest slot to which you can bid ( 2 Slots = 2 * 40 Blocks = 20 min )
+    // Number of closed slots after the current slot ( 2 Slots = 2 * 40 Blocks = 20 min ) 
     uint16 private _closedAuctionSlots;
-    // Distance (#slots) to the farthest slot to which you can bid ( 30 days = 4320 slots )
+    // Total number of open slots which you can bid ( 30 days = 4320 slots )
     uint16 private _openAuctionSlots;
     // How the HEZ tokens deposited by the slot winner are distributed ( Burn: 40.00% - Donation: 40.00% - HGT: 20.00% )
     uint16[3] private _allocationRatio; // Two decimal precision
@@ -206,10 +206,6 @@ contract HermezAuctionProtocol is
         override
         onlyGovernance
     {
-        require(
-            newOpenAuctionSlots >= _closedAuctionSlots,
-            "HermezAuctionProtocol::setOpenAuctionSlots: SMALLER_THAN_CLOSED_AUCTION_SLOTS"
-        );
         _openAuctionSlots = newOpenAuctionSlots;
         emit NewOpenAuctionSlots(_openAuctionSlots);
     }
@@ -235,10 +231,6 @@ contract HermezAuctionProtocol is
         override
         onlyGovernance
     {
-        require(
-            newClosedAuctionSlots <= _openAuctionSlots,
-            "HermezAuctionProtocol::setClosedAuctionSlots: GREATER_THAN_CLOSED_AUCTION_SLOTS"
-        );
         _closedAuctionSlots = newClosedAuctionSlots;
         emit NewClosedAuctionSlots(_closedAuctionSlots);
     }
@@ -489,7 +481,7 @@ contract HermezAuctionProtocol is
             "HermezAuctionProtocol::processBid: COORDINATOR_NOT_REGISTERED"
         );
         require(
-            slot >= (getCurrentSlotNumber() + _closedAuctionSlots),
+            slot > (getCurrentSlotNumber() + _closedAuctionSlots),
             "HermezAuctionProtocol::processBid: AUCTION_CLOSED"
         );
         require(
@@ -498,7 +490,7 @@ contract HermezAuctionProtocol is
         );
 
         require(
-            slot <
+            slot <=
                 (getCurrentSlotNumber() +
                     _closedAuctionSlots +
                     _openAuctionSlots),
@@ -543,11 +535,11 @@ contract HermezAuctionProtocol is
         bytes calldata permit
     ) external override {
         require(
-            startingSlot >= (getCurrentSlotNumber() + _closedAuctionSlots),
+            startingSlot > (getCurrentSlotNumber() + _closedAuctionSlots),
             "HermezAuctionProtocol::processMultiBid AUCTION_CLOSED"
         );
         require(
-            endingSlot <
+            endingSlot <=
                 (getCurrentSlotNumber() +
                     _closedAuctionSlots +
                     _openAuctionSlots),

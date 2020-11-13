@@ -122,7 +122,7 @@ describe("Auction Protocol", function() {
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
         .setCoordinator(await forger1.getAddress(), COORDINATOR_1_URL);
-      await buidlerHEZToken.connect(coordinator1).approve(buidlerHermezAuctionProtocol.address,ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+      await buidlerHEZToken.connect(coordinator1).approve(buidlerHermezAuctionProtocol.address, ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
 
     });
 
@@ -169,15 +169,15 @@ describe("Auction Protocol", function() {
       let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
-      let slotMin = 2;
-      let slotMax = 7;
+      let slotMin = 3;
+      let slotMax = 8;
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await 
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit);
+      await
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       let block = startingBlock.add(3 * 40);
       // Check forger address
@@ -199,15 +199,15 @@ describe("Auction Protocol", function() {
       let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
-      let slotMin = 2;
-      let slotMax = 7;
+      let slotMin = 3;
+      let slotMax = 8;
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await 
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit);
+      await
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (i = 0; i < 6; i++) {
         // Change epochs minBid
@@ -262,15 +262,15 @@ describe("Auction Protocol", function() {
       let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
-      let slotMin = 2;
-      let slotMax = 7;
+      let slotMin = 3;
+      let slotMax = 8;
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await 
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit);
+      await
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (i = 0; i < 6; i++) {
         // Change epochs minBid
@@ -384,15 +384,15 @@ describe("Auction Protocol", function() {
 
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
-      let slotMin = 2;
-      let slotMax = 7;
+      let slotMin = 3;
+      let slotMax = 8;
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await 
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit);
+      await
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       // Advance blocks
       let blockNumber = startingBlock.add(3 * 40).toNumber();
@@ -446,15 +446,15 @@ describe("Auction Protocol", function() {
 
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
-      let slotMin = 2;
-      let slotMax = 7;
+      let slotMin = 3;
+      let slotMax = 8;
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await 
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit);
+      await
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (let slot = 3; slot < 6; slot++) {
         // Advance blocks
@@ -503,15 +503,15 @@ describe("Auction Protocol", function() {
 
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
-      let slotMin = 2;
-      let slotMax = 7;
+      let slotMin = 3;
+      let slotMax = 8;
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await 
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit);
+      await
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (let slot = 3; slot < 6; slot++) {
         // Advance blocks

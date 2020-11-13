@@ -1,8 +1,8 @@
-const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const { expect } = require("chai");
+const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
-const {time} = require("@openzeppelin/test-helpers");
+const { time } = require("@openzeppelin/test-helpers");
 
 const {
   signBjjAuth,
@@ -46,7 +46,7 @@ let iface = new ethers.utils.Interface(ABIbid);
 const INITIAL_DELAY = 0;
 
 
-describe("Hermez integration", function () {
+describe("Hermez integration", function() {
   let buidlerTokenHermez;
   let buidlerHermez;
   let buidlerWithdrawalDelayer;
@@ -73,7 +73,7 @@ describe("Hermez integration", function () {
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
   const INITIAL_DELAY = 60; //seconds
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     [
       owner,
       governance,
@@ -88,18 +88,18 @@ describe("Hermez integration", function () {
       donation,
       ...addrs
     ] = await ethers.getSigners();
-    
+
     hermezGovernanceDAOAddress = await governance.getAddress();
     ownerAddress = await owner.getAddress();
 
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
-    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+    if (chainIdProvider == 1337) { // solcover, must be a jsonRPC wallet
       const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
-      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic);
       // ownerWalletTest = ownerWallet.connect(ethers.provider);
       ownerWallet = owner;
       ownerWallet.privateKey = ownerWalletTest.privateKey;
-    } 
+    }
     else {
       ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
@@ -220,8 +220,8 @@ describe("Hermez integration", function () {
     chainID = chainSC.toNumber();
   });
 
-  describe("Forge Batch", function () {
-    it("forge L1 user & Coordiator Tx batch using consensus mechanism", async function () {
+  describe("Forge Batch", function() {
+    it("forge L1 user & Coordiator Tx batch using consensus mechanism", async function() {
       // consensus operations
       let startingBlock = (
         await buidlerHermezAuctionProtocol.genesisBlock()
@@ -236,7 +236,7 @@ describe("Hermez integration", function () {
       const deadline = ethers.constants.MaxUint256;
       const nonce = await buidlerTokenHermez.nonces(await owner.getAddress());
 
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerTokenHermez,
         ownerWallet,
         buidlerHermezAuctionProtocol.address,
@@ -244,7 +244,7 @@ describe("Hermez integration", function () {
         nonce,
         deadline
       );
-          
+
       const dataPermit = iface.encodeFunctionData("permit", [
         await owner.getAddress(),
         buidlerHermezAuctionProtocol.address,
@@ -254,11 +254,11 @@ describe("Hermez integration", function () {
         r,
         s
       ]);
-        
+
       await buidlerHermezAuctionProtocol.processMultiBid(
-        value, 
-        2,
-        7,
+        value,
+        3,
+        8,
         [true, true, true, true, true, true],
         ethers.utils.parseEther("11"),
         ethers.utils.parseEther("11"),
@@ -388,7 +388,7 @@ describe("Hermez integration", function () {
       // forge batch with all the L1 tx
       await forgerTest.forgeBatch(true, l1TxUserArray, l1TxCoordiatorArray);
     });
-    it("test delayed withdraw with consensus mechanism and withdrawal delayer", async function () {
+    it("test delayed withdraw with consensus mechanism and withdrawal delayer", async function() {
       // consensus operations
       let startingBlock = (
         await buidlerHermezAuctionProtocol.genesisBlock()
@@ -401,8 +401,8 @@ describe("Hermez integration", function () {
       const value = ethers.utils.parseEther("100");
       const deadline = ethers.constants.MaxUint256;
       const nonce = await buidlerTokenHermez.nonces(await owner.getAddress());
-  
-      const {v,r,s} = await createPermitSignature(
+
+      const { v, r, s } = await createPermitSignature(
         buidlerTokenHermez,
         ownerWallet,
         buidlerHermezAuctionProtocol.address,
@@ -410,7 +410,7 @@ describe("Hermez integration", function () {
         nonce,
         deadline
       );
-            
+
       const dataPermit = iface.encodeFunctionData("permit", [
         await owner.getAddress(),
         buidlerHermezAuctionProtocol.address,
@@ -420,17 +420,17 @@ describe("Hermez integration", function () {
         r,
         s
       ]);
-          
+
       await buidlerHermezAuctionProtocol.processMultiBid(
-        value, 
-        2,
-        7,
+        value,
+        3,
+        8,
         [true, true, true, true, true, true],
         ethers.utils.parseEther("11"),
         ethers.utils.parseEther("11"),
         dataPermit
       );
-  
+
       let block = startingBlock + 3 * BLOCKS_PER_SLOT;
 
       await time.advanceBlockTo(block);
