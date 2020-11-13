@@ -3,6 +3,7 @@
 pragma solidity 0.6.12;
 import "../math/SafeMathUint128.sol";
 import "../interfaces/IHEZToken.sol";
+import "../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 
@@ -14,7 +15,11 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
  * define the rules to coordinate this auction where the bids will be placed
  * only in HEZ utility token.
  */
-contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
+contract HermezAuctionProtocol is
+    Initializable,
+    ReentrancyGuardUpgradeSafe,
+    IHermezAuctionProtocol
+{
     using SafeMath128 for uint128;
 
     struct Coordinator {
@@ -158,7 +163,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_slotDeadline`
      * @return The `_slotDeadline` value
      */
-    function getSlotDeadline() external view returns (uint8) {
+    function getSlotDeadline() external override view returns (uint8) {
         return _slotDeadline;
     }
 
@@ -167,7 +172,11 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @param newDeadline new `_slotDeadline`
      * Events: `NewSlotDeadline`
      */
-    function setSlotDeadline(uint8 newDeadline) external onlyGovernance {
+    function setSlotDeadline(uint8 newDeadline)
+        external
+        override
+        onlyGovernance
+    {
         require(
             newDeadline <= BLOCKS_PER_SLOT,
             "HermezAuctionProtocol::setSlotDeadline: GREATER_THAN_BLOCKS_PER_SLOT"
@@ -180,7 +189,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_openAuctionSlots`
      * @return The `_openAuctionSlots` value
      */
-    function getOpenAuctionSlots() external view returns (uint16) {
+    function getOpenAuctionSlots() external override view returns (uint16) {
         return _openAuctionSlots;
     }
 
@@ -194,6 +203,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function setOpenAuctionSlots(uint16 newOpenAuctionSlots)
         external
+        override
         onlyGovernance
     {
         require(
@@ -208,7 +218,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_closedAuctionSlots`
      * @return The `_closedAuctionSlots` value
      */
-    function getClosedAuctionSlots() external view returns (uint16) {
+    function getClosedAuctionSlots() external override view returns (uint16) {
         return _closedAuctionSlots;
     }
 
@@ -222,6 +232,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function setClosedAuctionSlots(uint16 newClosedAuctionSlots)
         external
+        override
         onlyGovernance
     {
         require(
@@ -236,7 +247,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_outbidding`
      * @return The `_outbidding` value
      */
-    function getOutbidding() external view returns (uint16) {
+    function getOutbidding() external override view returns (uint16) {
         return _outbidding;
     }
 
@@ -246,7 +257,11 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @param newOutbidding new `_outbidding`
      * Events: `NewOutbidding`
      */
-    function setOutbidding(uint16 newOutbidding) external onlyGovernance {
+    function setOutbidding(uint16 newOutbidding)
+        external
+        override
+        onlyGovernance
+    {
         _outbidding = newOutbidding;
         emit NewOutbidding(_outbidding);
     }
@@ -255,7 +270,12 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_allocationRatio`
      * @return The `_allocationRatio` array
      */
-    function getAllocationRatio() external view returns (uint16[3] memory) {
+    function getAllocationRatio()
+        external
+        override
+        view
+        returns (uint16[3] memory)
+    {
         return _allocationRatio;
     }
 
@@ -266,6 +286,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function setAllocationRatio(uint16[3] memory newAllocationRatio)
         external
+        override
         onlyGovernance
     {
         require(
@@ -282,7 +303,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_donationAddress`
      * @return The `_donationAddress`
      */
-    function getDonationAddress() external view returns (address) {
+    function getDonationAddress() external override view returns (address) {
         return _donationAddress;
     }
 
@@ -293,6 +314,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function setDonationAddress(address newDonationAddress)
         external
+        override
         onlyGovernance
     {
         require(
@@ -307,7 +329,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @notice Getter of the current `_bootCoordinator`
      * @return The `_bootCoordinator`
      */
-    function getBootCoordinator() external view returns (address) {
+    function getBootCoordinator() external override view returns (address) {
         return _bootCoordinator;
     }
 
@@ -318,6 +340,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function setBootCoordinator(address newBootCoordinator)
         external
+        override
         onlyGovernance
     {
         _bootCoordinator = newBootCoordinator;
@@ -342,6 +365,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function changeDefaultSlotSetBid(uint128 slotSet, uint128 newInitialMinBid)
         external
+        override
         onlyGovernance
     {
         require(
@@ -374,6 +398,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      */
     function setCoordinator(address forger, string memory coordinatorURL)
         external
+        override
     {
         require(
             keccak256(abi.encodePacked(coordinatorURL)) !=
@@ -453,7 +478,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
         uint128 slot,
         uint128 bidAmount,
         bytes calldata permit
-    ) external {
+    ) external override {
         // To avoid possible mistakes we don't allow anyone to bid without setting a forger
         require(
             coordinators[msg.sender].forger != address(0),
@@ -512,7 +537,7 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
         uint128 maxBid,
         uint128 minBid,
         bytes calldata permit
-    ) external {
+    ) external override {
         require(
             startingSlot >= (getCurrentSlotNumber() + _closedAuctionSlots),
             "HermezAuctionProtocol::processMultiBid AUCTION_CLOSED"
@@ -662,7 +687,22 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @return a bool true in case it can forge, false otherwise
      */
     function canForge(address forger, uint256 blockNumber)
-        public
+        external
+        override
+        view
+        returns (bool)
+    {
+        return _canForge(forger, blockNumber);
+    }
+
+    /**
+     * @notice function to know if a certain address can forge into a certain block
+     * @param forger the address of the coodirnator's forger
+     * @param blockNumber block number to check
+     * @return a bool true in case it can forge, false otherwise
+     */
+    function _canForge(address forger, uint256 blockNumber)
+        internal
         view
         returns (bool)
     {
@@ -713,13 +753,13 @@ contract HermezAuctionProtocol is Initializable, ReentrancyGuardUpgradeSafe {
      * @param forger the address of the coodirnator's forger
      * Events: `NewForgeAllocated` and `NewForge`
      */
-    function forge(address forger) external {
+    function forge(address forger) external override {
         require(
             msg.sender == hermezRollup,
             "HermezAuctionProtocol::forge: ONLY_HERMEZ_ROLLUP"
         );
         require(
-            canForge(forger, block.number),
+            _canForge(forger, block.number),
             "HermezAuctionProtocol::forge: CANNOT_FORGE"
         );
         uint128 slotToForge = getCurrentSlotNumber();

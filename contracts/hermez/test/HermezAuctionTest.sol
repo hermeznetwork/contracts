@@ -11,17 +11,14 @@ pragma solidity ^0.6.12;
  * only in HEZ utility token.
  */
 
-import "../interfaces/AuctionInterface.sol";
-
-contract HermezAuctionTest is AuctionInterface {
+contract HermezAuctionTest {
     function canForge(address forger, uint256 blockNumber)
-        public
-        override
+        external
         view
         returns (bool)
     {
         return true;
     }
 
-    function forge(address forger) public override {}
+    function forge(address forger) public {}
 }
