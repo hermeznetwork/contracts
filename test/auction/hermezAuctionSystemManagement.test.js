@@ -153,14 +153,6 @@ describe("Auction Protocol Management", function() {
         buidlerHermezAuctionProtocol.setOpenAuctionSlots(0)
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
     });
-    it("should'n set a OpenAuctionSlots smaller than the current closedAuctionSlots", async function() {
-      let closedAuctionSlots = await buidlerHermezAuctionProtocol.getClosedAuctionSlots();
-      await expect(
-        buidlerHermezAuctionProtocol
-          .connect(governance)
-          .setOpenAuctionSlots(closedAuctionSlots - 1)
-      ).to.be.revertedWith("HermezAuctionProtocol::setOpenAuctionSlots: SMALLER_THAN_CLOSED_AUCTION_SLOTS");
-    });
     it("shoul be able to set a new OpenAuctionSlots", async function() {
       let newOpenAuctionSlots = 65535;
 
@@ -198,14 +190,6 @@ describe("Auction Protocol Management", function() {
       await expect(
         buidlerHermezAuctionProtocol.setClosedAuctionSlots(0)
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
-    });
-    it("should'n set a ClosedAuctionSlots greater than the current openAuctionSlots", async function() {
-      let openAuctionSlots = await buidlerHermezAuctionProtocol.getOpenAuctionSlots();
-      await expect(
-        buidlerHermezAuctionProtocol
-          .connect(governance)
-          .setClosedAuctionSlots(openAuctionSlots + 1)
-      ).to.be.revertedWith("HermezAuctionProtocol::setClosedAuctionSlots: GREATER_THAN_CLOSED_AUCTION_SLOTS");
     });
     it("shoul be able to set a new ClosedAuctionSlots", async function() {
       let newClosedAuctionSlots = 4;
