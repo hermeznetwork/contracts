@@ -669,6 +669,10 @@ contract HermezAuctionProtocol is
     ) private {
         address prevBidder = slots[slot].bidder;
         uint128 prevBidValue = slots[slot].bidAmount;
+        require(
+            bidAmount > prevBidValue,
+            "HermezAuctionProtocol::_doBid: BID_MUST_BE_HIGHER"
+        );
 
         pendingBalances[bidder] = pendingBalances[bidder].sub(bidAmount);
 
