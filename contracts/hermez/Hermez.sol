@@ -668,7 +668,12 @@ contract Hermez is InstantWithdrawManager {
         if (permit.length != 0) {
             _permit(tokenHEZ, feeAddToken, permit);
         }
-        _safeTransferFrom(tokenHEZ, msg.sender, address(this), feeAddToken);
+        _safeTransferFrom(
+            tokenHEZ,
+            msg.sender,
+            hermezGovernanceDAOAddress,
+            feeAddToken
+        );
 
         tokenList.push(tokenAddress);
         tokenMap[tokenAddress] = currentTokens;
