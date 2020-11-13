@@ -109,7 +109,16 @@ contract HermezHelpersTest is HermezHelpers {
         bytes32 r,
         bytes32 s,
         uint8 v
-    ) public pure returns (address) {
+    ) public view returns (address) {
         return _checkSig(babyjub, r, s, v);
+    }
+
+    function getChainID() public view returns (uint256) {
+        uint256 chainID;
+        uint256 a = 0 % 6;
+        assembly {
+            chainID := chainid()
+        }
+        return chainID;
     }
 }

@@ -206,7 +206,7 @@ contract HermezHelpers is Initializable {
         bytes32 r,
         bytes32 s,
         uint8 v
-    ) internal pure returns (address) {
+    ) internal view returns (address) {
         // from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/cryptography/ECDSA.sol#L46
         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
         // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
@@ -223,11 +223,19 @@ contract HermezHelpers is Initializable {
             "HermezHelpers::_checkSig: INVALID_S_VALUE"
         );
 
+        uint16 chainId;
+        assembly {
+            chainId := chainid()
+        }
+
+        // 120 bytes --> 66 bytes (string message) + 32 bytes (babyjub) + 2 bytes (chainId) +  20 bytes (Hermez address)
         bytes32 messageDigest = keccak256(
             abi.encodePacked(
-                "\x19Ethereum Signed Message:\n98", // 98 bytes --> 66 bytes (string message) + 32 bytes (babyjub)
+                "\x19Ethereum Signed Message:\n120",
                 "I authorize this babyjubjub key for hermez rollup account creation",
-                babyjub
+                babyjub,
+                chainId,
+                address(this)
             )
         );
         address ethAddress = ecrecover(messageDigest, v, r, s);
