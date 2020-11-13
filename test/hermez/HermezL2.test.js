@@ -46,6 +46,9 @@ describe("Hermez ERC 20", function () {
   let hermezGovernanceDAOAddress;
   let ownerWallet;
 
+  let chainID;
+  let chainIDHex;
+
   const accounts = [];
 
   // set accounts
@@ -64,7 +67,6 @@ describe("Hermez ERC 20", function () {
   const maxTx = 512;
   const nLevels = 32;
   const forgeL1L2BatchTimeout = 10;
-  let chainID;
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
   const INITIAL_DELAY = 0;
@@ -205,6 +207,7 @@ describe("Hermez ERC 20", function () {
 
     const chainSC = await buidlerHermez.getChainID();
     chainID = chainSC.toNumber();
+    chainIDHex = chainSC.toHexString();
   });
 
   describe("L2-user-Tx", function () {
@@ -434,7 +437,8 @@ describe("Hermez ERC 20", function () {
             tokenIdERC20,
             accounts[0].bjjCompressed,
             owner,
-            buidlerHermez
+            buidlerHermez,
+            chainIDHex
           ));
       }
       // forge empty batch

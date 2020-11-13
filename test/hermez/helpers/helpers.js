@@ -126,18 +126,21 @@ class ForgerTest {
   }
 }
 
-async function signBjjAuth(wallet, babyjub) {
+async function signBjjAuth(wallet, babyjub, chainIdHex, hermezAddress) {
   const AccountCreationAuthMsgArray = ethers.utils.toUtf8Bytes(
     "I authorize this babyjubjub key for hermez rollup account creation"
   ); // 66 bytes
+
+  // 66 bytes + 32 bytes + 2 bytes + 20 bytes = 120 bytes
   const messageHex =
-    ethers.utils.hexlify(AccountCreationAuthMsgArray) + babyjub; // 66 bytes + 32 bytes = 98 bytes
+    ethers.utils.hexlify(AccountCreationAuthMsgArray) + babyjub + ethers.utils.hexZeroPad(chainIdHex, 2).slice(2) + hermezAddress.slice(2); 
   const messageArray = ethers.utils.arrayify(messageHex);
   // other approach could be babyjub arrify, concat with AccountCreationAuthMsgArray and sign
   const flatSig = await wallet.signMessage(messageArray); // automatically concat "\x19Ethereum Signed Message:\n98" to the messageArray, where `98`is the length of the messageArray
   const signatureParams = ethers.utils.splitSignature(flatSig);
   return flatSig.slice(0, -2) + signatureParams.v.toString(16);
 }
+
 
 async function l1UserTxCreateAccountDeposit(
   loadAmount,
@@ -808,10 +811,10 @@ async function l1UserTxForceExit(
   return l1Txbytes;
 }
 
-async function l1CoordinatorTxEth(tokenID, babyjub, wallet, buidlerHermez) {
+async function l1CoordinatorTxEth(tokenID, babyjub, wallet, buidlerHermez, chainIdHex) {
   // equivalent L1 transaction:
 
-  const flatSig = await signBjjAuth(wallet, babyjub.slice(2));
+  const flatSig = await signBjjAuth(wallet, babyjub.slice(2), chainIdHex, buidlerHermez.address);
 
   let sig = ethers.utils.splitSignature(flatSig);
 

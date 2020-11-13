@@ -34,6 +34,7 @@ describe("Hermez Helpers", function () {
   let id1;
   let id2;
   let addrs;
+  let chainIDHex;
 
   const accounts = [];
   for (let i = 0; i < 10; i++) {
@@ -81,12 +82,15 @@ describe("Hermez Helpers", function () {
     await buidlerHermezHelpersTest.deployed();
 
     fillSmtTree();
+
+    const chainSC = await buidlerHermezHelpersTest.getChainID();
+    chainIDHex = chainSC.toHexString();
   });
 
   describe("utility helpers", function () {
     it("checkSig", async function () {
       const babyjub = accounts[0].bjjCompressed;
-      const flatSig = await signBjjAuth(owner, babyjub);
+      const flatSig = await signBjjAuth(owner, babyjub, chainIDHex, buidlerHermezHelpersTest.address);
       let sig = ethers.utils.splitSignature(flatSig);
 
       expect(
