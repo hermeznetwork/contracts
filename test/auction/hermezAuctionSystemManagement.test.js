@@ -246,10 +246,20 @@ describe("Auction Protocol Management", function() {
         }, TIMEOUT);
       });
 
+      await expect(buidlerHermezAuctionProtocol
+        .connect(governance)
+        .setOutbidding(0)
+      ).to.be.revertedWith("HermezAuctionProtocol::setOutbidding: OUTBIDDING_NOT_VALID");
+      await expect(buidlerHermezAuctionProtocol
+        .connect(governance)
+        .setOutbidding(10001)
+      ).to.be.revertedWith("HermezAuctionProtocol::setOutbidding: OUTBIDDING_NOT_VALID");
+
       // Set outbidding
       await buidlerHermezAuctionProtocol
         .connect(governance)
         .setOutbidding(newOutbidding);
+
       await eventNewOutbidding;
       // Check new outbidding
       expect(await buidlerHermezAuctionProtocol.getOutbidding()).to.be.equal(

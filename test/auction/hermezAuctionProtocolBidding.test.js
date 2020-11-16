@@ -198,9 +198,17 @@ describe("Consensus Protocol Bidding", function() {
     it("should be higher than the previous bid", async function() {
       await buidlerHermezAuctionProtocol
         .connect(governance)
-        .setOutbidding(0);
+        .setOutbidding(2);
 
-      let amount = ethers.utils.parseEther("10");
+      // test for values <10000
+      for (i = 0; i < 6; i++) {
+        // Change minBids
+        await buidlerHermezAuctionProtocol
+          .connect(governance)
+          .changeDefaultSlotSetBid(i, 0);
+      }
+        
+      let amount = 1000;
       let slot = 3;
       let permit = ethers.utils.toUtf8Bytes("");
 
