@@ -245,7 +245,7 @@ contract HermezAuctionProtocol is
 
     /**
      * @notice Allows to change the `_outbidding` if it's called by the owner
-     * @dev newOutbidding between 0.00% and 655.36%
+     * @dev newOutbidding between 0.01% and 100.00%
      * @param newOutbidding new `_outbidding`
      * Events: `NewOutbidding`
      */
@@ -254,6 +254,10 @@ contract HermezAuctionProtocol is
         override
         onlyGovernance
     {
+        require(
+            newOutbidding > 1 && newOutbidding < 10000,
+            "HermezAuctionProtocol::setOutbidding: OUTBIDDING_NOT_VALID"
+        );
         _outbidding = newOutbidding;
         emit NewOutbidding(_outbidding);
     }
