@@ -663,6 +663,7 @@ contract Hermez is InstantWithdrawManager {
             "Hermez::addToken: ADDRESS_0_INVALID"
         );
         require(tokenMap[tokenAddress] == 0, "Hermez::addToken: ALREADY_ADDED");
+        require(IERC20(tokenAddress).totalSupply() > 0, "Hermez::addToken: TOTAL_SUPPLY_ZERO");
 
         // permit and transfer HEZ tokens
         if (permit.length != 0) {

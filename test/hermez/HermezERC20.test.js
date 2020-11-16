@@ -216,6 +216,26 @@ describe("Hermez ERC 20", function() {
   });
 
   describe("Utils", function() {
+    it("should revert if token with 0 supply", async function() {
+
+      const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
+      // deploy tokens
+      const token_zero_supply = await TokenERC20Mock.deploy(
+        "tokenname",
+        "TKN",
+        await owner.getAddress(),
+        0
+      );
+      await expect(AddToken(
+        buidlerHermez,
+        token_zero_supply,
+        buidlerHEZ,
+        ownerWallet,
+        feeAddToken
+      )).to.be.revertedWith("TOTAL_SUPPLY_ZERO");
+
+    });
+
     it("Add Token", async function() {
       await AddToken(
         buidlerHermez,
@@ -224,6 +244,7 @@ describe("Hermez ERC 20", function() {
         ownerWallet,
         feeAddToken
       );
+
       expect(await buidlerHEZ.balanceOf(hermezGovernanceDAOAddress))
         .to.be.equal(await buidlerHermez.feeAddToken())
     });
