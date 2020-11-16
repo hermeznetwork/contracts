@@ -77,15 +77,15 @@ describe("Consensus Protocol Bidding", function() {
 
     buidlerHEZToken = await HEZToken.deploy(await owner.getAddress());
     await buidlerHEZToken.deployed();
-   
+
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
-    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+    if (chainIdProvider == 1337) { // solcover, must be a jsonRPC wallet
       const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
-      let erc2612WalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      let erc2612WalletTest = ethers.Wallet.fromMnemonic(mnemonic);
       // erc2612WalletTest = erc2612Wallet.connect(ethers.provider);
       erc2612Wallet = owner;
       erc2612Wallet.privateKey = erc2612WalletTest.privateKey;
-    } 
+    }
     else {
       erc2612Wallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
@@ -157,7 +157,7 @@ describe("Consensus Protocol Bidding", function() {
       await buidlerHermezAuctionProtocol
         .connect(coordinator2)
         .setCoordinator(await forger2.getAddress(), COORDINATOR_2_URL);
-        
+
       await buidlerHEZToken.connect(coordinator1).approve(
         buidlerHermezAuctionProtocol.address,
         ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
@@ -180,9 +180,29 @@ describe("Consensus Protocol Bidding", function() {
       await expect(
         buidlerHermezAuctionProtocol
           .connect(owner)
-          .processBid(amount,slot,amount,permit)
+          .processBid(amount, slot, amount, permit)
       ).to.be.revertedWith("HermezAuctionProtocol::processBid: COORDINATOR_NOT_REGISTERED");
     });
+
+    it("should be higher than the previous bid", async function() {
+      await buidlerHermezAuctionProtocol
+        .connect(governance)
+        .setOutbidding(0);
+
+      let amount = ethers.utils.parseEther("10");
+      let slot = 2;
+      let permit = ethers.utils.toUtf8Bytes("");
+
+      await buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processBid(amount, slot, amount, permit);
+
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(amount, slot, amount, permit)
+      ).to.be.revertedWith("HermezAuctionProtocol::_doBid: BID_MUST_BE_HIGHER");
+    })
 
     it("should call bid 11HEZ@2 ", async function() {
       // Event NewBid
@@ -204,9 +224,9 @@ describe("Consensus Protocol Bidding", function() {
       await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(amount,slot,amount,permit)
-      ).to.emit(buidlerHermezAuctionProtocol,"NewBid")
-        .withArgs(slot,amount,coordinator1Address);
+          .processBid(amount, slot, amount, permit)
+      ).to.emit(buidlerHermezAuctionProtocol, "NewBid")
+        .withArgs(slot, amount, coordinator1Address);
     });
 
     it("should call multiBid 11HEZ@5-10 ", async function() {
@@ -218,10 +238,10 @@ describe("Consensus Protocol Bidding", function() {
       let slotSet = [true, true, true, true, true, true];
 
 
-      await expect(); 
+      await expect();
       buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit);
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
     });
 
     it("should revert when call multiBid without enough balanace", async function() {
@@ -232,10 +252,10 @@ describe("Consensus Protocol Bidding", function() {
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit))
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit))
         .to.be.revertedWith("HermezAuctionProtocol::processMultiBid NOT_ENOUGH_BALANCE");
     });
 
@@ -256,9 +276,9 @@ describe("Consensus Protocol Bidding", function() {
       let slotSet = [true, false, true, false, true, false];
 
       await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bidMax,bidMin,permit);
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bidMax, bidMin, permit);
 
       // Get how much HEZ tokens are pending to be claimed for coordinator1Address
       let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
@@ -278,9 +298,9 @@ describe("Consensus Protocol Bidding", function() {
       slotSet = [true, false, true, false, true, false];
 
       await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount, slotMin, slotMax, slotSet, bidMax, bidMin, permit);
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bidMax, bidMin, permit);
 
       // Get how much HEZ tokens are pending to be claimed for coordinator1Address
       postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
@@ -292,19 +312,19 @@ describe("Consensus Protocol Bidding", function() {
       expect(postBalance).to.be.equal(ethers.utils.parseEther("868"));
 
       await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,bidMax,bidMin,permit);
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bidMax, bidMin, permit);
 
       await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processBid(
-          ethers.utils.parseEther("0"),
-          11,
-          ethers.utils.parseEther("800"),
-          ethers.utils.toUtf8Bytes("")
-        );
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(
+            ethers.utils.parseEther("0"),
+            11,
+            ethers.utils.parseEther("800"),
+            ethers.utils.toUtf8Bytes("")
+          );
 
       // Get how much HEZ tokens are pending to be claimed for coordinator1Address
       postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
@@ -331,10 +351,10 @@ describe("Consensus Protocol Bidding", function() {
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit))
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit))
         .to.be.revertedWith("HermezAuctionProtocol::processMultiBid AUCTION_CLOSED");
     });
 
@@ -346,10 +366,10 @@ describe("Consensus Protocol Bidding", function() {
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processMultiBid(amount,slotMin,slotMax,slotSet,bid,bid,permit))
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit))
         .to.be.revertedWith("HermezAuctionProtocol::processMultiBid AUCTION_NOT_OPEN");
     });
 
@@ -365,7 +385,7 @@ describe("Consensus Protocol Bidding", function() {
 
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit);
+        .processMultiBid(amount, slotMin, slotMax, slotSet, maxBid, minBid, permit);
 
       for (let i = 5; i < 10; i++) {
         // Check that the minBid of the slots 5-10 has been updated
@@ -393,7 +413,7 @@ describe("Consensus Protocol Bidding", function() {
 
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit);
+        .processMultiBid(amount, slotMin, slotMax, slotSet, maxBid, minBid, permit);
 
       // Check that bidder is producer
       expect((await buidlerHermezAuctionProtocol.slots(5)).bidder).to.be.equal(
@@ -423,7 +443,7 @@ describe("Consensus Protocol Bidding", function() {
 
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit);
+        .processMultiBid(amount, slotMin, slotMax, slotSet, maxBid, minBid, permit);
     });
 
     it("should when maxBid < closedMinBid", async function() {
@@ -436,10 +456,10 @@ describe("Consensus Protocol Bidding", function() {
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit))
+          .processMultiBid(amount, slotMin, slotMax, slotSet, maxBid, minBid, permit))
         .to.be.revertedWith("HermezAuctionProtocol::processMultiBid MAXBID_GREATER_THAN_MINBID");
 
     });
@@ -453,10 +473,10 @@ describe("Consensus Protocol Bidding", function() {
       let permit = ethers.utils.toUtf8Bytes("");
       let slotSet = [true, true, true, true, true, true];
 
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(owner)
-          .processMultiBid(amount,slotMin,slotMax,slotSet,maxBid,minBid,permit))
+          .processMultiBid(amount, slotMin, slotMax, slotSet, maxBid, minBid, permit))
         .to.be.revertedWith("HermezAuctionProtocol::processMultiBid COORDINATOR_NOT_REGISTERED");
 
     });
@@ -479,15 +499,15 @@ describe("Consensus Protocol Bidding", function() {
       let permit = ethers.utils.toUtf8Bytes("");
 
       await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processBid(amount,slot,amount,permit);
-
-      // Send tokens and bid data with amount = 11 (previous bid = 12)
-      await expect( 
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("11"),2,ethers.utils.parseEther("11"),permit))
+          .processBid(amount, slot, amount, permit);
+
+      // Send tokens and bid data with amount = 11 (previous bid = 12)
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("11"), 2, ethers.utils.parseEther("11"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
 
       let prevBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
@@ -496,7 +516,7 @@ describe("Consensus Protocol Bidding", function() {
       // Send tokens and bid data with amount = 14
       await buidlerHermezAuctionProtocol
         .connect(coordinator1)
-        .processBid(ethers.utils.parseEther("14"),2,ethers.utils.parseEther("14"),permit);
+        .processBid(ethers.utils.parseEther("14"), 2, ethers.utils.parseEther("14"), permit);
 
       let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
         await coordinator1.getAddress()
@@ -512,16 +532,16 @@ describe("Consensus Protocol Bidding", function() {
       let permit = ethers.utils.toUtf8Bytes("");
 
       // Send tokens and bid data with slot with closed auction
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("14"),0,ethers.utils.parseEther("14"),permit))
+          .processBid(ethers.utils.parseEther("14"), 0, ethers.utils.parseEther("14"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_CLOSED");
-      
-      await expect( 
+
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("14"),1,ethers.utils.parseEther("14"),permit))
+          .processBid(ethers.utils.parseEther("14"), 1, ethers.utils.parseEther("14"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_CLOSED");
     });
 
@@ -529,41 +549,41 @@ describe("Consensus Protocol Bidding", function() {
       let permit = ethers.utils.toUtf8Bytes("");
 
       // Send tokens and bid data with slot with auction that has not yet been opened
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("14"),4322,ethers.utils.parseEther("14"),permit))
+          .processBid(ethers.utils.parseEther("14"), 4322, ethers.utils.parseEther("14"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_NOT_OPEN");
       // Send tokens and bid data with slot with auction that has not yet been opened
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("14"),4323,ethers.utils.parseEther("14"),permit))
+          .processBid(ethers.utils.parseEther("14"), 4323, ethers.utils.parseEther("14"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_NOT_OPEN");
     });
     // Send tokens and bid data with bid below minimum bid
     it("should revert when bid below minimal bid", async function() {
       let permit = ethers.utils.toUtf8Bytes("");
 
-      await expect( 
+      await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("10"),2,ethers.utils.parseEther("10"),permit))
+          .processBid(ethers.utils.parseEther("10"), 2, ethers.utils.parseEther("10"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
     });
 
     it("should revert if claimHEZ revert", async function() {
       let permit = ethers.utils.toUtf8Bytes("");
 
-      await 
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processBid(ethers.utils.parseEther("12"),2,ethers.utils.parseEther("12"),permit);
+      await
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("12"), 2, ethers.utils.parseEther("12"), permit);
 
-      await 
-      buidlerHermezAuctionProtocol
-        .connect(coordinator2)
-        .processBid(ethers.utils.parseEther("14"),2,ethers.utils.parseEther("14"),permit);
+      await
+        buidlerHermezAuctionProtocol
+          .connect(coordinator2)
+          .processBid(ethers.utils.parseEther("14"), 2, ethers.utils.parseEther("14"), permit);
 
       // Check that the coordinator can withdraw the tokens from the previous bid
       expect(
@@ -600,26 +620,26 @@ describe("Consensus Protocol Bidding", function() {
       await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("10"),2,ethers.utils.parseEther("10"),permit))
+          .processBid(ethers.utils.parseEther("10"), 2, ethers.utils.parseEther("10"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
 
       // Send tokens and bid data with amount > minBid
       await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processBid(ethers.utils.parseEther("330"),2,ethers.utils.parseEther("330"),permit);
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("330"), 2, ethers.utils.parseEther("330"), permit);
 
       // Check same behavior next slot set
       await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("10"), 2 + 6,ethers.utils.parseEther("10"),permit))
+          .processBid(ethers.utils.parseEther("10"), 2 + 6, ethers.utils.parseEther("10"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
 
       await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processBid(ethers.utils.parseEther("330"),2 + 6,ethers.utils.parseEther("330"),permit);
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(ethers.utils.parseEther("330"), 2 + 6, ethers.utils.parseEther("330"), permit);
 
     });
   });
@@ -641,7 +661,7 @@ describe("Consensus Protocol Bidding", function() {
       const deadline = ethers.constants.MaxUint256;
       const nonce = await buidlerHEZToken.nonces(await erc2612Wallet.getAddress());
 
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerHEZToken,
         erc2612Wallet,
         buidlerHermezAuctionProtocol.address,
@@ -662,15 +682,15 @@ describe("Consensus Protocol Bidding", function() {
 
       await expect(
         buidlerHermezAuctionProtocol.connect(coordinator1)
-          .processBid(amount,slot,amount,data)
+          .processBid(amount, slot, amount, data)
       ).to.revertedWith("HermezAuctionProtocol::_permit: OWNER_NOT_EQUAL_SENDER");
 
 
       await expect(
         buidlerHermezAuctionProtocol.connect(erc2612Wallet)
-          .processBid(amount,slot,amount,data)
-      ).to.emit(buidlerHermezAuctionProtocol,"NewBid");
-  
+          .processBid(amount, slot, amount, data)
+      ).to.emit(buidlerHermezAuctionProtocol, "NewBid");
+
     });
 
     it("shouldn't be able to bid with a different permit call", async function() {
@@ -680,7 +700,7 @@ describe("Consensus Protocol Bidding", function() {
       const deadline = ethers.constants.MaxUint256;
       const nonce = await buidlerHEZToken.nonces(await erc2612Wallet.getAddress());
 
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerHEZToken,
         erc2612Wallet,
         buidlerHermezAuctionProtocol.address,
@@ -701,9 +721,9 @@ describe("Consensus Protocol Bidding", function() {
 
       await expect(
         buidlerHermezAuctionProtocol.connect(erc2612Wallet)
-          .processBid(amount,slot,amount,data)
+          .processBid(amount, slot, amount, data)
       ).to.revertedWith("HermezAuctionProtocol::_permit: NOT_VALID_CALL");
-  
+
     });
 
     it("should be able to multiBid with permit", async function() {
@@ -712,7 +732,7 @@ describe("Consensus Protocol Bidding", function() {
       const value = ethers.utils.parseEther("200");
       const nonce = await buidlerHEZToken.nonces(addressOwner);
 
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerHEZToken,
         erc2612Wallet,
         buidlerHermezAuctionProtocol.address,
@@ -738,21 +758,21 @@ describe("Consensus Protocol Bidding", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-      buidlerHermezAuctionProtocol
-        .connect(erc2612Wallet)
-        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, data);
+        buidlerHermezAuctionProtocol
+          .connect(erc2612Wallet)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, data);
     });
 
     it("shouldn't be able to bid with permit if SPENDER_NOT_EQUAL_THIS", async function() {
       let amount = ethers.utils.parseEther("11");
       let slot = 2;
-  
+
       const addressOwner = await erc2612Wallet.getAddress();
       const deadline = ethers.constants.MaxUint256;
       const value = ethers.utils.parseEther("11");
       const nonce = await buidlerHEZToken.nonces(addressOwner);
-  
-      const {v,r,s} = await createPermitSignature(
+
+      const { v, r, s } = await createPermitSignature(
         buidlerHEZToken,
         erc2612Wallet,
         buidlerHEZToken.address,
@@ -760,7 +780,7 @@ describe("Consensus Protocol Bidding", function() {
         nonce,
         deadline
       );
-  
+
       const data = iface.encodeFunctionData("permit", [
         await erc2612Wallet.getAddress(),
         buidlerHEZToken.address,
@@ -770,24 +790,24 @@ describe("Consensus Protocol Bidding", function() {
         r,
         s
       ]);
-  
+
       await expect(
         buidlerHermezAuctionProtocol
           .connect(erc2612Wallet)
-          .processBid(amount,slot,amount,data)
+          .processBid(amount, slot, amount, data)
       ).to.revertedWith("HermezAuctionProtocol::_permit: SPENDER_NOT_EQUAL_THIS");
     });
 
     it("shouldn't be able to bid with permit if WRONG_AMOUNT", async function() {
       let amount = ethers.utils.parseEther("11");
       let slot = 2;
-  
+
       const addressOwner = await erc2612Wallet.getAddress();
       const deadline = ethers.constants.MaxUint256;
       const value = ethers.utils.parseEther("11");
       const nonce = await buidlerHEZToken.nonces(addressOwner);
 
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerHEZToken,
         erc2612Wallet,
         buidlerHermezAuctionProtocol.address,
@@ -795,7 +815,7 @@ describe("Consensus Protocol Bidding", function() {
         nonce,
         deadline
       );
-  
+
       const data = iface.encodeFunctionData("permit", [
         await erc2612Wallet.getAddress(),
         buidlerHermezAuctionProtocol.address,
@@ -805,23 +825,23 @@ describe("Consensus Protocol Bidding", function() {
         r,
         s
       ]);
-  
+
       await expect(
         buidlerHermezAuctionProtocol
           .connect(erc2612Wallet)
-          .processBid(amount,slot,amount,data)
+          .processBid(amount, slot, amount, data)
       ).to.revertedWith("HermezAuctionProtocol::_permit: WRONG_AMOUNT");
     });
     it("shouldn't be able to bid without NOT_ENOUGH_BALANCE", async function() {
       let amount = ethers.utils.parseEther("11");
       let slot = 2;
-  
+
       const addressOwner = await erc2612Wallet.getAddress();
       const deadline = ethers.constants.MaxUint256;
       const value = ethers.utils.parseEther("11");
       const nonce = await buidlerHEZToken.nonces(addressOwner);
 
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerHEZToken,
         erc2612Wallet,
         buidlerHermezAuctionProtocol.address,
@@ -829,7 +849,7 @@ describe("Consensus Protocol Bidding", function() {
         nonce,
         deadline
       );
-  
+
       const data = iface.encodeFunctionData("permit", [
         await erc2612Wallet.getAddress(),
         buidlerHermezAuctionProtocol.address,
@@ -839,24 +859,24 @@ describe("Consensus Protocol Bidding", function() {
         r,
         s
       ]);
-  
+
       await expect(
         buidlerHermezAuctionProtocol
           .connect(erc2612Wallet)
-          .processBid(amount,slot,amount.add(1),data)
+          .processBid(amount, slot, amount.add(1), data)
       ).to.revertedWith("HermezAuctionProtocol::processBid: NOT_ENOUGH_BALANCE");
     });
 
     it("should revert if token transfer fail", async function() {
       let amount = ethers.utils.parseEther("11");
       let slot = 2;
-  
+
       const addressOwner = await erc2612Wallet.getAddress();
       const deadline = ethers.constants.MaxUint256;
       const value = ethers.utils.parseEther("11");
       const nonce = await buidlerHEZToken.nonces(addressOwner);
 
-      const {v,r,s} = await createPermitSignature(
+      const { v, r, s } = await createPermitSignature(
         buidlerHEZToken,
         erc2612Wallet,
         buidlerHermezAuctionProtocol.address,
@@ -864,7 +884,7 @@ describe("Consensus Protocol Bidding", function() {
         nonce,
         deadline
       );
-  
+
       const data = iface.encodeFunctionData("permit", [
         await erc2612Wallet.getAddress(),
         buidlerHermezAuctionProtocol.address,
@@ -879,7 +899,7 @@ describe("Consensus Protocol Bidding", function() {
       await expect(
         buidlerHermezAuctionProtocol
           .connect(erc2612Wallet)
-          .processBid(amount,slot,amount,data)
+          .processBid(amount, slot, amount, data)
       ).to.revertedWith("HermezAuctionProtocol::processBid: TOKEN_TRANSFER_FAILED");
 
 
@@ -890,8 +910,8 @@ describe("Consensus Protocol Bidding", function() {
 
       await expect(
         buidlerHermezAuctionProtocol
-        .connect(erc2612Wallet)
-        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, data)
+          .connect(erc2612Wallet)
+          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, data)
       ).to.revertedWith("HermezAuctionProtocol::processMultiBid: TOKEN_TRANSFER_FAILED");
 
       await buidlerHEZToken.setTransferFromResult(true);
@@ -922,7 +942,7 @@ async function createPermitSignature(buidlerToken, owner, spenderAddress, value,
     r,
     s
   } = new ethers.utils.SigningKey(owner.privateKey).signDigest(digest);
-  
+
   return {
     v,
     r,
