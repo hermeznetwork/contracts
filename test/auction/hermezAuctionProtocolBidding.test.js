@@ -183,6 +183,17 @@ describe("Consensus Protocol Bidding", function() {
           .processBid(amount, slot, amount, permit)
       ).to.be.revertedWith("HermezAuctionProtocol::processBid: COORDINATOR_NOT_REGISTERED");
     });
+    it("should call bid 11HEZ@2 ", async function() {
+      let amount = ethers.utils.parseEther("11");
+      let slot = 2;
+      let permit = ethers.utils.toUtf8Bytes("");
+
+      await expect(
+        buidlerHermezAuctionProtocol
+          .connect(coordinator1)
+          .processBid(amount, slot, amount, permit)
+      ).to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_CLOSED");
+    });
 
     it("should be higher than the previous bid", async function() {
       await buidlerHermezAuctionProtocol
@@ -190,7 +201,7 @@ describe("Consensus Protocol Bidding", function() {
         .setOutbidding(0);
 
       let amount = ethers.utils.parseEther("10");
-      let slot = 2;
+      let slot = 3;
       let permit = ethers.utils.toUtf8Bytes("");
 
       await buidlerHermezAuctionProtocol
@@ -202,30 +213,6 @@ describe("Consensus Protocol Bidding", function() {
           .connect(coordinator1)
           .processBid(amount, slot, amount, permit)
       ).to.be.revertedWith("HermezAuctionProtocol::_doBid: BID_MUST_BE_HIGHER");
-    });
-
-    it("should call bid 11HEZ@2 ", async function() {
-      // Event NewBid
-      let eventNewBid = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewBid();
-        buidlerHermezAuctionProtocol.on(filter, () => {
-          resolve();
-        });
-
-        // After 10s, we throw a timeout error
-        setTimeout(() => {
-          reject(new Error("timeout while waiting for event"));
-        }, TIMEOUT);
-      });
-      let amount = ethers.utils.parseEther("11");
-      let slot = 2;
-      let permit = ethers.utils.toUtf8Bytes("");
-
-      await expect(
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .processBid(amount, slot, amount, permit)
-      ).to.be.revertedWith("HermezAuctionProtocol::processBid: AUCTION_CLOSED");
     });
 
     it("should call bid 11HEZ@3 ", async function() {
@@ -507,7 +494,7 @@ describe("Consensus Protocol Bidding", function() {
       await expect(
         buidlerHermezAuctionProtocol
           .connect(coordinator1)
-          .processBid(ethers.utils.parseEther("11"), 2, ethers.utils.parseEther("11"), permit))
+          .processBid(ethers.utils.parseEther("11"), slot, ethers.utils.parseEther("11"), permit))
         .to.be.revertedWith("HermezAuctionProtocol::processBid: BELOW_MINIMUM");
 
       let prevBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
