@@ -35,6 +35,12 @@ const {
 } = require("@hermeznetwork/commonjs");
 
 const INITIAL_DELAY = 0;
+const ABIbid = [
+  "function permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+];
+
+const iface = new ethers.utils.Interface(ABIbid);
+
 describe("Hermez ERC20 Permit", function() {
   let buidlerTokenERC20PermitMock;
   let buidlerHermez;
@@ -207,10 +213,69 @@ describe("Hermez ERC20 Permit", function() {
         feeAddToken
       );
     });
+
+    it("Add Token of a token that does not exist", async function() {
+      const fakeTokenAddress = "0xEEF9f339514298C6A857EfCfC1A762aF84438dEE";
+      const addressOwner = await ownerWallet.getAddress();
+
+      const deadline = ethers.constants.MaxUint256;
+      const value = feeAddToken;
+      const nonce = await buidlerTokenERC20PermitMock.nonces(addressOwner);
+      const { v, r, s } = await createPermitSignature(
+        buidlerTokenERC20PermitMock,
+        ownerWallet,
+        buidlerHermez.address,
+        value,
+        nonce,
+        deadline
+      );
+
+      const data = iface.encodeFunctionData("permit", [
+        await ownerWallet.getAddress(),
+        buidlerHermez.address,
+        value,
+        deadline,
+        v,
+        r,
+        s
+      ]);
+
+      // Send data and amount
+      await expect(buidlerHermez.connect(ownerWallet).addToken(fakeTokenAddress, data))
+        .to.be.reverted;
+    });
   });
 
   // You can nest describe calls to create subsections.
   describe("L1-user-Tx", function() {
+
+    it("createAccountDeposit should revert cause token is not added", async function() {
+      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const tokenID = 1;
+      const babyjub = `0x${accounts[0].bjjCompressed}`;
+
+      // using ERC20 approach: approve and transferFrom, shoudl revert
+      await expect(
+        buidlerTokenERC20PermitMock.approve(buidlerHermez.address, loadAmount)
+      ).to.emit(buidlerTokenERC20PermitMock, "Approval");
+
+      const fromIdx0 = 0;
+      const amountF0 = 0;
+      const toIdx0 = 0;
+
+      await expect(
+        buidlerHermez.addL1Transaction(
+          babyjub,
+          fromIdx0,
+          loadAmount,
+          amountF0,
+          tokenID,
+          toIdx0,
+          emptyPermit
+        )
+      ).to.be.revertedWith("Hermez::addL1Transaction: TOKEN_NOT_REGISTERED");
+    });
+
     it("createAccountDeposit", async function() {
       await AddToken(
         buidlerHermez,
@@ -255,77 +320,6 @@ describe("Hermez ERC20 Permit", function() {
           emptyPermit
         )
       );
-    });
-
-    it("createAccountDeposit of a token that does not exist", async function() {
-      const fakeTokenAddress = "0xEEF9f339514298C6A857EfCfC1A762aF84438dEE";
-      const addressOwner = await ownerWallet.getAddress();
-      const deadline = ethers.constants.MaxUint256;
-      const value = feeAddToken;
-      const nonce = await buidlerTokenERC20PermitMock.nonces(addressOwner);
-      const { v, r, s } = await createPermitSignature(
-        buidlerTokenERC20PermitMock,
-        ownerWallet,
-        buidlerHermez.address,
-        value,
-        nonce,
-        deadline
-      );
-
-      let ABIbid = [
-        "function permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
-      ];
-
-      let iface = new ethers.utils.Interface(ABIbid);
-      const data = iface.encodeFunctionData("permit", [
-        addressOwner,
-        buidlerHermez.address,
-        value,
-        deadline,
-        v,
-        r,
-        s
-      ]);
-      const tokensAdded = await buidlerHermez.registerTokensCount();
-      await expect(buidlerHermez.connect(ownerWallet).addToken(fakeTokenAddress, data))
-        .to.emit(buidlerHermez, "AddToken")
-        .withArgs(fakeTokenAddress, tokensAdded);
-
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
-      const tokenID = 1;
-      const fromIdx0 = 0;
-      const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const toIdx0 = 0;
-      const amountF0 = 0;
-
-      await expect(
-        buidlerHermez.addL1Transaction(
-          babyjub,
-          fromIdx0,
-          loadAmount,
-          amountF0,
-          tokenID,
-          toIdx0,
-          emptyPermit,
-          {
-            value: loadAmount,
-            gasPrice: 0,
-          }
-        )
-      ).to.be.revertedWith("Hermez::addL1Transaction: MSG_VALUE_NOT_EQUAL_0");
-
-      // using erc20permit approach:
-      await expect(
-        l1UserTxCreateAccountDeposit(
-          loadAmount,
-          tokenID,
-          babyjub,
-          ownerWallet,
-          buidlerHermez,
-          buidlerTokenERC20PermitMock,
-          true
-        )
-      ).to.be.reverted;
     });
 
     it("deposit", async function() {
