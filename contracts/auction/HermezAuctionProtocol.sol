@@ -784,7 +784,6 @@ contract HermezAuctionProtocol is
             // If the bootcoordinator is forging and there has been a previous bid that is lower than the slot min bid,
             // we must return the tokens to the bidder and the tokens have not been distributed
             if (
-                (_bootCoordinator == forger) &&
                 (slots[slotToForge].bidAmount != 0) &&
                 (slots[slotToForge].bidAmount < minBid)
             ) {
@@ -795,7 +794,7 @@ contract HermezAuctionProtocol is
                     slots[slotToForge].bidAmount
                 );
                 // In case the winner is forging we have to allocate the tokens according to the desired distribution
-            } else if (_bootCoordinator != forger) {
+            } else {
                 // We save the minBid that this block has had
                 slots[slotToForge].closedMinBid = slots[slotToForge].bidAmount;
                 // calculation of token distribution
@@ -831,6 +830,34 @@ contract HermezAuctionProtocol is
             }
         }
         emit NewForge(forger, slotToForge);
+    }
+
+    function claimPendingHEZ(uint128 slot) public {
+        require(
+            slot < getCurrentSlotNumber(),
+            "HermezAuctionProtocol::claimPendingHEZ: ONLY_IF_PREVIOUS_SLOT"
+        );
+        require(
+            !slots[slot].fulfilled,
+            "HermezAuctionProtocol::claimPendingHEZ: ONLY_IF_NOT_FULFILLED"
+        );
+        // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
+        // otherwise the one that has been saved will be used
+        uint128 minBid = (slots[slot].closedMinBid == 0)
+            ? _defaultSlotSetBid[getSlotSet(slot)]
+            : slots[slot].closedMinBid;
+
+        require(
+            slots[slot].bidAmount != 0 && slots[slot].bidAmount < minBid,
+            "HermezAuctionProtocol::claimPendingHEZ: ONLY_IF_NOT_FULFILLED"
+        );
+
+        slots[slot].closedMinBid = minBid;
+        slots[slot].fulfilled = true;
+
+        pendingBalances[slots[slot].bidder] = pendingBalances[slots[slot]
+            .bidder]
+            .add(slots[slot].bidAmount);
     }
 
     /**
