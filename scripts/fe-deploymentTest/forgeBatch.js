@@ -42,7 +42,7 @@ async function main() {
     const filter = buidlerHermez.filters.L1UserTxEvent(null, i, null);
     let events = await buidlerHermez.queryFilter(filter, 0, "latest");
     events.forEach((e) => {
-      bb.addTx(txUtils.decodeL1Tx(e.args.l1UserTx));
+      bb.addTx(txUtils.decodeL1TxFull(e.args.l1UserTx));
     });
     await bb.build();
     await rollupDB.consolidate(bb);
@@ -59,7 +59,7 @@ async function main() {
     const lastChar = i * 68 * 2;
     const currentHexChar = (i + 1) * 68 * 2;
     const currenTx = SCL1TxData.slice(lastChar, currentHexChar);
-    bbCurrent.addTx(txUtils.decodeL1Tx(currenTx));
+    bbCurrent.addTx(txUtils.decodeL1TxFull(currenTx));
   }
   await bbCurrent.build();
 

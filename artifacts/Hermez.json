@@ -25,9 +25,15 @@
       "inputs": [
         {
           "indexed": true,
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "batchNum",
-          "type": "uint64"
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint16",
+          "name": "l1UserTxsLen",
+          "type": "uint16"
         }
       ],
       "name": "ForgeBatch",
@@ -38,9 +44,9 @@
       "inputs": [
         {
           "indexed": true,
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "queueIndex",
-          "type": "uint64"
+          "type": "uint32"
         },
         {
           "indexed": true,
@@ -171,9 +177,9 @@
         },
         {
           "indexed": true,
-          "internalType": "uint48",
+          "internalType": "uint32",
           "name": "numExitRoot",
-          "type": "uint48"
+          "type": "uint32"
         },
         {
           "indexed": true,
@@ -301,9 +307,9 @@
     {
       "inputs": [
         {
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "",
-          "type": "uint64"
+          "type": "uint32"
         },
         {
           "internalType": "uint48",
@@ -325,9 +331,9 @@
     {
       "inputs": [
         {
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "",
-          "type": "uint64"
+          "type": "uint32"
         }
       ],
       "name": "exitRootsMap",
@@ -378,7 +384,7 @@
         },
         {
           "internalType": "bytes",
-          "name": "l2TxsData",
+          "name": "l1L2TxsData",
           "type": "bytes"
         },
         {
@@ -563,9 +569,9 @@
       "name": "lastForgedBatch",
       "outputs": [
         {
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "",
-          "type": "uint64"
+          "type": "uint32"
         }
       ],
       "stateMutability": "view",
@@ -600,9 +606,9 @@
     {
       "inputs": [
         {
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "",
-          "type": "uint64"
+          "type": "uint32"
         }
       ],
       "name": "mapL1TxQueue",
@@ -621,9 +627,9 @@
       "name": "nextL1FillingQueue",
       "outputs": [
         {
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "",
-          "type": "uint64"
+          "type": "uint32"
         }
       ],
       "stateMutability": "view",
@@ -634,9 +640,9 @@
       "name": "nextL1ToForgeQueue",
       "outputs": [
         {
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "",
-          "type": "uint64"
+          "type": "uint32"
         }
       ],
       "stateMutability": "view",
@@ -707,9 +713,9 @@
     {
       "inputs": [
         {
-          "internalType": "uint64",
+          "internalType": "uint32",
           "name": "",
-          "type": "uint64"
+          "type": "uint32"
         }
       ],
       "name": "stateRootMap",
@@ -891,9 +897,9 @@
           "type": "uint192"
         },
         {
-          "internalType": "uint48",
+          "internalType": "uint32",
           "name": "numExitRoot",
-          "type": "uint48"
+          "type": "uint32"
         },
         {
           "internalType": "uint48",
@@ -942,9 +948,9 @@
           "type": "uint256"
         },
         {
-          "internalType": "uint48",
+          "internalType": "uint32",
           "name": "numExitRoot",
-          "type": "uint48"
+          "type": "uint32"
         },
         {
           "internalType": "uint256[]",

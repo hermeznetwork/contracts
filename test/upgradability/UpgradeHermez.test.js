@@ -20,7 +20,7 @@ const maxTxVerifierConstant = 512;
 const nLevelsVeriferConstant = 32;
 const TIMEOUT = 400000;
 
-describe("upgradability test", function() {
+describe("upgradability test Hermez", function() {
   this.timeout(TIMEOUT);
 
   let hermez, libVerifiersAddress, maxTxVerifier, nLevelsVerifer, libverifiersWithdrawAddress,

@@ -6,6 +6,7 @@ import "../hermez/lib/InstantWithdrawManager.sol";
 import "../hermez/interfaces/VerifierRollupInterface.sol";
 import "../hermez/interfaces/VerifierWithdrawInterface.sol";
 import "../interfaces/IHermezAuctionProtocol.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract HermezV2 is InstantWithdrawManager {
     struct VerifierRollup {
@@ -68,10 +69,10 @@ contract HermezV2 is InstantWithdrawManager {
     uint256 constant _RFIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
     // [6 bytes] lastIdx + [6 bytes] newLastIdx  + [32 bytes] stateRoot  + [32 bytes] newStRoot  + [32 bytes] newExitRoot +
-    // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData + totalL2TxsDataLength + feeIdxCoordinatorLength + [2 bytes] chainID =
-    // 18542 bytes +  totalL2TxsDataLength + feeIdxCoordinatorLength
+    // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData + totall1L2TxsDataLength + feeIdxCoordinatorLength + [2 bytes] chainID + [4 bytes] batchNum =
+    // 18546 bytes + totall1L2TxsDataLength + feeIdxCoordinatorLength
 
-    uint256 constant _INPUT_SHA_CONSTANT_BYTES = 18542;
+    uint256 constant _INPUT_SHA_CONSTANT_BYTES = 18546;
 
     uint8 public constant ABSOLUTE_MAX_L1L2BATCHTIMEOUT = 240;
 
@@ -92,17 +93,17 @@ contract HermezV2 is InstantWithdrawManager {
     uint48 public lastIdx;
 
     // Last batch forged
-    uint64 public lastForgedBatch;
+    uint32 public lastForgedBatch;
 
     // Each batch forged will have a correlated 'state root'
-    mapping(uint64 => uint256) public stateRootMap;
+    mapping(uint32 => uint256) public stateRootMap;
 
     // Each batch forged will have a correlated 'exit tree' represented by the exit root
-    mapping(uint64 => uint256) public exitRootsMap;
+    mapping(uint32 => uint256) public exitRootsMap;
 
     // Mapping of exit nullifiers, only allowing each withdrawal to be made once
     // rootId => (Idx => true/false)
-    mapping(uint64 => mapping(uint48 => bool)) public exitNullifierMap;
+    mapping(uint32 => mapping(uint48 => bool)) public exitNullifierMap;
 
     // List of ERC20 tokens that can be used in rollup
     // ID = 0 will be reserved for ether
@@ -119,16 +120,16 @@ contract HermezV2 is InstantWithdrawManager {
 
     // Map of queues of L1-user-tx transactions, the transactions are stored in bytes32 sequentially
     // The coordinator is forced to forge the next queue in the next L1-L2-batch
-    mapping(uint64 => bytes) public mapL1TxQueue;
+    mapping(uint32 => bytes) public mapL1TxQueue;
 
     // Ethereum block where the last L1-L2-batch was forged
     uint64 public lastL1L2Batch;
 
     // Queue index that will be forged in the next L1-L2-batch
-    uint64 public nextL1ToForgeQueue;
+    uint32 public nextL1ToForgeQueue;
 
     // Queue index wich will be filled with the following L1-User-Tx
-    uint64 public nextL1FillingQueue;
+    uint32 public nextL1FillingQueue;
 
     // Max ethereum blocks after the last L1-L2-batch, when exceeds the timeout only L1-L2-batch are allowed
     uint8 public forgeL1L2BatchTimeout;
@@ -141,7 +142,7 @@ contract HermezV2 is InstantWithdrawManager {
 
     // Event emitted when a L1-user transaction is called and added to the nextL1FillingQueue queue
     event L1UserTxEvent(
-        uint64 indexed queueIndex,
+        uint32 indexed queueIndex,
         uint8 indexed position, // Position inside the queue where the TX resides
         bytes l1UserTx
     );
@@ -150,7 +151,7 @@ contract HermezV2 is InstantWithdrawManager {
     event AddToken(address indexed tokenAddress, uint32 tokenID);
 
     // Event emitted every time a batch is forged
-    event ForgeBatch(uint64 indexed batchNum);
+    event ForgeBatch(uint32 indexed batchNum, uint16 l1UserTxsLen);
 
     // Event emitted when the governance update the `forgeL1L2BatchTimeout`
     event UpdateForgeL1L2BatchTimeout(uint8 newForgeL1L2BatchTimeout);
@@ -161,7 +162,7 @@ contract HermezV2 is InstantWithdrawManager {
     // Event emitted when a withdrawal is done
     event WithdrawEvent(
         uint48 indexed idx,
-        uint48 indexed numExitRoot,
+        uint32 indexed numExitRoot,
         bool indexed instantWithdraw
     );
 
@@ -222,13 +223,13 @@ contract HermezV2 is InstantWithdrawManager {
     /**
      * @dev Forge a new batch providing the L2 Transactions, L1Corrdinator transactions and the proof.
      * If the proof is succesfully verified, update the current state, adding a new state and exit root.
-     * In order to optimize the gas consumption the parameters `encodedL1CoordinatorTx`, `l2TxsData` and `feeIdxCoordinator`
+     * In order to optimize the gas consumption the parameters `encodedL1CoordinatorTx`, `l1L2TxsData` and `feeIdxCoordinator`
      * are read directly from the calldata using assembly with the instruction `calldatacopy`
      * @param newLastIdx New total rollup accounts
      * @param newStRoot New state root
      * @param newExitRoot New exit root
      * @param encodedL1CoordinatorTx Encoded L1-coordinator transactions
-     * @param l2TxsData Encoded l2 data
+     * @param l1L2TxsData Encoded l2 data
      * @param feeIdxCoordinator Encoded idx accounts of the coordinator where the fees will be payed
      * @param verifierIdx Verifier index
      * @param l1Batch Indicates if this batch will be L2 or L1-L2
@@ -242,7 +243,7 @@ contract HermezV2 is InstantWithdrawManager {
         uint256 newStRoot,
         uint256 newExitRoot,
         bytes calldata encodedL1CoordinatorTx,
-        bytes calldata l2TxsData,
+        bytes calldata l1L2TxsData,
         bytes calldata feeIdxCoordinator,
         uint8 verifierIdx,
         bool l1Batch,
@@ -298,17 +299,18 @@ contract HermezV2 is InstantWithdrawManager {
         stateRootMap[lastForgedBatch] = newStRoot;
         exitRootsMap[lastForgedBatch] = newExitRoot;
 
+        uint16 l1UserTxsLen;
         if (l1Batch) {
             // restart the timeout
             lastL1L2Batch = uint64(block.number);
             // clear current queue
-            _clearQueue();
+            l1UserTxsLen = _clearQueue();
         }
 
         // auction must be aware that a batch is being forged
         hermezAuctionContract.forge(msg.sender);
 
-        emit ForgeBatch(lastForgedBatch);
+        emit ForgeBatch(lastForgedBatch, l1UserTxsLen);
     }
 
     //////////////
@@ -368,17 +370,31 @@ contract HermezV2 is InstantWithdrawManager {
             if (tokenID == 0) {
                 require(
                     loadAmount == msg.value,
-                    "Hermez::addL1Transaction: LOADAMOUNT_DOES_NOT_MATCH"
+                    "Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH"
                 );
             } else {
+                require(
+                    msg.value == 0,
+                    "Hermez::addL1Transaction: MSG_VALUE_NOT_EQUAL_0"
+                );
                 if (permit.length != 0) {
                     _permit(tokenList[tokenID], loadAmount, permit);
                 }
+                uint256 prevBalance = IERC20(tokenList[tokenID]).balanceOf(
+                    address(this)
+                );
                 _safeTransferFrom(
                     tokenList[tokenID],
                     msg.sender,
                     address(this),
                     loadAmount
+                );
+                uint256 postBalance = IERC20(tokenList[tokenID]).balanceOf(
+                    address(this)
+                );
+                require(
+                    postBalance - prevBalance == loadAmount,
+                    "Hermez::addL1Transaction: LOADAMOUNT_ERC20_DOES_NOT_MATCH"
                 );
             }
         }
@@ -488,7 +504,7 @@ contract HermezV2 is InstantWithdrawManager {
         uint32 tokenID,
         uint192 amount,
         uint256 babyPubKey,
-        uint48 numExitRoot,
+        uint32 numExitRoot,
         uint256[] memory siblings,
         uint48 idx,
         bool instantWithdraw
@@ -552,7 +568,7 @@ contract HermezV2 is InstantWithdrawManager {
         uint256[2] calldata proofC,
         uint32 tokenID,
         uint192 amount,
-        uint48 numExitRoot,
+        uint32 numExitRoot,
         uint48 idx,
         bool instantWithdraw
     ) external {
@@ -651,12 +667,21 @@ contract HermezV2 is InstantWithdrawManager {
             "Hermez::addToken: ADDRESS_0_INVALID"
         );
         require(tokenMap[tokenAddress] == 0, "Hermez::addToken: ALREADY_ADDED");
+        require(
+            IERC20(tokenAddress).totalSupply() > 0,
+            "Hermez::addToken: TOTAL_SUPPLY_ZERO"
+        );
 
         // permit and transfer HEZ tokens
         if (permit.length != 0) {
             _permit(tokenHEZ, feeAddToken, permit);
         }
-        _safeTransferFrom(tokenHEZ, msg.sender, address(this), feeAddToken);
+        _safeTransferFrom(
+            tokenHEZ,
+            msg.sender,
+            hermezGovernanceDAOAddress,
+            feeAddToken
+        );
 
         tokenList.push(tokenAddress);
         tokenMap[tokenAddress] = currentTokens;
@@ -859,10 +884,11 @@ contract HermezV2 is InstantWithdrawManager {
         uint256 dPtr; // Pointer to the calldata parameter data
         uint256 dLen; // Length of the calldata parameter
 
-        // l2TxsData = l2Bytes * maxTx =
+        // l1L2TxsData = l2Bytes * maxTx =
         // ([(nLevels / 8) bytes] fromIdx + [(nLevels / 8) bytes] toIdx + [2 bytes] amountFloat16 + [1 bytes] fee) * maxTx =
         // ((nLevels / 4) bytes + 3 bytes) * maxTx
-        uint256 l2TxsDataLength = ((rollupVerifiers[verifierIdx].nLevels / 8) *
+        uint256 l1L2TxsDataLength = ((rollupVerifiers[verifierIdx].nLevels /
+            8) *
             2 +
             3) * rollupVerifiers[verifierIdx].maxTx;
 
@@ -877,17 +903,18 @@ contract HermezV2 is InstantWithdrawManager {
         // [32 bytes] newStRoot  +
         // [32 bytes] newExitRoot +
         // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData +
-        // totalL2TxsDataLength +
+        // totall1L2TxsDataLength +
         // feeIdxCoordinatorLength +
-        // [2 bytes] chainID =
-        // _INPUT_SHA_CONSTANT_BYTES bytes +  totalL2TxsDataLength + feeIdxCoordinatorLength
+        // [2 bytes] chainID +
+        // [4 bytes] batchNum =
+        // _INPUT_SHA_CONSTANT_BYTES bytes +  totall1L2TxsDataLength + feeIdxCoordinatorLength
         bytes memory inputBytes;
 
         uint256 ptr; // Position for writing the bufftr
 
         assembly {
             let inputBytesLength := add(
-                add(_INPUT_SHA_CONSTANT_BYTES, l2TxsDataLength),
+                add(_INPUT_SHA_CONSTANT_BYTES, l1L2TxsDataLength),
                 feeIdxCoordinatorLength
             )
 
@@ -926,15 +953,17 @@ contract HermezV2 is InstantWithdrawManager {
         // Copy the L2 TX Data from calldata
         (dPtr, dLen) = _getCallData(4);
         require(
-            dLen <= l2TxsDataLength,
+            dLen <= l1L2TxsDataLength,
             "Hermez::_constructCircuitInput: L2_TX_OVERFLOW"
         );
         assembly {
             calldatacopy(ptr, dPtr, dLen)
         }
         ptr += dLen;
-        _fillZeros(ptr, l2TxsDataLength - dLen);
-        ptr += l2TxsDataLength - dLen;
+
+        // L2 TX unused data is padded with 0 at the end
+        _fillZeros(ptr, l1L2TxsDataLength - dLen);
+        ptr += l1L2TxsDataLength - dLen;
 
         // Copy the FeeIdxCoordinator from the calldata
         (dPtr, dLen) = _getCallData(5);
@@ -953,6 +982,14 @@ contract HermezV2 is InstantWithdrawManager {
         assembly {
             mstore(ptr, shl(240, chainid())) // 256 - 16 = 240
         }
+        ptr += 2;
+
+        uint256 batchNum = lastForgedBatch + 1; // to change
+
+        // store 4 bytes of batch number at the end of the inputBytes
+        assembly {
+            mstore(ptr, shl(224, batchNum)) // 256 - 32 = 224
+        }
 
         return uint256(sha256(inputBytes)) % _RFIELD;
     }
@@ -960,12 +997,16 @@ contract HermezV2 is InstantWithdrawManager {
     /**
      * @dev Clear the current queue, and update the `nextL1ToForgeQueue` and `nextL1FillingQueue` if needed
      */
-    function _clearQueue() internal {
+    function _clearQueue() internal returns (uint16) {
+        uint16 l1UserTxsLen = uint16(
+            mapL1TxQueue[nextL1ToForgeQueue].length / _L1_USER_TOTALBYTES
+        );
         delete mapL1TxQueue[nextL1ToForgeQueue];
         nextL1ToForgeQueue++;
         if (nextL1ToForgeQueue == nextL1FillingQueue) {
             nextL1FillingQueue++;
         }
+        return l1UserTxsLen;
     }
 
     /**
@@ -1161,7 +1202,7 @@ contract HermezV2 is InstantWithdrawManager {
         uint256 newStRoot,
         uint256 newExitRoot,
         bytes calldata compressedL1CoordinatorTx,
-        bytes calldata l2TxsData,
+        bytes calldata l1L2TxsData,
         bytes calldata feeIdxCoordinator,
         bool l1Batch,
         uint8 verifierIdx

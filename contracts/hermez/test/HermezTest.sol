@@ -78,7 +78,7 @@ contract HermezTest is Hermez {
         uint256 newStRoot,
         uint256 newExitRoot,
         bytes calldata encodedL1CoordinatorTx,
-        bytes calldata l2TxsData,
+        bytes calldata l1L2TxsData,
         bytes calldata feeIdxCoordinator,
         uint8 verifierIdx,
         bool l1Batch,
@@ -134,17 +134,18 @@ contract HermezTest is Hermez {
         stateRootMap[lastForgedBatch] = newStRoot;
         exitRootsMap[lastForgedBatch] = newExitRoot;
 
+        uint16 l1UserTxsLen;
         if (l1Batch) {
             // restart the timeout
             lastL1L2Batch = uint64(block.number);
             // clear current queue
-            _clearQueue();
+            l1UserTxsLen = _clearQueue();
         }
 
         // auction must be aware that a batch is being forged
         hermezAuctionContract.forge(msg.sender);
 
-        emit ForgeBatch(lastForgedBatch);
+        emit ForgeBatch(lastForgedBatch, l1UserTxsLen);
         emit ReturnUint256(gasleft());
     }
 
@@ -153,7 +154,7 @@ contract HermezTest is Hermez {
         uint256 newStRoot,
         uint256 newExitRoot,
         bytes calldata encodedL1CoordinatorTx,
-        bytes calldata l2TxsData,
+        bytes calldata l1L2TxsData,
         bytes calldata feeIdxCoordinator,
         uint8 verifierIdx,
         bool l1Batch,

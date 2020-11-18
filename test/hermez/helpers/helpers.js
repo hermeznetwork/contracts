@@ -44,7 +44,7 @@ class ForgerTest {
 
     let jsL1TxData = "";
     for (let tx of l1TxUserArray) {
-      bb.addTx(txUtils.decodeL1Tx(tx));
+      bb.addTx(txUtils.decodeL1TxFull(tx));
       jsL1TxData = jsL1TxData + tx.slice(2);
     }
 
@@ -57,7 +57,7 @@ class ForgerTest {
   
     if (l1TxCoordiatorArray) {
       for (let tx of l1TxCoordiatorArray) {
-        bb.addTx(txUtils.decodeL1Tx(tx.l1TxBytes));
+        bb.addTx(txUtils.decodeL1TxFull(tx.l1TxBytes));
       }
     }
 
@@ -87,7 +87,7 @@ class ForgerTest {
     const newStateRoot = bb.getNewStateRoot();
     const newExitRoot = bb.getNewExitRoot();
     const compressedL1CoordinatorTx = `0x${stringL1CoordinatorTx}`;
-    const L2TxsData = bb.getL2TxsDataSM();
+    const L1L2TxsData = bb.getL1L2TxsDataSM();
     const feeIdxCoordinator = bb.getFeeTxsDataSM();
     const verifierIdx = 0;
 
@@ -97,7 +97,7 @@ class ForgerTest {
         newStateRoot,
         newExitRoot,
         compressedL1CoordinatorTx,
-        L2TxsData,
+        L1L2TxsData,
         feeIdxCoordinator,
         l1Batch,
         verifierIdx
@@ -106,23 +106,24 @@ class ForgerTest {
       .to.emit(this.buidlerHermez, "ReturnUint256")
       .withArgs(bb.getHashInputs());
 
-    const tx = await this.buidlerHermez.forgeBatch(
-      newLastIdx,
-      newStateRoot,
-      newExitRoot,
-      compressedL1CoordinatorTx,
-      L2TxsData,
-      feeIdxCoordinator,
-      verifierIdx,
-      l1Batch,
-      proofA,
-      proofB,
-      proofC
-    );
+    await expect(
+      this.buidlerHermez.forgeBatch(
+        newLastIdx,
+        newStateRoot,
+        newExitRoot,
+        compressedL1CoordinatorTx,
+        L1L2TxsData,
+        feeIdxCoordinator,
+        verifierIdx,
+        l1Batch,
+        proofA,
+        proofB,
+        proofC
+      )
+    ).to.emit(this.buidlerHermez, "ForgeBatch")
+      .withArgs(bb.batchNumber, l1TxUserArray.length);
 
     await this.rollupDB.consolidate(bb);
-
-    return tx;
   }
 }
 
@@ -163,7 +164,7 @@ async function l1UserTxCreateAccountDeposit(
     fromBjjCompressed: babyjub,
     fromEthAddr: await wallet.getAddress(),
   };
-  const l1Txbytes = `0x${txUtils.encodeL1Tx(l1TxcreateAccountDeposit)}`;
+  const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxcreateAccountDeposit)}`;
 
   const lastQueue = await buidlerHermez.nextL1FillingQueue();
 
@@ -311,7 +312,7 @@ async function l1UserTxDeposit(
     fromEthAddr: await wallet.getAddress(),
   };
 
-  const l1Txbytes = `0x${txUtils.encodeL1Tx(l1TxDeposit)}`;
+  const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxDeposit)}`;
 
   const lastQueue = await buidlerHermez.nextL1FillingQueue();
 
@@ -457,7 +458,7 @@ async function l1UserTxDepositTransfer(
     fromEthAddr: await wallet.getAddress(),
   };
 
-  const l1Txbytes = `0x${txUtils.encodeL1Tx(l1TxDepositTransfer)}`;
+  const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxDepositTransfer)}`;
 
   const lastQueue = await buidlerHermez.nextL1FillingQueue();
 
@@ -603,7 +604,7 @@ async function l1UserTxCreateAccountDepositTransfer(
     fromEthAddr: await wallet.getAddress(),
   };
 
-  const l1Txbytes = `0x${txUtils.encodeL1Tx(l1TxCreateAccountDepositTransfer)}`;
+  const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxCreateAccountDepositTransfer)}`;
 
   const lastQueue = await buidlerHermez.nextL1FillingQueue();
 
@@ -743,7 +744,7 @@ async function l1UserTxForceTransfer(
     fromEthAddr: await wallet.getAddress(),
   };
 
-  const l1Txbytes = `0x${txUtils.encodeL1Tx(l1TxForceTransfer)}`;
+  const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxForceTransfer)}`;
 
   const lastQueue = await buidlerHermez.nextL1FillingQueue();
 
@@ -786,7 +787,7 @@ async function l1UserTxForceExit(
     fromBjjCompressed: 0,
     fromEthAddr: await wallet.getAddress(),
   };
-  const l1Txbytes = `0x${txUtils.encodeL1Tx(l1TxForceExit)}`;
+  const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxForceExit)}`;
 
   const lastQueue = await buidlerHermez.nextL1FillingQueue();
 
@@ -830,7 +831,7 @@ async function l1CoordinatorTxEth(tokenID, babyjub, wallet, buidlerHermez, chain
   const l1TxCoordinatorbytes = `0x${txUtils.encodeL1CoordinatorTx(
     l1TxCoordinator
   )}`;
-  const l1TxBytes = `0x${txUtils.encodeL1Tx(l1TxCoordinator)}`;
+  const l1TxBytes = `0x${txUtils.encodeL1TxFull(l1TxCoordinator)}`;
 
   return { l1TxBytes, l1TxCoordinatorbytes };
 }
@@ -848,7 +849,7 @@ async function l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez) {
   const l1TxCoordinatorbytes = `0x${txUtils.encodeL1CoordinatorTx(
     l1TxCoordinatorCreateBjj
   )}`;
-  const l1TxBytes = `0x${txUtils.encodeL1Tx(l1TxCoordinatorCreateBjj)}`;
+  const l1TxBytes = `0x${txUtils.encodeL1TxFull(l1TxCoordinatorCreateBjj)}`;
 
   return {
     l1TxBytes,
