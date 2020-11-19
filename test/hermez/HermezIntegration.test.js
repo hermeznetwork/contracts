@@ -59,6 +59,9 @@ describe("Hermez integration", function() {
   let hermezGovernanceDAOAddress;
   let ownerWallet;
 
+  let chainID;
+  let chainIDHex;
+
   const accounts = [];
   for (let i = 0; i < 10; i++) {
     accounts.push(new HermezAccount());
@@ -68,7 +71,6 @@ describe("Hermez integration", function() {
   const maxTx = 512;
   const nLevels = 32;
   const forgeL1L2BatchTimeout = 10;
-  let chainID;
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
   const INITIAL_DELAY = 60; //seconds
@@ -216,8 +218,10 @@ describe("Hermez integration", function() {
 
     expect(buidlerWithdrawalDelayer.address).to.equal(WithdrawalDelayerAddress);
     expect(buidlerHermez.address).to.equal(HermezAddress);
+    
     const chainSC = await buidlerHermez.getChainID();
     chainID = chainSC.toNumber();
+    chainIDHex = chainSC.toHexString();
   });
 
   describe("Forge Batch", function() {
@@ -378,7 +382,7 @@ describe("Hermez integration", function() {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez, chainIDHex)
       );
 
       l1TxCoordiatorArray.push(

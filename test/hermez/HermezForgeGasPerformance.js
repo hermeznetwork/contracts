@@ -10,7 +10,6 @@ const {
   l1UserTxCreateAccountDepositTransfer,
   l1UserTxForceTransfer,
   l1UserTxForceExit,
-  l1CoordinatorTxEth,
   l1CoordinatorTxBjj,
   AddToken,
   ForgerTest,
