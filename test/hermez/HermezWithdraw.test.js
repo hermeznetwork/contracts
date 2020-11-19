@@ -276,26 +276,39 @@ describe("Hermez instant withdraw manager", function() {
       // 0 withdrawals
       await time.advanceBlockTo(initialTimestamp + tokenRate * 2 - 1);
 
+
+      const expectedIdx = bucketIdx;
+      let expectedWithdrawals = 1;
+      let expectedblockStamp = initialTimestamp + tokenRate * 2;
+
       // 2 withdrawals
-      await buidlerHermez.instantWithdrawalTest(
+      await expect (buidlerHermez.instantWithdrawalTest(
         tokenAddress,
         tokenAmountDecimals
-      );
+      )).to.emit(buidlerHermez,"UpdateBucketWithdraw")
+        .withArgs(expectedIdx,expectedblockStamp,expectedWithdrawals);
+
+
       bucketSC = await buidlerHermez.buckets(bucketIdx);
-      expect(bucketSC.withdrawals).to.be.equal(1);
-      expect(bucketSC.blockStamp).to.be.equal(initialTimestamp + tokenRate * 2);
+      expect(bucketSC.withdrawals).to.be.equal(expectedWithdrawals);
+      expect(bucketSC.blockStamp).to.be.equal(expectedblockStamp);
 
       await time.advanceBlockTo(initialTimestamp + tokenRate * 5 - 1);
 
-      await buidlerHermez.instantWithdrawalTest(
+      expectedWithdrawals = 3;
+      expectedblockStamp = initialTimestamp + tokenRate * 5;
+
+      await expect (buidlerHermez.instantWithdrawalTest(
         tokenAddress,
         tokenAmountDecimals
-      );
+      )).to.emit(buidlerHermez,"UpdateBucketWithdraw")
+        .withArgs(expectedIdx,expectedblockStamp,expectedWithdrawals);
+
       bucketSC = await buidlerHermez.buckets(bucketIdx);
 
       // 1 + 3 - 1 = 3 withdrawals left
-      expect(bucketSC.withdrawals).to.be.equal(3);
-      expect(bucketSC.blockStamp).to.be.equal(initialTimestamp + tokenRate * 5);
+      expect(bucketSC.withdrawals).to.be.equal(expectedWithdrawals);
+      expect(bucketSC.blockStamp).to.be.equal(expectedblockStamp);
 
       await buidlerHermez.instantWithdrawalTest(
         tokenAddress,
@@ -421,27 +434,41 @@ describe("Hermez instant withdraw manager", function() {
         )
       ).to.be.equal(true);
 
+
+      const expectedIdx = bucketIdx;
+      let expectedWithdrawals = 1;
+      let expectedblockStamp = initialTimestamp + tokenRate * 2;
+
       // 2 withdrawals
-      await buidlerHermez.instantWithdrawalTest(
+      await expect (buidlerHermez.instantWithdrawalTest(
         tokenAddress,
         tokenAmountDecimals
-      );
+      )).to.emit(buidlerHermez,"UpdateBucketWithdraw")
+        .withArgs(expectedIdx,expectedblockStamp,expectedWithdrawals);
+
+
+      // 2 withdrawals
       bucketSC = await buidlerHermez.buckets(bucketIdx);
 
-      expect(bucketSC.withdrawals).to.be.equal(1);
-      expect(bucketSC.blockStamp).to.be.equal(initialTimestamp + tokenRate * 2);
+      expect(bucketSC.withdrawals).to.be.equal(expectedWithdrawals);
+      expect(bucketSC.blockStamp).to.be.equal(expectedblockStamp);
 
       await time.advanceBlockTo(initialTimestamp + tokenRate * 5 - 1);
 
-      await buidlerHermez.instantWithdrawalTest(
+
+      expectedWithdrawals = 3;
+      expectedblockStamp = initialTimestamp + tokenRate * 5;
+
+      await expect (buidlerHermez.instantWithdrawalTest(
         tokenAddress,
         tokenAmountDecimals
-      );
+      )).to.emit(buidlerHermez,"UpdateBucketWithdraw")
+        .withArgs(expectedIdx,expectedblockStamp,expectedWithdrawals);
+        
       bucketSC = await buidlerHermez.buckets(bucketIdx);
-
       // max withdawals = 4
-      expect(bucketSC.withdrawals).to.be.equal(3);
-      expect(bucketSC.blockStamp).to.be.equal(initialTimestamp + tokenRate * 5);
+      expect(bucketSC.withdrawals).to.be.equal(expectedWithdrawals);
+      expect(bucketSC.blockStamp).to.be.equal(expectedblockStamp);
 
       // withdraw could be performed
       expect(
