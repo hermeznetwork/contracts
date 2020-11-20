@@ -219,6 +219,27 @@ async function main() {
             ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
         );
 
+    await buidlerTokenHermez
+        .connect(governance)
+        .approve(
+            buidlerHermezAuctionProtocolTest.address,
+            ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+        );
+
+    await buidlerTokenHermez
+        .connect(governance)
+        .approve(
+            buidlerHermez.address,
+            ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+        );
+
+    await buidlerTokenHermez
+        .connect(governance)
+        .approve(
+            buidlerHermezAuctionProtocol.address,
+            ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+        );
+
     const address = {
         // genesisBlock: genesisBlock,
         genesisBlock: genesisBlockTest,
