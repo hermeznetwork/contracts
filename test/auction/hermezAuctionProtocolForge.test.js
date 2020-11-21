@@ -15,6 +15,7 @@ const {
 const COORDINATOR_1_URL = "https://hermez.io";
 
 const BLOCKS_PER_SLOT = 40;
+const DEADLINE_BLOCKS = 20;
 const TIMEOUT = 30000;
 const MIN_BLOCKS = 81;
 
@@ -59,6 +60,7 @@ describe("Auction Protocol", function() {
       governance,
       donation,
       bootCoordinator,
+      deadlineCoordinator,
       ...addrs
     ] = await ethers.getSigners();
 
@@ -175,11 +177,11 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
-      let block = startingBlock.add(3 * 40);
+      let block = startingBlock.add(3 * BLOCKS_PER_SLOT);
       // Check forger address
       expect(
         await buidlerHermezAuctionProtocol.canForge(
@@ -205,9 +207,9 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (i = 0; i < 6; i++) {
         // Change epochs minBid
@@ -220,18 +222,18 @@ describe("Auction Protocol", function() {
       expect(
         await buidlerHermezAuctionProtocol.canForge(
           governanceAddress,
-          startingBlock.add(3 * 40)
+          startingBlock.add(3 * BLOCKS_PER_SLOT)
         )
       ).to.be.equal(false);
       expect(
         await buidlerHermezAuctionProtocol.canForge(
           bootCoordinatorAddress,
-          startingBlock.add(3 * 40)
+          startingBlock.add(3 * BLOCKS_PER_SLOT)
         )
       ).to.be.equal(true);
 
       // Advance blocks
-      let blockNumber = startingBlock.add(3 * 40).toNumber();
+      let blockNumber = startingBlock.add(3 * BLOCKS_PER_SLOT).toNumber();
       time.advanceBlockTo(blockNumber);
       while (blockNumber > (await time.latestBlock()).toNumber()) {
         sleep(100);
@@ -258,7 +260,7 @@ describe("Auction Protocol", function() {
       );
     });
 
-    it("should burn the HEZ tokens if it's no able to return them", async function() {
+    it("should burn the HEZ tokens if it's no able to return them ???", async function() {
       let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
@@ -268,9 +270,9 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (i = 0; i < 6; i++) {
         // Change epochs minBid
@@ -279,7 +281,7 @@ describe("Auction Protocol", function() {
           .changeDefaultSlotSetBid(i, ethers.utils.parseEther("123456789"));
       }
       // Advance Blocks
-      let blockNumber = startingBlock.add(3 * 40).toNumber();
+      let blockNumber = startingBlock.add(3 * BLOCKS_PER_SLOT).toNumber();
       time.advanceBlockTo(blockNumber);
       while (blockNumber > (await time.latestBlock()).toNumber()) {
         sleep(100);
@@ -307,7 +309,7 @@ describe("Auction Protocol", function() {
     it("shouldn't be able to forge unless it's the bootcoordinator or the winner", async function() {
       // Advance Blocks
       let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
-      let blockNumber = startingBlock.add(3 * 40).toNumber();
+      let blockNumber = startingBlock.add(3 * BLOCKS_PER_SLOT).toNumber();
       time.advanceBlockTo(blockNumber);
       while (blockNumber > (await time.latestBlock()).toNumber()) {
         sleep(100);
@@ -337,16 +339,36 @@ describe("Auction Protocol", function() {
         }, TIMEOUT);
       });
       // Advance blocks
-      let blockNumber = startingBlock.add(3 * 40).toNumber();
+      const slotNum = 3;
+      let blockNumber = startingBlock.add(slotNum * BLOCKS_PER_SLOT).toNumber(); 
+
       time.advanceBlockTo(blockNumber);
       while (blockNumber > (await time.latestBlock()).toNumber()) {
         sleep(100);
       }
+
+      const SlotStateBefore = await buidlerHermezAuctionProtocol.slots(slotNum);
+
+      expect(SlotStateBefore.fulfilled).to.be.equal(false);
+      expect(SlotStateBefore.forgerCommitment).to.be.equal(false);
+      expect(SlotStateBefore.bidder).to.be.equal("0x0000000000000000000000000000000000000000");
+      expect(SlotStateBefore.bidAmount).to.be.equal(0);
+
       // Forge
-      buidlerHermezAuctionProtocol
+      await expect(buidlerHermezAuctionProtocol
         .connect(hermezRollup)
-        .forge(bootCoordinatorAddress);
+        .forge(bootCoordinatorAddress)
+      ).to.emit(buidlerHermezAuctionProtocol, "NewForge")
+        .withArgs(bootCoordinatorAddress, slotNum);
       await eventNewForge;
+
+      const SlotStateAfter = await buidlerHermezAuctionProtocol.slots(slotNum);
+
+      expect(SlotStateAfter.fulfilled).to.be.equal(true);
+      expect(SlotStateAfter.forgerCommitment).to.be.equal(true);
+
+      // slots[slotToForge].forgerCommitment;
+      // forgerCommitment;
     });
 
     it("Winner should be able to forge", async function() {
@@ -390,16 +412,24 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       // Advance blocks
-      let blockNumber = startingBlock.add(3 * 40).toNumber();
+      const slotNum = 3;
+      let blockNumber = startingBlock.add(slotNum * BLOCKS_PER_SLOT).toNumber();
       time.advanceBlockTo(blockNumber);
       while (blockNumber > (await time.latestBlock()).toNumber()) {
         sleep(100);
       }
+
+      const SlotStateBefore = await buidlerHermezAuctionProtocol.slots(slotNum);
+      expect(SlotStateBefore.fulfilled).to.be.equal(false);
+      expect(SlotStateBefore.forgerCommitment).to.be.equal(false);
+      expect(SlotStateBefore.bidder).to.be.equal(await coordinator1.getAddress());
+      expect(SlotStateBefore.bidAmount).to.be.equal(bidAmount);
+
       // Winner forge
       await buidlerHermezAuctionProtocol
         .connect(hermezRollup)
@@ -411,7 +441,66 @@ describe("Auction Protocol", function() {
         .connect(hermezRollup)
         .forge(producer1Address);
       await eventNewForgeAllocated;
+
+
+      const SlotStateAfter = await buidlerHermezAuctionProtocol.slots(slotNum);
+
+      expect(SlotStateAfter.fulfilled).to.be.equal(true);
+      expect(SlotStateAfter.forgerCommitment).to.be.equal(true);
     });
+
+    it("forgerCommitment don't accomplished if forge after the deadline", async function() {
+      let producer1Address = await forger1.getAddress();
+      let bidAmount = ethers.utils.parseEther("11");
+      // Event NewForgeAllocated
+
+      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+
+      let amount = ethers.utils.parseEther("100");
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 3;
+      let slotMax = 8;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+
+      // Advance blocks to deadline
+      const slotNum = 3;
+      let blockNumber = startingBlock.add(slotNum * BLOCKS_PER_SLOT + DEADLINE_BLOCKS).toNumber();
+      time.advanceBlockTo(blockNumber);
+      while (blockNumber > (await time.latestBlock()).toNumber()) {
+        sleep(100);
+      }
+
+      const SlotStateBefore = await buidlerHermezAuctionProtocol.slots(slotNum);
+      expect(SlotStateBefore.fulfilled).to.be.equal(false);
+      expect(SlotStateBefore.forgerCommitment).to.be.equal(false);
+      expect(SlotStateBefore.bidder).to.be.equal(await coordinator1.getAddress());
+      expect(SlotStateBefore.bidAmount).to.be.equal(bidAmount);
+
+      // Winner forge
+      await buidlerHermezAuctionProtocol
+        .connect(hermezRollup)
+        .forge(producer1Address);
+
+      const SlotStateAfter = await buidlerHermezAuctionProtocol.slots(slotNum);
+
+      expect(SlotStateAfter.fulfilled).to.be.equal(true);
+      expect(SlotStateAfter.forgerCommitment).to.be.equal(false);
+
+      // the commitment is not accomplished so anyone can forge!
+      await buidlerHermezAuctionProtocol
+        .connect(hermezRollup)
+        .forge(await deadlineCoordinator.getAddress());
+      await buidlerHermezAuctionProtocol
+        .connect(hermezRollup)
+        .forge(await deadlineCoordinator.getAddress());
+    });
+
 
     it("shouldn't be able to claim HEZ if NOT_ENOUGH_BALANCE", async function() {
       await expect(
@@ -452,9 +541,9 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (let slot = 3; slot < 6; slot++) {
         // Advance blocks
@@ -496,7 +585,7 @@ describe("Auction Protocol", function() {
       await eventHEZClaimed;
     });
 
-    it("should revert when claim HEZ and it revert", async function() {
+    it("should revert when claim HEZ and it revert ????", async function() {
       let producer1Address = await forger1.getAddress();
       let bidAmount = ethers.utils.parseEther("11");
       let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
@@ -509,9 +598,9 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-        buidlerHermezAuctionProtocol
-          .connect(coordinator1)
-          .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (let slot = 3; slot < 6; slot++) {
         // Advance blocks
@@ -525,6 +614,149 @@ describe("Auction Protocol", function() {
           .connect(hermezRollup)
           .forge(producer1Address);
       }
+    });
+
+    it("edge case: bid was `outbidded` by the DefaultSlotSetBid, boot coordinator don't forge", async function() {
+      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let amount = ethers.utils.parseEther("100");
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 3;
+      let slotMax = 8;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+
+      for (i = 0; i < 6; i++) {
+        // Change epochs minBid
+        await buidlerHermezAuctionProtocol
+          .connect(governance)
+          .changeDefaultSlotSetBid(i, ethers.utils.parseEther("123456789"));
+      }
+
+      // Check forger address
+      expect(
+        await buidlerHermezAuctionProtocol.canForge(
+          governanceAddress,
+          startingBlock.add(3 * BLOCKS_PER_SLOT)
+        )
+      ).to.be.equal(false);
+      expect(
+        await buidlerHermezAuctionProtocol.canForge(
+          bootCoordinatorAddress,
+          startingBlock.add(3 * BLOCKS_PER_SLOT)
+        )
+      ).to.be.equal(true);
+
+      // Advance blocks to deadline
+      let blockNumber = startingBlock.add(3 * BLOCKS_PER_SLOT + DEADLINE_BLOCKS).toNumber();
+      time.advanceBlockTo(blockNumber);
+      while (blockNumber > (await time.latestBlock()).toNumber()) {
+        sleep(100);
+      }
+
+      let forgerAddress = await coordinator1.getAddress();
+      let prevBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+        forgerAddress
+      );
+
+      // anyone can forge now
+      await buidlerHermezAuctionProtocol
+        .connect(hermezRollup)
+        .forge(await deadlineCoordinator.getAddress());
+      await buidlerHermezAuctionProtocol
+        .connect(hermezRollup)
+        .forge(await deadlineCoordinator.getAddress());
+      await buidlerHermezAuctionProtocol
+        .connect(hermezRollup)
+        .forge(await deadlineCoordinator.getAddress());
+
+      // funds should return to the coordinator anyway
+      let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+        forgerAddress
+      );
+
+      // the slot is fullfilled but the forgeCommitment is false, because 
+      // is forged after the deadline
+      const SlotStateBefore = await buidlerHermezAuctionProtocol.slots(3);
+      expect(SlotStateBefore.fulfilled).to.be.equal(true);
+      expect(SlotStateBefore.forgerCommitment).to.be.equal(false);
+
+      // Check forgerAddress balances
+      expect(postBalance).to.be.equal(
+        prevBalance.add(ethers.utils.parseEther("11"))
+      );
+      expect(prevBalance.add(ethers.utils.parseEther("11"))).to.be.equal(
+        postBalance
+      );
+    });
+
+    it("edge case: bid was `outbidded` by the DefaultSlotSetBid, no one forge in that slot", async function() {
+      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let amount = ethers.utils.parseEther("100");
+      let bid = ethers.utils.parseEther("11");
+      let slotMin = 3;
+      let slotMax = 8;
+      let permit = ethers.utils.toUtf8Bytes("");
+      let slotSet = [true, true, true, true, true, true];
+
+      await
+      buidlerHermezAuctionProtocol
+        .connect(coordinator1)
+        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
+
+      for (i = 0; i < 6; i++) {
+        // Change epochs minBid
+        await buidlerHermezAuctionProtocol
+          .connect(governance)
+          .changeDefaultSlotSetBid(i, ethers.utils.parseEther("123456789"));
+      }
+
+      // Check forger address
+      expect(
+        await buidlerHermezAuctionProtocol.canForge(
+          governanceAddress,
+          startingBlock.add(3 * BLOCKS_PER_SLOT)
+        )
+      ).to.be.equal(false);
+      expect(
+        await buidlerHermezAuctionProtocol.canForge(
+          bootCoordinatorAddress,
+          startingBlock.add(3 * BLOCKS_PER_SLOT)
+        )
+      ).to.be.equal(true);
+
+      // Advance blocks to slot 4, no one forge in slot 3
+      let blockNumber = startingBlock.add(4 * BLOCKS_PER_SLOT + 1).toNumber();
+      time.advanceBlockTo(blockNumber);
+      while (blockNumber > (await time.latestBlock()).toNumber()) {
+        sleep(100);
+      }
+
+      let forgerAddress = await coordinator1.getAddress();
+      let prevBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+        forgerAddress
+      );
+
+      // anyone can claim the tokens in the slot 3
+      await buidlerHermezAuctionProtocol
+        .connect(deadlineCoordinator)
+        .claimPendingHEZ(3);
+
+      let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+        forgerAddress
+      );
+
+      // Check forgerAddress balances
+      expect(postBalance).to.be.equal(
+        prevBalance.add(ethers.utils.parseEther("11"))
+      );
+      expect(prevBalance.add(ethers.utils.parseEther("11"))).to.be.equal(
+        postBalance
+      );
     });
   });
 });
