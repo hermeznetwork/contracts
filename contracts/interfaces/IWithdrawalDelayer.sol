@@ -4,16 +4,16 @@ pragma solidity 0.6.12;
 
 interface IWithdrawalDelayer {
     /**
-     * @notice Getter of the current `_hermezGovernanceDAOAddress`
-     * @return The `_hermezGovernanceDAOAddress` value
+     * @notice Getter of the current `_hermezGovernanceAddress`
+     * @return The `_hermezGovernanceAddress` value
      */
-    function getHermezGovernanceDAOAddress() external view returns (address);
+    function getHermezGovernanceAddress() external view returns (address);
 
     /**
-     * @notice Allows to change the `_hermezGovernanceDAOAddress` if it's called by `_hermezGovernanceDAOAddress`
-     * @param newAddress new `_hermezGovernanceDAOAddress`
+     * @notice Allows to change the `_hermezGovernanceAddress` if it's called by `_hermezGovernanceAddress`
+     * @param newAddress new `_hermezGovernanceAddress`
      */
-    function setHermezGovernanceDAOAddress(address newAddress) external;
+    function setHermezGovernanceAddress(address newAddress) external;
 
     /**
      * @notice Getter of the current `_hermezKeeperAddress`
@@ -31,13 +31,13 @@ interface IWithdrawalDelayer {
      * @notice Getter of the current `_whiteHackGroupAddress`
      * @return The `_whiteHackGroupAddress` value
      */
-    function getWhiteHackGroupAddress() external view returns (address);
+    function getEmergencyCouncil() external view returns (address);
 
     /**
      * @notice Allows to change the `_whiteHackGroupAddress` if it's called by `_whiteHackGroupAddress`
      * @param newAddress new `_whiteHackGroupAddress`
      */
-    function setWhiteHackGroupAddress(address payable newAddress) external;
+    function setEmergencyCouncil(address payable newAddress) external;
 
     /**
      * @notice Getter of the current `_emergencyMode` status to know if the emergency mode is enable or disable
@@ -115,7 +115,7 @@ interface IWithdrawalDelayer {
     function withdrawal(address payable _owner, address _token) external;
 
     /**
-     * Allows the Hermez Governance DAO to withdawal the funds in the event that emergency mode was enable.
+     * Allows the Hermez Governance to withdawal the funds in the event that emergency mode was enable.
      * Note: An Aragon Court will have the right to veto over the call to this method
      * @dev `NonReentrant` modifier is used as a protection despite the state is being previously updated and this is
      * a security mechanism

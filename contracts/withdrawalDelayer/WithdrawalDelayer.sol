@@ -31,8 +31,8 @@ contract WithdrawalDelayer is
     // resolution and after which the WHG can redeem the funds
     uint64 private _withdrawalDelay; // Current delay
     uint64 private _emergencyModeStartingTime; // When emergency mode has started
-    address private _hermezGovernanceDAOAddress; // Governance DAO who control the system parameters
-    address payable private _whiteHackGroupAddress; // WHG address who can redeem the funds after MAX_EMERGENCY_MODE_TIME
+    address private _hermezGovernance; // Governance who control the system parameters
+    address payable private _emergencyCouncil; // WHG address who can redeem the funds after MAX_EMERGENCY_MODE_TIME
     address private _hermezKeeperAddress; // Can enable the emergency mode
     bool private _emergencyMode; // bool to set the emergency mode
     address public hermezRollupAddress; // hermez Rollup Address who can send funds to this smart contract
@@ -58,61 +58,58 @@ contract WithdrawalDelayer is
         uint256 amount
     );
     event NewHermezKeeperAddress(address newHermezKeeperAddress);
-    event NewWhiteHackGroupAddress(address newWhiteHackGroupAddress);
-    event NewHermezGovernanceDAOAddress(address newHermezGovernanceDAOAddress);
+    event NewEmergencyCouncil(address newEmergencyCouncil);
+    event NewHermezGovernanceAddress(address newHermezGovernanceAddress);
 
     /**
      * @notice withdrawalDelayerInitializer (Constructor)
      * @param _initialWithdrawalDelay Initial withdrawal delay time in seconds to be able to withdraw the funds
      * @param _initialHermezRollup Smart contract responsible of making deposits and it's able to change the delay
      * @param _initialHermezKeeperAddress can enable emergency mode and modify the delay to make a withdrawal
-     * @param _initialHermezGovernanceDAOAddress can claim the funds in an emergency mode
-     * @param _initialWhiteHackGroupAddress can claim the funds in an emergency and MAX_EMERGENCY_MODE_TIME exceeded
+     * @param _initialHermezGovernanceAddress can claim the funds in an emergency mode
+     * @param _initialEmergencyCouncil can claim the funds in an emergency and MAX_EMERGENCY_MODE_TIME exceeded
      */
 
     function withdrawalDelayerInitializer(
         uint64 _initialWithdrawalDelay,
         address _initialHermezRollup,
         address _initialHermezKeeperAddress,
-        address _initialHermezGovernanceDAOAddress,
-        address payable _initialWhiteHackGroupAddress
+        address _initialHermezGovernanceAddress,
+        address payable _initialEmergencyCouncil
     ) public initializer {
         __ReentrancyGuard_init_unchained();
         _withdrawalDelay = _initialWithdrawalDelay;
         hermezRollupAddress = _initialHermezRollup;
         _hermezKeeperAddress = _initialHermezKeeperAddress;
-        _hermezGovernanceDAOAddress = _initialHermezGovernanceDAOAddress;
-        _whiteHackGroupAddress = _initialWhiteHackGroupAddress;
+        _hermezGovernance = _initialHermezGovernanceAddress;
+        _emergencyCouncil = _initialEmergencyCouncil;
         _emergencyMode = false;
     }
 
     /**
-     * @notice Getter of the current `_hermezGovernanceDAOAddress`
-     * @return The `_hermezGovernanceDAOAddress` value
+     * @notice Getter of the current `_hermezGovernance`
+     * @return The `_hermezGovernance` value
      */
-    function getHermezGovernanceDAOAddress()
+    function getHermezGovernanceAddress()
         external
         override
         view
         returns (address)
     {
-        return _hermezGovernanceDAOAddress;
+        return _hermezGovernance;
     }
 
     /**
-     * @notice Allows to change the `_hermezGovernanceDAOAddress` if it's called by `_hermezGovernanceDAOAddress`
-     * @param newAddress new `_hermezGovernanceDAOAddress`
+     * @notice Allows to change the `_hermezGovernance` if it's called by `_hermezGovernance`
+     * @param newAddress new `_hermezGovernance`
      */
-    function setHermezGovernanceDAOAddress(address newAddress)
-        external
-        override
-    {
+    function setHermezGovernanceAddress(address newAddress) external override {
         require(
-            msg.sender == _hermezGovernanceDAOAddress,
-            "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_GOVERNANCE"
+            msg.sender == _hermezGovernance,
+            "WithdrawalDelayer::setHermezGovernanceAddress: ONLY_GOVERNANCE"
         );
-        _hermezGovernanceDAOAddress = newAddress;
-        emit NewHermezGovernanceDAOAddress(_hermezGovernanceDAOAddress);
+        _hermezGovernance = newAddress;
+        emit NewHermezGovernanceAddress(_hermezGovernance);
     }
 
     /**
@@ -130,39 +127,31 @@ contract WithdrawalDelayer is
     function setHermezKeeperAddress(address newAddress) external override {
         require(
             msg.sender == _hermezKeeperAddress,
-            "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_KEEPER"
+            "WithdrawalDelayer::setHermezKeeperAddress: ONLY_KEEPER"
         );
         _hermezKeeperAddress = newAddress;
         emit NewHermezKeeperAddress(_hermezKeeperAddress);
     }
 
     /**
-     * @notice Getter of the current `_whiteHackGroupAddress`
-     * @return The `_whiteHackGroupAddress` value
+     * @notice Getter of the current `_emergencyCouncil`
+     * @return The `_emergencyCouncil` value
      */
-    function getWhiteHackGroupAddress()
-        external
-        override
-        view
-        returns (address)
-    {
-        return _whiteHackGroupAddress;
+    function getEmergencyCouncil() external override view returns (address) {
+        return _emergencyCouncil;
     }
 
     /**
-     * @notice Allows to change the `_whiteHackGroupAddress` if it's called by `_whiteHackGroupAddress`
-     * @param newAddress new `_whiteHackGroupAddress`
+     * @notice Allows to change the `_emergencyCouncil` if it's called by `_emergencyCouncil`
+     * @param newAddress new `_emergencyCouncil`
      */
-    function setWhiteHackGroupAddress(address payable newAddress)
-        external
-        override
-    {
+    function setEmergencyCouncil(address payable newAddress) external override {
         require(
-            msg.sender == _whiteHackGroupAddress,
-            "WithdrawalDelayer::setHermezGovernanceDAOAddress: ONLY_WHG"
+            msg.sender == _emergencyCouncil,
+            "WithdrawalDelayer::setEmergencyCouncil: ONLY_EMERGENCY_COUNCIL"
         );
-        _whiteHackGroupAddress = newAddress;
-        emit NewWhiteHackGroupAddress(_whiteHackGroupAddress);
+        _emergencyCouncil = newAddress;
+        emit NewEmergencyCouncil(_emergencyCouncil);
     }
 
     /**
@@ -382,7 +371,7 @@ contract WithdrawalDelayer is
     }
 
     /**
-     * Allows the Hermez Governance DAO to withdawal the funds in the event that emergency mode was enable.
+     * Allows the Hermez Governance to withdawal the funds in the event that emergency mode was enable.
      * Note: An Aragon Court will have the right to veto over the call to this method
      * @dev `NonReentrant` modifier is used as a protection despite the state is being previously updated and this is
      * a security mechanism
@@ -401,11 +390,13 @@ contract WithdrawalDelayer is
             "WithdrawalDelayer::escapeHatchWithdrawal: ONLY_EMODE"
         );
         require(
-            msg.sender == _whiteHackGroupAddress ||
-                msg.sender == _hermezGovernanceDAOAddress,
+            msg.sender == _emergencyCouncil || msg.sender == _hermezGovernance,
             "WithdrawalDelayer::escapeHatchWithdrawal: ONLY_GOVERNANCE_WHG"
         );
-        if (msg.sender == _whiteHackGroupAddress) {
+        if (
+            msg.sender == _emergencyCouncil &&
+            _emergencyCouncil != _hermezGovernance
+        ) {
             require(
                 uint64(now) >=
                     _emergencyModeStartingTime + MAX_EMERGENCY_MODE_TIME,

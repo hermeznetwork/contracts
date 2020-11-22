@@ -11,9 +11,9 @@ interface IWithdrawalDelayer {
         uint256 _amount
     ) external;
 
-    function setHermezGovernanceDAOAddress(address newAddress) external;
+    function setHermezGovernanceAddress(address newAddress) external;
 
-    function setWhiteHackGroupAddress(address payable newAddress) external;
+    function setEmergencyCouncil(address payable newAddress) external;
 }
 
 contract PayableRevert {
@@ -55,19 +55,20 @@ contract PayableRevert {
         );
     }
 
-    function setHermezGovernanceDAOAddress(
+    function setHermezGovernanceAddress(
         address withdrawalDelayerAddress,
         address newAddress
     ) public {
-        IWithdrawalDelayer(withdrawalDelayerAddress)
-            .setHermezGovernanceDAOAddress(newAddress);
+        IWithdrawalDelayer(withdrawalDelayerAddress).setHermezGovernanceAddress(
+            newAddress
+        );
     }
 
-    function setWhiteHackGroupAddress(
+    function setEmergencyCouncil(
         address withdrawalDelayerAddress,
         address payable newAddress
     ) public {
-        IWithdrawalDelayer(withdrawalDelayerAddress).setWhiteHackGroupAddress(
+        IWithdrawalDelayer(withdrawalDelayerAddress).setEmergencyCouncil(
             newAddress
         );
     }
