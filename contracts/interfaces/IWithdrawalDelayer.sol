@@ -16,18 +16,6 @@ interface IWithdrawalDelayer {
     function setHermezGovernanceAddress(address newAddress) external;
 
     /**
-     * @notice Getter of the current `_hermezKeeperAddress`
-     * @return The `_hermezKeeperAddress` value
-     */
-    function getHermezKeeperAddress() external view returns (address);
-
-    /**
-     * @notice Allows to change the `_hermezKeeperAddress` if it's called by `_hermezKeeperAddress`
-     * @param newAddress `_hermezKeeperAddress`
-     */
-    function setHermezKeeperAddress(address newAddress) external;
-
-    /**
      * @notice Getter of the current `_whiteHackGroupAddress`
      * @return The `_whiteHackGroupAddress` value
      */
