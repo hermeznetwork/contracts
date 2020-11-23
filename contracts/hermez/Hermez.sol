@@ -981,7 +981,7 @@ contract Hermez is InstantWithdrawManager {
         }
         ptr += 2;
 
-        uint256 batchNum = lastForgedBatch + 1; // to change
+        uint256 batchNum = lastForgedBatch + 1;
 
         // store 4 bytes of batch number at the end of the inputBytes
         assembly {
