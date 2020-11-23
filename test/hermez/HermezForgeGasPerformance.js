@@ -10,8 +10,8 @@ const {
   l1UserTxCreateAccountDepositTransfer,
   l1UserTxForceTransfer,
   l1UserTxForceExit,
-  l1CoordinatorTxEth,
   l1CoordinatorTxBjj,
+  l1CoordinatorTxEth,
   AddToken,
   ForgerTest,
   calculateInputMaxTxLevels
@@ -42,6 +42,9 @@ describe("Hermez gas performance", function () {
   let hermezGovernanceDAOAddress;
   let ownerWallet;
 
+  let chainID;
+  let chainIDHex;
+
   const accounts = [];
   for (let i = 0; i < 10; i++) {
     accounts.push(new HermezAccount());
@@ -51,7 +54,6 @@ describe("Hermez gas performance", function () {
   const maxTx = 512;
   const nLevels = 48;
   const forgeL1L2BatchTimeout = 10;
-  let chainID;
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
 
@@ -179,6 +181,7 @@ describe("Hermez gas performance", function () {
     await buidlerTokenERC20Mock.deployed();
     const chainSC = await buidlerHermez.getChainID();
     chainID = chainSC.toNumber();
+    chainIDHex = chainSC.toHexString();
   });
 
   describe("Test Queue", function () {
@@ -247,7 +250,7 @@ describe("Hermez gas performance", function () {
       for (let i = 0; i < 124; i++) {
         if (i != 0) {
           await l1TxCoordiatorArray.push(
-            await l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez)
+            await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez, chainIDHex)
           );
         }
 

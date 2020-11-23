@@ -54,6 +54,9 @@ describe("Hermez ETH test", function() {
   let hermezGovernanceDAOAddress;
   let ownerWallet;
 
+  let chainID;
+  let chainIDHex;
+
   const accounts = [];
   for (let i = 0; i < 10; i++) {
     accounts.push(new HermezAccount());
@@ -63,7 +66,6 @@ describe("Hermez ETH test", function() {
   const maxTx = 512;
   const nLevels = 32;
   const forgeL1L2BatchTimeout = 10;
-  let chainID;
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
 
@@ -193,6 +195,7 @@ describe("Hermez ETH test", function() {
 
     const chainSC = await buidlerHermez.getChainID();
     chainID = chainSC.toNumber();
+    chainIDHex = chainSC.toHexString();
   });
 
   // You can nest describe calls to create subsections.
@@ -480,7 +483,7 @@ describe("Hermez ETH test", function() {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez, chainIDHex)
       );
 
       l1TxCoordiatorArray.push(

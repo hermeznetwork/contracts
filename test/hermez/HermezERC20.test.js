@@ -46,6 +46,9 @@ describe("Hermez ERC 20", function() {
   let hermezGovernanceDAOAddress;
   let ownerWallet;
 
+  let chainID;
+  let chainIDHex;
+
   const accounts = [];
   for (let i = 0; i < 10; i++) {
     accounts.push(new HermezAccount());
@@ -55,7 +58,6 @@ describe("Hermez ERC 20", function() {
   const maxTx = 512;
   const nLevels = 32;
   const forgeL1L2BatchTimeout = 10;
-  let chainID;
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
   const INITIAL_DELAY = 0;
@@ -196,6 +198,7 @@ describe("Hermez ERC 20", function() {
 
     const chainSC = await buidlerHermez.getChainID();
     chainID = chainSC.toNumber();
+    chainIDHex = chainSC.toHexString();
   });
 
   describe("test tokens contract", function() {
@@ -505,7 +508,7 @@ describe("Hermez ERC 20", function() {
       const l1TxCoordiatorArray = [];
       // L1-Tx Coordinator with eth signature
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez, chainIDHex)
       );
 
       // L1-Tx Coordinator without eth signature:
@@ -585,7 +588,7 @@ describe("Hermez ERC 20", function() {
       );
 
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez, chainIDHex)
       );
 
       l1TxCoordiatorArray.push(
@@ -708,7 +711,8 @@ describe("Hermez ERC 20", function() {
         tokenID,
         babyjub,
         owner,
-        buidlerHermez
+        buidlerHermez,
+        chainIDHex
       );
 
       // add L1-Tx Coordinator without eth signature:
@@ -882,7 +886,7 @@ describe("Hermez ERC 20", function() {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez)
+        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez, chainIDHex)
       );
 
       l1TxCoordiatorArray.push(

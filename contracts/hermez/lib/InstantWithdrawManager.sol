@@ -53,6 +53,12 @@ contract InstantWithdrawManager is HermezHelpers {
 
     uint256 private constant _EXCHANGE_MULTIPLIER = 1e14;
 
+    event UpdateBucketWithdraw(
+        uint8 indexed numBucket,
+        uint256 indexed blockStamp,
+        uint256 withdrawals
+    );
+
     event UpdateWithdrawalDelay(uint64 newWithdrawalDelay);
     event UpdateBucketsParameters(uint256[4][_NUM_BUCKETS] arrayBuckets);
     event UpdateTokenExchange(address[] addressArray, uint64[] valueArray);
@@ -110,6 +116,11 @@ contract InstantWithdrawManager is HermezHelpers {
                     currentBucket.blockStamp = block.number;
                 }
                 currentBucket.withdrawals--;
+                emit UpdateBucketWithdraw(
+                    uint8(bucketIdx),
+                    currentBucket.blockStamp,
+                    currentBucket.withdrawals
+                );
                 return true;
             }
             // the bucket still empty, instant withdrawal can't be performed
@@ -141,6 +152,11 @@ contract InstantWithdrawManager is HermezHelpers {
                     (addWithdrawals.mul(currentBucket.blockWithdrawalRate))
                 );
             }
+            emit UpdateBucketWithdraw(
+                uint8(bucketIdx),
+                currentBucket.blockStamp,
+                currentBucket.withdrawals
+            );
             return true;
         }
     }
