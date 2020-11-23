@@ -263,9 +263,9 @@ describe("Hermez ERC 20", function () {
         fromIdx: accounts[0].idx,
         toIdx: accounts[1].idx,
         tokenID: tokenIdERC20,
-        amount: Scalar.e(50),
+        amount: Scalar.e(40),
         nonce: 0,
-        userFee: 200, // effective fee is 5
+        userFee: 152, // effective fee amount / 4 = 10
       };
 
       accounts[0].hermezAccount.signTx(tx);
@@ -276,7 +276,7 @@ describe("Hermez ERC 20", function () {
       const s1 = await rollupDB.getStateByIdx(256);
       expect(s1.sign).to.be.equal(accounts[0].hermezAccount.sign);
       expect(s1.ay).to.be.equal(accounts[0].hermezAccount.ay);
-      expect(s1.balance.toString()).to.be.equal(Scalar.e(945).toString()); // 1000(loadAmount) - 50(amount) - 5(fee) = 945
+      expect(s1.balance.toString()).to.be.equal(Scalar.e(950).toString()); // 1000(loadAmount) - 40(amount) - 10(fee) = 950
       expect(s1.tokenID).to.be.equal(tokenIdERC20);
       expect(s1.nonce).to.be.equal(1);
     });
@@ -327,7 +327,7 @@ describe("Hermez ERC 20", function () {
 
       const l2TxUserArray = [];
 
-      const amount = 50;  
+      const amount = 40;  
 
       let nonce = 0;
       for (let i = 0; i < 180; i++){
@@ -337,7 +337,7 @@ describe("Hermez ERC 20", function () {
           tokenID: tokenIdERC20,
           amount: Scalar.e(amount),
           nonce: nonce++,
-          userFee: 200, // effective fee is 5
+          userFee: 152, // effective fee amount / 4 = 10
         };
         accounts[0].hermezAccount.signTx(tx);
         l2TxUserArray.push(tx);
@@ -347,7 +347,7 @@ describe("Hermez ERC 20", function () {
       const s1 = await rollupDB.getStateByIdx(256);
       expect(s1.sign).to.be.equal(accounts[0].hermezAccount.sign);
       expect(s1.ay).to.be.equal(accounts[0].hermezAccount.ay);
-      expect(s1.balance.toString()).to.be.equal(Scalar.e(100).toString()); // 10000(loadAmount) - 180*(50(amount) - 5(fee)) = 100
+      expect(s1.balance.toString()).to.be.equal(Scalar.e(1000).toString()); // 10000(loadAmount) - 180*(40(amount) + 10(fee)) = 1000
       expect(s1.tokenID).to.be.equal(tokenIdERC20);
       expect(s1.nonce).to.be.equal(nonce);
     });
@@ -398,7 +398,7 @@ describe("Hermez ERC 20", function () {
 
       const l2TxUserArray = [];
 
-      const amount = 50;  
+      const amount = 40;  
 
       let nonce = 0;
       for (let i = 0; i < 180; i++){
@@ -408,7 +408,7 @@ describe("Hermez ERC 20", function () {
           tokenID: tokenIdERC20,
           amount: Scalar.e(amount),
           nonce: nonce++,
-          userFee: 200, // effective fee is 5
+          userFee: 152, // effective fee amount / 4 = 10
         };
         accounts[0].hermezAccount.signTx(tx);
         l2TxUserArray.push(tx);
@@ -449,7 +449,7 @@ describe("Hermez ERC 20", function () {
       const s1 = await rollupDB.getStateByIdx(256);
       expect(s1.sign).to.be.equal(accounts[0].hermezAccount.sign);
       expect(s1.ay).to.be.equal(accounts[0].hermezAccount.ay);
-      expect(s1.balance.toString()).to.be.equal(Scalar.e(100).toString()); // 10000(loadAmount) - 180*(50(amount) - 5(fee)) = 100
+      expect(s1.balance.toString()).to.be.equal(Scalar.e(1000).toString()); // 10000(loadAmount) - 180*(40(amount) + 10(fee)) = 1000
       expect(s1.tokenID).to.be.equal(tokenIdERC20);
       expect(s1.nonce).to.be.equal(nonce);
     });

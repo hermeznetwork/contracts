@@ -10,10 +10,6 @@ const {
 } = require("@openzeppelin/test-helpers");
 
 const {
-  ecsign,
-} = require("ethereumjs-util");
-
-const {
   createPermitDigest
 } = require("./helpers/erc2612.js");
 
