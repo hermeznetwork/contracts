@@ -50,7 +50,7 @@ describe("Hermez ERC20 Permit", function() {
   let id1;
   let id2;
   let addrs;
-  let hermezGovernanceDAOAddress;
+  let hermezGovernanceAddress;
   let ownerWallet;
 
   let chainID;
@@ -73,13 +73,13 @@ describe("Hermez ERC20 Permit", function() {
     [
       owner,
       governance,
-      safetyAddress,
+      ,
       id1,
       id2,
       ...addrs
     ] = await ethers.getSigners();
 
-    hermezGovernanceDAOAddress = governance.getAddress();
+    hermezGovernanceAddress = governance.getAddress();
 
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
     if (chainIdProvider == 1337) { // solcover, must be a jsonRPC wallet
@@ -157,9 +157,9 @@ describe("Hermez ERC20 Permit", function() {
     await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
       buidlerHermez.address,
-      hermezGovernanceDAOAddress,
-      hermezGovernanceDAOAddress,
-      hermezGovernanceDAOAddress
+      hermezGovernanceAddress,
+      hermezGovernanceAddress,
+      hermezGovernanceAddress
     );
 
     // deploy hermez
@@ -174,8 +174,7 @@ describe("Hermez ERC20 Permit", function() {
       poseidonAddr2,
       poseidonAddr3,
       poseidonAddr4,
-      hermezGovernanceDAOAddress,
-      await safetyAddress.getAddress(),
+      hermezGovernanceAddress,
       withdrawalDelay,
       buidlerWithdrawalDelayer.address
     );

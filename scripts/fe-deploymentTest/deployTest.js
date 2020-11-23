@@ -17,7 +17,7 @@ async function main() {
   let id1;
   let id2;
   let addrs;
-  let hermezGovernanceDAOAddress;
+  let hermezGovernanceAddress;
 
   const tokenInitialAmount = ethers.utils.parseEther("100000");
   const maxTx = 512;
@@ -31,13 +31,12 @@ async function main() {
   [
     owner,
     governance,
-    safetyAddress,
     id1,
     id2,
     ...addrs
   ] = await ethers.getSigners();
 
-  hermezGovernanceDAOAddress = governance.getAddress();
+  hermezGovernanceAddress = governance.getAddress();
 
   // factory helpers
   const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
@@ -99,10 +98,10 @@ async function main() {
   let buidlerHermezAuctionTest = await HermezAuctionTest.deploy();
 
   buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
-    hermezGovernanceDAOAddress,
-    hermezGovernanceDAOAddress,
-    hermezGovernanceDAOAddress,
-    hermezGovernanceDAOAddress,
+    hermezGovernanceAddress,
+    hermezGovernanceAddress,
+    hermezGovernanceAddress,
+    hermezGovernanceAddress,
     0
   );
 
@@ -116,8 +115,7 @@ async function main() {
     [calculateInputMaxTxLevels(maxTx, nLevels)],
     buidlerVerifierWithdrawHelper.address,
     buidlerTokenERC20Mock.address,
-    hermezGovernanceDAOAddress,
-    await safetyAddress.getAddress(),
+    hermezGovernanceAddress,
     buidlerHermezAuctionTest.address,
     buidlerWithdrawalDelayer.address,
     poseidonAddr2,

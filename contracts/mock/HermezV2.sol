@@ -181,8 +181,7 @@ contract HermezV2 is InstantWithdrawManager {
         address _poseidon2Elements,
         address _poseidon3Elements,
         address _poseidon4Elements,
-        address _hermezGovernanceDAOAddress,
-        address _safetyAddress,
+        address _hermezGovernanceAddress,
         uint64 _withdrawalDelay,
         address _withdrawDelayerContract
     ) external initializer {
@@ -209,8 +208,7 @@ contract HermezV2 is InstantWithdrawManager {
             _poseidon4Elements
         );
         _initializeWithdraw(
-            _hermezGovernanceDAOAddress,
-            _safetyAddress,
+            _hermezGovernanceAddress,
             _withdrawalDelay,
             _withdrawDelayerContract
         );
@@ -679,7 +677,7 @@ contract HermezV2 is InstantWithdrawManager {
         _safeTransferFrom(
             tokenHEZ,
             msg.sender,
-            hermezGovernanceDAOAddress,
+            hermezGovernanceAddress,
             feeAddToken
         );
 

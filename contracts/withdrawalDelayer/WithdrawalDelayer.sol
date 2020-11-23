@@ -372,7 +372,6 @@ contract WithdrawalDelayer is
 
     /**
      * Allows the Hermez Governance to withdawal the funds in the event that emergency mode was enable.
-     * Note: An Aragon Court will have the right to veto over the call to this method
      * @dev `NonReentrant` modifier is used as a protection despite the state is being previously updated and this is
      * a security mechanism
      * @param _to where the funds will be sent
@@ -391,7 +390,7 @@ contract WithdrawalDelayer is
         );
         require(
             msg.sender == _emergencyCouncil || msg.sender == _hermezGovernance,
-            "WithdrawalDelayer::escapeHatchWithdrawal: ONLY_GOVERNANCE_WHG"
+            "WithdrawalDelayer::escapeHatchWithdrawal: ONLY_GOVERNANCE"
         );
         if (
             msg.sender == _emergencyCouncil &&

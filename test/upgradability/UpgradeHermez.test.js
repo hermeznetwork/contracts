@@ -195,7 +195,6 @@ describe("upgradability test Hermez", function() {
       libposeidonsAddress[1],
       libposeidonsAddress[2],
       hermezGovernanceAddress,
-      hermezKeeperAddress,
       1209600,
       withdrawalDelayer.address
     );
@@ -225,7 +224,6 @@ describe("upgradability test Hermez", function() {
       libposeidonsAddress[1],
       libposeidonsAddress[2],
       hermezGovernanceAddress,
-      hermezKeeperAddress,
       1209600,
       withdrawalDelayer.address
     )).to.be.revertedWith("Contract instance has already been initialized");
