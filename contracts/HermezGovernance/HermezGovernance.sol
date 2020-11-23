@@ -29,10 +29,6 @@ contract HermezGovernance is Initializable, AccessControlUpgradeSafe {
      * @param account account to grant access
      */
     function addRole(bytes32 role, address account) public {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "HermezGovernance::addRole: ONLY_DEFAULT_ADMIN_ROLE"
-        );
         grantRole(role, account);
     }
 
@@ -42,10 +38,6 @@ contract HermezGovernance is Initializable, AccessControlUpgradeSafe {
      * @param account account to grant access
      */
     function removeRole(bytes32 role, address account) public {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "HermezGovernance::removeRole: ONLY_DEFAULT_ADMIN_ROLE"
-        );
         revokeRole(role, account);
     }
 

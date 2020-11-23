@@ -35,7 +35,7 @@ describe("WithdrawalDelayer Tests", function() {
   let buidlerERC20Fake;
   let hermezRollup, hermezKeeper, escapeHatch, registryFunder, ownerToken1;
   let hermezRollupAddress,
-    hermezGovernanceDAOAddress,
+    hermezGovernanceAddress,
     hermezKeeperAddress,
     whiteHackGroupAddress,
     registryFunderAddress,
@@ -70,7 +70,7 @@ describe("WithdrawalDelayer Tests", function() {
     await buidlerWhiteHackGroup.deployed();
 
     whiteHackGroupAddress = buidlerWhiteHackGroup.address;
-    hermezGovernanceDAOAddress = buidlerHermezGovernanceDAO.address;
+    hermezGovernanceAddress = buidlerHermezGovernanceDAO.address;
 
     for (let i = 0; i < ERC20_TOKENS; i++) {
       buidlerERC20[i] = await ERC20.deploy(
@@ -104,7 +104,7 @@ describe("WithdrawalDelayer Tests", function() {
       INITIAL_DELAY,
       hermezRollupAddress,
       hermezKeeperAddress,
-      hermezGovernanceDAOAddress,
+      hermezGovernanceAddress,
       whiteHackGroupAddress
     );
   });
@@ -117,7 +117,7 @@ describe("WithdrawalDelayer Tests", function() {
             INITIAL_DELAY,
             hermezRollupAddress,
             hermezKeeperAddress,
-            hermezGovernanceDAOAddress,
+            hermezGovernanceAddress,
             whiteHackGroupAddress
           )
         ).to.be.revertedWith("Contract instance has already been initialized");
@@ -221,8 +221,8 @@ describe("WithdrawalDelayer Tests", function() {
               ownerToken1Address,
               buidlerERC20[0].address,
               DEPOSIT_AMOUNT, {
-              value: DEPOSIT_AMOUNT,
-            }
+                value: DEPOSIT_AMOUNT,
+              }
             )
         ).to.be.revertedWith("WithdrawalDelayer::deposit: WRONG_TOKEN_ADDRESS");
 
@@ -234,8 +234,8 @@ describe("WithdrawalDelayer Tests", function() {
               ownerToken1Address,
               ethers.constants.AddressZero,
               DEPOSIT_AMOUNT, {
-              value: ethers.utils.parseEther("1"),
-            }
+                value: ethers.utils.parseEther("1"),
+              }
             )
         ).to.be.revertedWith("WithdrawalDelayer::deposit: WRONG_AMOUNT");
 
@@ -246,8 +246,8 @@ describe("WithdrawalDelayer Tests", function() {
             ownerToken1Address,
             ethers.constants.AddressZero,
             DEPOSIT_AMOUNT, {
-            value: DEPOSIT_AMOUNT,
-          }
+              value: DEPOSIT_AMOUNT,
+            }
           );
         await eventDeposit;
       });
@@ -402,8 +402,8 @@ describe("WithdrawalDelayer Tests", function() {
             ownerToken1Address,
             ethers.constants.AddressZero,
             DEPOSIT_AMOUNT, {
-            value: DEPOSIT_AMOUNT,
-          }
+              value: DEPOSIT_AMOUNT,
+            }
           );
       });
 
@@ -516,8 +516,8 @@ describe("WithdrawalDelayer Tests", function() {
             buidlerPayableRevert.address,
             ethers.constants.AddressZero,
             ethers.utils.parseEther("1"), {
-            value: ethers.utils.parseEther("1"),
-          }
+              value: ethers.utils.parseEther("1"),
+            }
           );
 
         await time.increaseTo((await time.latest()) + INITIAL_DELAY);
@@ -624,7 +624,7 @@ describe("WithdrawalDelayer Tests", function() {
       await expect(
         buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
-          hermezGovernanceDAOAddress,
+          hermezGovernanceAddress,
           buidlerERC20[0].address,
           ERC20Amount
         )
@@ -670,13 +670,13 @@ describe("WithdrawalDelayer Tests", function() {
 
   describe("Address change tests", function() {
     it("should be able to set a new hermezGovernanceAddress", async function() {
-      // Only the current hermezGovernanceDAOAddress can set a new address
+      // Only the current hermezGovernanceAddress can set a new address
       await expect(
         buidlerWithdrawalDelayer
           .connect(ownerToken1)
           .setHermezGovernanceAddress(buidlerWithdrawalDelayer.address)
       ).to.be.revertedWith("WithdrawalDelayer::setHermezGovernanceAddress: ONLY_GOVERNANCE");
-      // Change HermezGovernanceDAOAddress to WithdrawalDelayerAddress
+      // Change hermezGovernanceAddress to WithdrawalDelayerAddress
       await buidlerHermezGovernanceDAO.setHermezGovernanceAddress(
         buidlerWithdrawalDelayer.address,
         buidlerWithdrawalDelayer.address
@@ -688,13 +688,13 @@ describe("WithdrawalDelayer Tests", function() {
     });
 
     it("should be able to set a new hermezKeeperAddress", async function() {
-      // Only the current hermezGovernanceDAOAddress can set a new address
+      // Only the current hermezGovernanceAddress can set a new address
       await expect(
         buidlerWithdrawalDelayer
           .connect(ownerToken1)
           .setHermezKeeperAddress(buidlerWithdrawalDelayer.address)
       ).to.be.revertedWith("WithdrawalDelayer::setHermezKeeperAddress: ONLY_KEEPER");
-      // Change HermezGovernanceDAOAddress to WithdrawalDelayerAddress
+      // Change hermezGovernanceAddress to WithdrawalDelayerAddress
       await buidlerWithdrawalDelayer
         .connect(hermezKeeper)
         .setHermezKeeperAddress(buidlerWithdrawalDelayer.address);
@@ -747,8 +747,8 @@ describe("WithdrawalDelayer Tests", function() {
           ownerToken1Address,
           ethers.constants.AddressZero,
           DEPOSIT_AMOUNT, {
-          value: DEPOSIT_AMOUNT,
-        }
+            value: DEPOSIT_AMOUNT,
+          }
         );
     });
     it("shouldn't be able to enableEmergencyMode twice", async function() {
@@ -778,7 +778,7 @@ describe("WithdrawalDelayer Tests", function() {
             buidlerERC20[0].address,
             amount
           )
-      ).to.be.revertedWith("WithdrawalDelayer::escapeHatchWithdrawal: ONLY_GOVERNANCE_WHG");
+      ).to.be.revertedWith("WithdrawalDelayer::escapeHatchWithdrawal: ONLY_GOVERNANCE");
     });
 
     it("GovernanceDAO should be able to make a escapeHatchWithdrawal at any time", async function() {
@@ -792,7 +792,7 @@ describe("WithdrawalDelayer Tests", function() {
       await expect(
         buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
           buidlerWithdrawalDelayer.address,
-          hermezGovernanceDAOAddress,
+          hermezGovernanceAddress,
           ethers.constants.AddressZero,
           ETHAmount
         )
@@ -811,23 +811,23 @@ describe("WithdrawalDelayer Tests", function() {
       // Withdraw the ERC20
       await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
         buidlerWithdrawalDelayer.address,
-        hermezGovernanceDAOAddress,
+        hermezGovernanceAddress,
         buidlerERC20[0].address,
         ERC20Amount
       );
       expect(
-        await buidlerERC20[0].balanceOf(hermezGovernanceDAOAddress)
+        await buidlerERC20[0].balanceOf(hermezGovernanceAddress)
       ).to.be.eq(ERC20Amount);
 
       // Withdraw the ETH
       await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
         buidlerWithdrawalDelayer.address,
-        hermezGovernanceDAOAddress,
+        hermezGovernanceAddress,
         ethers.constants.AddressZero,
         ETHAmount
       );
       expect(
-        await ethers.provider.getBalance(hermezGovernanceDAOAddress)
+        await ethers.provider.getBalance(hermezGovernanceAddress)
       ).to.be.eq(ETHAmount);
     });
 

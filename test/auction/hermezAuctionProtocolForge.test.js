@@ -260,44 +260,6 @@ describe("Auction Protocol", function() {
       );
     });
 
-    it("should burn the HEZ tokens if it's no able to return them ???", async function() {
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
-      let amount = ethers.utils.parseEther("100");
-      let bid = ethers.utils.parseEther("11");
-      let slotMin = 3;
-      let slotMax = 8;
-      let permit = ethers.utils.toUtf8Bytes("");
-      let slotSet = [true, true, true, true, true, true];
-
-      await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
-
-      for (i = 0; i < 6; i++) {
-        // Change epochs minBid
-        await buidlerHermezAuctionProtocol
-          .connect(governance)
-          .changeDefaultSlotSetBid(i, ethers.utils.parseEther("123456789"));
-      }
-      // Advance Blocks
-      let blockNumber = startingBlock.add(3 * BLOCKS_PER_SLOT).toNumber();
-      time.advanceBlockTo(blockNumber);
-      while (blockNumber > (await time.latestBlock()).toNumber()) {
-        sleep(100);
-      }
-      // Check forger balances
-      await buidlerHEZToken.connect(coordinator1).setTransferRevert(true);
-      let forgerAddress = await coordinator1.getAddress();
-      let prevBalance = await buidlerHEZToken.balanceOf(forgerAddress);
-      await buidlerHermezAuctionProtocol
-        .connect(hermezRollup)
-        .forge(bootCoordinatorAddress);
-      let currentBalance = await buidlerHEZToken.balanceOf(forgerAddress);
-      expect(prevBalance).to.be.equal(currentBalance);
-      await buidlerHEZToken.connect(coordinator1).setTransferRevert(false);
-    });
-
     it("shouldn't be able to forge unless it's called by Hermez rollup", async function() {
       await expect(
         buidlerHermezAuctionProtocol
@@ -583,37 +545,6 @@ describe("Auction Protocol", function() {
       );
 
       await eventHEZClaimed;
-    });
-
-    it("should revert when claim HEZ and it revert ????", async function() {
-      let producer1Address = await forger1.getAddress();
-      let bidAmount = ethers.utils.parseEther("11");
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
-
-      let amount = ethers.utils.parseEther("100");
-      let bid = ethers.utils.parseEther("11");
-      let slotMin = 3;
-      let slotMax = 8;
-      let permit = ethers.utils.toUtf8Bytes("");
-      let slotSet = [true, true, true, true, true, true];
-
-      await
-      buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
-
-      for (let slot = 3; slot < 6; slot++) {
-        // Advance blocks
-        let firstBlock = startingBlock.add(slot * BLOCKS_PER_SLOT).toNumber();
-        time.advanceBlockTo(firstBlock);
-        while (firstBlock > (await time.latestBlock()).toNumber()) {
-          sleep(100);
-        }
-        // Forge
-        await buidlerHermezAuctionProtocol
-          .connect(hermezRollup)
-          .forge(producer1Address);
-      }
     });
 
     it("edge case: bid was `outbidded` by the DefaultSlotSetBid, boot coordinator don't forge", async function() {

@@ -33,7 +33,7 @@ describe("Hermez Queue", function () {
   let id1;
   let id2;
   let addrs;
-  let hermezGovernanceDAOAddress;
+  let hermezGovernanceAddress;
   let ownerWallet;
 
   const accounts = [];
@@ -53,13 +53,12 @@ describe("Hermez Queue", function () {
     [
       owner,
       governance,
-      safetyAddress,
       id1,
       id2,
       ...addrs
     ] = await ethers.getSigners();
 
-    hermezGovernanceDAOAddress = governance.getAddress();
+    hermezGovernanceAddress = governance.getAddress();
 
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
     if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
@@ -144,9 +143,9 @@ describe("Hermez Queue", function () {
     await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
       buidlerHermez.address,
-      hermezGovernanceDAOAddress,
-      hermezGovernanceDAOAddress,
-      hermezGovernanceDAOAddress
+      hermezGovernanceAddress,
+      hermezGovernanceAddress,
+      hermezGovernanceAddress
     );
 
     await buidlerHermez.initializeHermez(
@@ -160,8 +159,7 @@ describe("Hermez Queue", function () {
       poseidonAddr2,
       poseidonAddr3,
       poseidonAddr4,
-      hermezGovernanceDAOAddress,
-      await safetyAddress.getAddress(),
+      hermezGovernanceAddress,
       withdrawalDelay,
       buidlerWithdrawalDelayer.address
     );

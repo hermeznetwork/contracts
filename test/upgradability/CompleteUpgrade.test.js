@@ -203,7 +203,6 @@ describe("upgradability test", function() {
       libposeidonsAddress[1],
       libposeidonsAddress[2],
       hermezGovernanceAddress,
-      hermezKeeperAddress,
       1209600,
       withdrawalDelayer.address
     );

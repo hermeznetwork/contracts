@@ -174,7 +174,6 @@ describe("Hermez Governance", function() {
       libposeidonsAddress[1],
       libposeidonsAddress[2],
       hermezGovernance.address,
-      hermezKeeperAddress,
       1209600,
       withdrawalDelayer.address
     );
@@ -550,7 +549,7 @@ describe("Hermez Governance", function() {
       const buckets = [];
       await expect(
         hermez.safeMode()
-      ).to.be.revertedWith("InstantWithdrawManager::safeMode: ONY_SAFETYADDRESS_OR_GOVERNANCE");
+      ).to.be.revertedWith("InstantWithdrawManager::onlyGovernance: ONLY_GOVERNANCE_ADDRESS");
 
       let data = hermez.interface.encodeFunctionData("safeMode", []);
       dataEncoded = ethers.utils.defaultAbiCoder.encode(

@@ -31,7 +31,7 @@ contract WithdrawalDelayerTest is ReentrancyGuard, Initializable {
         uint64 _initialWithdrawalDelay,
         address _initialHermezRollup,
         address _initialHermezKeeperAddress,
-        address _initialHermezGovernanceDAOAddress,
+        address _initialhermezGovernanceAddress,
         address payable _initialWhiteHackGroupAddress
     ) public initializer {
         hermezRollupAddress = _initialHermezRollup;

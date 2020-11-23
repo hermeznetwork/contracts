@@ -56,7 +56,7 @@ describe("Hermez integration", function() {
   let id1;
   let id2;
   let addrs;
-  let hermezGovernanceDAOAddress;
+  let hermezGovernanceAddress;
   let ownerWallet;
 
   let chainID;
@@ -80,18 +80,17 @@ describe("Hermez integration", function() {
       owner,
       governance,
       forger1,
-      safetyAddress,
       id1,
       id2,
       registryFunder,
       hermezKeeperAddress,
-      hermezGovernanceDAOAddress,
+      hermezGovernanceAddress,
       whiteHackGroupAddress,
       donation,
       ...addrs
     ] = await ethers.getSigners();
 
-    hermezGovernanceDAOAddress = await governance.getAddress();
+    hermezGovernanceAddress = await governance.getAddress();
     ownerAddress = await owner.getAddress();
 
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
@@ -182,7 +181,7 @@ describe("Hermez integration", function() {
       buidlerTokenHermez.address,
       latest + 1 + MIN_BLOCKS,
       HermezAddress,
-      hermezGovernanceDAOAddress,
+      hermezGovernanceAddress,
       await donation.getAddress(), // donation address
       ownerAddress // bootCoordinatorAddress
     );
@@ -192,7 +191,7 @@ describe("Hermez integration", function() {
       INITIAL_DELAY,
       HermezAddress,
       hermezKeeperAddress.getAddress(),
-      hermezGovernanceDAOAddress,
+      hermezGovernanceAddress,
       whiteHackGroupAddress.getAddress()
     );
     // deploy hermez
@@ -210,8 +209,7 @@ describe("Hermez integration", function() {
       poseidonAddr2,
       poseidonAddr3,
       poseidonAddr4,
-      hermezGovernanceDAOAddress,
-      await safetyAddress.getAddress(),
+      hermezGovernanceAddress,
       withdrawalDelay,
       WithdrawalDelayerAddress
     );

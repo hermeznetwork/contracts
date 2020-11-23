@@ -36,7 +36,6 @@ describe("Hermez instant withdraw manager", function() {
     [
       owner,
       governance,
-      safetyAddress,
       id1,
       ...addrs
     ] = await ethers.getSigners();
@@ -53,7 +52,7 @@ describe("Hermez instant withdraw manager", function() {
       ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
 
-    const hermezGovernanceDAOAddress = await governance.getAddress();
+    const hermezGovernanceAddress = await governance.getAddress();
 
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
@@ -128,9 +127,9 @@ describe("Hermez instant withdraw manager", function() {
     await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
       buidlerHermez.address,
-      hermezGovernanceDAOAddress,
-      hermezGovernanceDAOAddress,
-      hermezGovernanceDAOAddress
+      hermezGovernanceAddress,
+      hermezGovernanceAddress,
+      hermezGovernanceAddress
     );
 
     await buidlerHermez.initializeHermez(
@@ -144,8 +143,7 @@ describe("Hermez instant withdraw manager", function() {
       poseidonAddr2,
       poseidonAddr3,
       poseidonAddr4,
-      hermezGovernanceDAOAddress,
-      await safetyAddress.getAddress(),
+      hermezGovernanceAddress,
       withdrawalDelay,
       buidlerWithdrawalDelayer.address
     );
@@ -551,9 +549,9 @@ describe("Hermez instant withdraw manager", function() {
 
     it("enable safeMode", async function() {
       await expect(buidlerHermez.safeMode()).to.be.revertedWith(
-        "InstantWithdrawManager::safeMode: ONY_SAFETYADDRESS_OR_GOVERNANCE"
+        "InstantWithdrawManager::onlyGovernance: ONLY_GOVERNANCE_ADDRESS"
       );
-
+      
       const numBuckets = 5;
 
       const buckets = [];
@@ -581,7 +579,7 @@ describe("Hermez instant withdraw manager", function() {
         expect(bucket.maxWithdrawals).to.be.equal(buckets[i][3]);
       }
 
-      await expect(buidlerHermez.connect(safetyAddress).safeMode()).to.emit(buidlerHermez, "SafeMode");
+      await expect(buidlerHermez.connect(governance).safeMode()).to.emit(buidlerHermez, "SafeMode");
 
       for (let i = 0; i < numBuckets; i++) {
         let bucket = await buidlerHermez.buckets(i);

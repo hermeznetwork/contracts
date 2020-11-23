@@ -25,11 +25,7 @@ contract InstantWithdrawManager is HermezHelpers {
     Bucket[_NUM_BUCKETS] public buckets;
 
     // Governance address
-    address public hermezGovernanceDAOAddress;
-
-    // Safety address, in case something out of control happens can put Hermez in safe mode
-    // wich means only delay withdrawals allowed
-    address public safetyAddress;
+    address public hermezGovernanceAddress;
 
     // Withdraw delay in seconds
     uint64 public withdrawalDelay;
@@ -65,20 +61,18 @@ contract InstantWithdrawManager is HermezHelpers {
     event SafeMode();
 
     function _initializeWithdraw(
-        address _hermezGovernanceDAOAddress,
-        address _safetyAddress,
+        address _hermezGovernanceAddress,
         uint64 _withdrawalDelay,
         address _withdrawDelayerContract
     ) internal initializer {
-        hermezGovernanceDAOAddress = _hermezGovernanceDAOAddress;
-        safetyAddress = _safetyAddress;
+        hermezGovernanceAddress = _hermezGovernanceAddress;
         withdrawalDelay = _withdrawalDelay;
         withdrawDelayerContract = IWithdrawalDelayer(_withdrawDelayerContract);
     }
 
     modifier onlyGovernance {
         require(
-            msg.sender == hermezGovernanceDAOAddress,
+            msg.sender == hermezGovernanceAddress,
             "InstantWithdrawManager::onlyGovernance: ONLY_GOVERNANCE_ADDRESS"
         );
         _;
@@ -229,13 +223,7 @@ contract InstantWithdrawManager is HermezHelpers {
      * @dev Put the smartcontract in safe mode, only delayed withdrawals allowed,
      * also update the 'withdrawalDelay' of the 'withdrawDelayer' contract
      */
-    function safeMode() external {
-        require(
-            (msg.sender == safetyAddress) ||
-                (msg.sender == hermezGovernanceDAOAddress),
-            "InstantWithdrawManager::safeMode: ONY_SAFETYADDRESS_OR_GOVERNANCE"
-        );
-
+    function safeMode() external onlyGovernance {
         // all buckets to 0
         for (uint256 i = 0; i < _NUM_BUCKETS; i++) {
             buckets[i] = Bucket(0, 0, 0, 0, 0);
