@@ -317,11 +317,9 @@ contract Hermez is InstantWithdrawManager {
     // |:-------:|:-----:|:-----------:|:-------:|:-----------:|:----------:|:-------------------------------:|
     // |    0    |   0   |      0      |  0(SC)  |      X      |  !=0(SC)   |          createAccount          |
     // |    0    |   0   |     !=0     |  0(SC)  |      X      |  !=0(SC)   |      createAccountDeposit       |
-    // |    0    |   1   |      X      |    X    |      X      |  !=0(SC)   |   createAccountDepositAndExit   |
     // |    0    | 255+  |      X      |    X    |      X      |  !=0(SC)   | createAccountDepositAndTransfer |
     // |  255+   |   0   |      X      |  0(SC)  |      X      |   0(SC)    |             Deposit             |
     // |  255+   |   1   |      0      |    X    |      X      |   0(SC)    |              Exit               |
-    // |  255+   |   1   |     !=0     |    X    |      X      |   0(SC)    |         DepositAndExit          |
     // |  255+   | 255+  |      0      |    X    |      X      |   0(SC)    |            Transfer             |
     // |  255+   | 255+  |     !=0     |    X    |      X      |   0(SC)    |       DepositAndTransfer        |
     // As can be seen in the table the type of transaction is determined basically by the "fromIdx" and "toIdx"
