@@ -170,7 +170,6 @@ describe("Hermez ERC 20", function() {
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,
-      hermezGovernanceAddress,
       hermezGovernanceAddress
     );
 

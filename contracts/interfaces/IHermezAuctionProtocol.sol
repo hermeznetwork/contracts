@@ -107,7 +107,10 @@ interface IHermezAuctionProtocol {
      * @param newBootCoordinator new `_bootCoordinator` uint8[3] array
      * Events: `NewBootCoordinator`
      */
-    function setBootCoordinator(address newBootCoordinator) external;
+    function setBootCoordinator(
+        address newBootCoordinator,
+        string memory newBootCoordinatorURL
+    ) external;
 
     /**
      * @notice Allows to change the change the min bid for an slotSet if it's called by the owner.

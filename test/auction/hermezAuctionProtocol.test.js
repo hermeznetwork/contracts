@@ -11,6 +11,7 @@ const {
 
 const COORDINATOR_1_URL = "https://hermez.io";
 const COORDINATOR_1_URL_2 = "https://new.hermez.io";
+const bootCoordinatorURL = "https://boot.coordinator.io";
 
 const BLOCKS_PER_SLOT = 40;
 const TIMEOUT = 40000;
@@ -111,7 +112,8 @@ describe("Auction Protocol", function() {
         hermezRollupAddress,
         governanceAddress,
         donationAddress,
-        bootCoordinator
+        bootCoordinator,
+        bootCoordinatorURL
       )
     ).to.be.revertedWith("HermezAuctionProtocol::hermezAuctionProtocolInitializer GENESIS_BELOW_MINIMAL");
 
@@ -121,7 +123,8 @@ describe("Auction Protocol", function() {
       hermezRollupAddress,
       governanceAddress,
       donationAddress,
-      bootCoordinator
+      bootCoordinator,
+      bootCoordinatorURL
     );
   });
 
@@ -133,7 +136,8 @@ describe("Auction Protocol", function() {
         hermezRollupAddress,
         governanceAddress,
         donationAddress,
-        bootCoordinator
+        bootCoordinator,
+        bootCoordinatorURL
       )
     ).to.be.revertedWith("Contract instance has already been initialized");
   });
@@ -161,8 +165,8 @@ describe("Auction Protocol", function() {
 
       await expect (
         buidlerHermezAuctionProtocol
-        .connect(coordinator1)
-        .setCoordinator(await forger2.getAddress(), ""))
+          .connect(coordinator1)
+          .setCoordinator(await forger2.getAddress(), ""))
         .to.be.revertedWith("HermezAuctionProtocol::setCoordinator: NOT_VALID_URL");
 
       // Register Coordinator

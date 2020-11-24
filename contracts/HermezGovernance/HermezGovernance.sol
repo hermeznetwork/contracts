@@ -29,7 +29,11 @@ contract HermezGovernance is Initializable, AccessControlUpgradeSafe {
      * @param value call value
      * @param data data of the call to make
      */
-    function execute(address destination, bytes memory data) external {
+    function execute(
+        address destination,
+        uint256 value,
+        bytes memory data
+    ) external {
         // Decode the signature
         bytes4 dataSignature = abi.decode(data, (bytes4));
         bytes32 role = keccak256(abi.encodePacked(destination, dataSignature));
@@ -38,9 +42,8 @@ contract HermezGovernance is Initializable, AccessControlUpgradeSafe {
             "HermezGovernance::execute: ONLY_ALLOWED_ROLE"
         );
 
-        (bool succcess, bytes memory returnData) = destination.call{
-            value: msg.value
-        }(data);
+        (bool succcess, bytes memory returnData) =
+            destination.call{value: value}(data);
         if (succcess) {
             emit ExecOk(returnData);
         } else {

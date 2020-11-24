@@ -158,7 +158,6 @@ describe("Hermez ERC20 Permit", function() {
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,
-      hermezGovernanceAddress,
       hermezGovernanceAddress
     );
 

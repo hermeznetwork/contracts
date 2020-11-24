@@ -13,6 +13,7 @@ const {
 } = require("ethers");
 
 const COORDINATOR_1_URL = "https://hermez.io";
+const bootCoordinatorURL = "https://boot.coordinator.io";
 
 const BLOCKS_PER_SLOT = 40;
 const DEADLINE_BLOCKS = 20;
@@ -114,7 +115,8 @@ describe("Auction Protocol", function() {
       hermezRollupAddress,
       governanceAddress,
       donationAddress,
-      bootCoordinatorAddress
+      bootCoordinatorAddress,
+      bootCoordinatorURL
     );
   });
 

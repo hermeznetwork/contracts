@@ -15,6 +15,7 @@ const {
 
 const COORDINATOR_1_URL = "https://hermez.io";
 const COORDINATOR_2_URL = "https://second.hermez.io";
+const bootCoordinatorURL = "https://boot.coordinator.io";
 
 const TIMEOUT = 40000;
 const MIN_BLOCKS = 81;
@@ -120,7 +121,8 @@ describe("Consensus Protocol Bidding", function() {
       hermezRollupAddress,
       governanceAddress,
       donationAddress,
-      bootCoordinator
+      bootCoordinator,
+      bootCoordinatorURL
     );
     // Send tokens to coordinators addresses
     await buidlerHEZToken

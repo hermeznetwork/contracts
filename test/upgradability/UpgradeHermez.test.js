@@ -19,32 +19,30 @@ const {
 const maxTxVerifierConstant = 512;
 const nLevelsVeriferConstant = 32;
 const TIMEOUT = 400000;
+const bootCoordinatorURL = "https://boot.coordinator.io";
 
 describe("upgradability test Hermez", function() {
   this.timeout(TIMEOUT);
 
   let hermez, libVerifiersAddress, maxTxVerifier, nLevelsVerifer, libverifiersWithdrawAddress,
     hermezAuctionProtocol, buidlerHEZToken, libposeidonsAddress, hermezGovernanceAddress, 
-    hermezKeeperAddress, withdrawalDelayer;
+    withdrawalDelayer;
   
   beforeEach(async function() {
 
     [
       deployer,
-      hermezKeeperEthers,
       hermezGovernanceEthers,
       whiteHackGroupEthers,
       donationEthers,
       bootCoordinatorEthers,
     ] = await ethers.getSigners();
 
-    hermezKeeperAddress = await hermezKeeperEthers.getAddress();
     whiteHackGroupAddress = await whiteHackGroupEthers.getAddress();
     hermezGovernanceAddress = await hermezGovernanceEthers.getAddress();
     donationAddress = await donationEthers.getAddress();
     bootCoordinatorAddress = await bootCoordinatorEthers.getAddress();
 
-    console.log("hermezKeeperAddress: " + hermezKeeperAddress);
     console.log("whiteHackGroupAddress: " + whiteHackGroupAddress);
     console.log("hermezGovernanceAddress: " + hermezGovernanceAddress);
     console.log("donationAddress: " + donationAddress);
@@ -157,7 +155,6 @@ describe("upgradability test Hermez", function() {
     await withdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_WITHDRAWAL_DELAY,
       hermez.address,
-      hermezKeeperAddress,
       hermezGovernanceAddress,
       whiteHackGroupAddress
     );
@@ -171,7 +168,8 @@ describe("upgradability test Hermez", function() {
       hermez.address,
       hermezGovernanceAddress,
       donationAddress,
-      bootCoordinatorAddress
+      bootCoordinatorAddress,
+      bootCoordinatorURL
     );
 
     console.log("hermezAuctionProtocol Initialized");

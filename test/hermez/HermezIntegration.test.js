@@ -35,7 +35,7 @@ const {
 
 const COORDINATOR_1_URL = "https://hermez.io";
 const BLOCKS_PER_SLOT = 40;
-
+const bootCoordinatorURL = "https://boot.coordinator.io";
 
 const MIN_BLOCKS = 81;
 let ABIbid = [
@@ -83,7 +83,6 @@ describe("Hermez integration", function() {
       id1,
       id2,
       registryFunder,
-      hermezKeeperAddress,
       hermezGovernanceAddress,
       whiteHackGroupAddress,
       donation,
@@ -183,14 +182,14 @@ describe("Hermez integration", function() {
       HermezAddress,
       hermezGovernanceAddress,
       await donation.getAddress(), // donation address
-      ownerAddress // bootCoordinatorAddress
+      ownerAddress, // bootCoordinatorAddress
+      bootCoordinatorURL
     );
 
     buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
     await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
       HermezAddress,
-      hermezKeeperAddress.getAddress(),
       hermezGovernanceAddress,
       whiteHackGroupAddress.getAddress()
     );

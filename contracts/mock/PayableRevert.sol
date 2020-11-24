@@ -2,19 +2,7 @@
 
 pragma solidity ^0.6.0;
 
-interface IWithdrawalDelayer {
-    function changeDisputeResolutionAddress() external;
-
-    function escapeHatchWithdrawal(
-        address _to,
-        address _token,
-        uint256 _amount
-    ) external;
-
-    function setHermezGovernanceAddress(address newAddress) external;
-
-    function setEmergencyCouncil(address payable newAddress) external;
-}
+import "../interfaces/IWithdrawalDelayer.sol";
 
 contract PayableRevert {
     bool public paymentEnable = true;
@@ -35,11 +23,35 @@ contract PayableRevert {
         require(paymentEnable, "Not payable");
     }
 
-    function changeDisputeResolutionAddress(address withdrawalDelayerAddress)
-        public
-    {
-        IWithdrawalDelayer(withdrawalDelayerAddress)
-            .changeDisputeResolutionAddress();
+    function transferEmergencyCouncil(
+        address withdrawalDelayerAddress,
+        address payable newEmergencyCouncil
+    ) public {
+        IWithdrawalDelayer(withdrawalDelayerAddress).transferEmergencyCouncil(
+            newEmergencyCouncil
+        );
+    }
+
+    function transferGovernance(
+        address withdrawalDelayerAddress,
+        address newAddress
+    ) public {
+        IWithdrawalDelayer(withdrawalDelayerAddress).transferGovernance(
+            newAddress
+        );
+    }
+
+    function enableEmergencyMode(address withdrawalDelayerAddress) public {
+        IWithdrawalDelayer(withdrawalDelayerAddress).enableEmergencyMode();
+    }
+
+    function changeWithdrawalDelay(
+        address withdrawalDelayerAddress,
+        uint64 _newWithdrawalDelay
+    ) public {
+        IWithdrawalDelayer(withdrawalDelayerAddress).changeWithdrawalDelay(
+            _newWithdrawalDelay
+        );
     }
 
     function escapeHatchWithdrawal(
@@ -52,24 +64,6 @@ contract PayableRevert {
             _to,
             _token,
             _amount
-        );
-    }
-
-    function setHermezGovernanceAddress(
-        address withdrawalDelayerAddress,
-        address newAddress
-    ) public {
-        IWithdrawalDelayer(withdrawalDelayerAddress).setHermezGovernanceAddress(
-            newAddress
-        );
-    }
-
-    function setEmergencyCouncil(
-        address withdrawalDelayerAddress,
-        address payable newAddress
-    ) public {
-        IWithdrawalDelayer(withdrawalDelayerAddress).setEmergencyCouncil(
-            newAddress
         );
     }
 }

@@ -12,6 +12,8 @@ const {
 const TIMEOUT = 40000;
 const MIN_BLOCKS = 81;
 
+const bootCoordinatorURL = "https://boot.coordinator.io";
+
 describe("Auction Protocol Management", function() {
   this.timeout(40000);
 
@@ -100,7 +102,8 @@ describe("Auction Protocol Management", function() {
       hermezRollupAddress,
       governanceAddress,
       donationAddress,
-      bootCoordinator
+      bootCoordinator,
+      bootCoordinatorURL
     );
   });
 
@@ -372,7 +375,7 @@ describe("Auction Protocol Management", function() {
     it("Anyone shouldn't set a new DonationAddress", async function() {
       await expect(
         buidlerHermezAuctionProtocol.setBootCoordinator(
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero, "urlBootCoordinator"
         )
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
     });
@@ -398,7 +401,7 @@ describe("Auction Protocol Management", function() {
       // Set boot coordinator
       await buidlerHermezAuctionProtocol
         .connect(governance)
-        .setBootCoordinator(newBootCoordinator);
+        .setBootCoordinator(newBootCoordinator, "urlBootCoordinator");
       await eventNewBootCoordinator;
       // Check new boot coordinator
       expect(
