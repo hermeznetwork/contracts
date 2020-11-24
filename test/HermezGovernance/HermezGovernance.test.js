@@ -15,6 +15,7 @@ const MIN_BLOCKS = 81;
 const INITIAL_WITHDRAWAL_DELAY = 3600; //seconds
 const maxTxVerifierConstant = 512;
 const nLevelsVeriferConstant = 32;
+const bootCoordinatorURL = "https://boot.coordinator.io";
 
 const {
   calculateInputMaxTxLevels,
@@ -138,7 +139,6 @@ describe("Hermez Governance", function() {
     await withdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_WITHDRAWAL_DELAY,
       hermez.address,
-      hermezKeeperAddress,
       hermezGovernance.address,
       emergencyCouncilAddress
     );
@@ -152,7 +152,8 @@ describe("Hermez Governance", function() {
       hermez.address,
       hermezGovernance.address,
       donationAddress,
-      bootCoordinatorAddress
+      bootCoordinatorAddress,
+      bootCoordinatorURL
     );
 
     // initialize Hermez
@@ -184,7 +185,7 @@ describe("Hermez Governance", function() {
       let role = await getRole(hermezGovernance.address, "0xFFFFFFFF");
 
       await expect(
-        hermezGovernance.addRole(role, bootstrapCouncilAddress)
+        hermezGovernance.grantRole(role, bootstrapCouncilAddress)
       ).to.emit(hermezGovernance, "RoleGranted")
         .withArgs(role, bootstrapCouncilAddress, communityCouncilAddress);
       expect(
@@ -199,7 +200,7 @@ describe("Hermez Governance", function() {
         hermezGovernance.hasRole(role, bootstrapCouncilAddress))
         .to.be.equal(true);
       await expect(
-        hermezGovernance.removeRole(role, bootstrapCouncilAddress)
+        hermezGovernance.revokeRole(role, bootstrapCouncilAddress)
       ).to.emit(hermezGovernance, "RoleRevoked")
         .withArgs(role, bootstrapCouncilAddress, communityCouncilAddress);
       expect(await
@@ -236,7 +237,7 @@ describe("Hermez Governance", function() {
           hermezAuctionProtocol.address,
           hermezAuctionProtocol.interface.getSighash(method));
         await expect(
-          hermezGovernance.addRole(role, bootstrapCouncilAddress)
+          hermezGovernance.grantRole(role, bootstrapCouncilAddress)
         ).to.emit(hermezGovernance, "RoleGranted")
           .withArgs(role, bootstrapCouncilAddress, communityCouncilAddress);
         expect(
@@ -254,7 +255,7 @@ describe("Hermez Governance", function() {
           hermezAuctionProtocol.address,
           hermezAuctionProtocol.interface.getSighash(method));
         await expect(
-          hermezGovernance.addRole(role, hermezKeeperAddress)
+          hermezGovernance.grantRole(role, hermezKeeperAddress)
         ).to.emit(hermezGovernance, "RoleGranted")
           .withArgs(role, hermezKeeperAddress, communityCouncilAddress);
         expect(
@@ -376,11 +377,12 @@ describe("Hermez Governance", function() {
 
     it("should be able to change setBootCoordinator", async function() {
       let newBootCoordinator = bootstrapCouncilAddress;
+      const newBootCoordinatorUrl = "urlBootCoordinator";
       await expect(
-        hermezAuctionProtocol.setBootCoordinator(newBootCoordinator)
+        hermezAuctionProtocol.setBootCoordinator(newBootCoordinator, newBootCoordinatorUrl)
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
 
-      let data = hermezAuctionProtocol.interface.encodeFunctionData("setBootCoordinator", [newBootCoordinator]);
+      let data = hermezAuctionProtocol.interface.encodeFunctionData("setBootCoordinator", [newBootCoordinator, newBootCoordinatorUrl]);
       await expect(
         hermezGovernance
           .execute(hermezAuctionProtocol.address, 0, data))
@@ -435,7 +437,7 @@ describe("Hermez Governance", function() {
           hermez.address,
           hermez.interface.getSighash(method));
         await expect(
-          hermezGovernance.addRole(role, bootstrapCouncilAddress)
+          hermezGovernance.grantRole(role, bootstrapCouncilAddress)
         ).to.emit(hermezGovernance, "RoleGranted")
           .withArgs(role, bootstrapCouncilAddress, communityCouncilAddress);
         expect(
@@ -454,7 +456,7 @@ describe("Hermez Governance", function() {
           hermez.address,
           hermez.interface.getSighash(method));
         await expect(
-          hermezGovernance.addRole(role, hermezKeeperAddress)
+          hermezGovernance.grantRole(role, hermezKeeperAddress)
         ).to.emit(hermezGovernance, "RoleGranted")
           .withArgs(role, hermezKeeperAddress, communityCouncilAddress);
         expect(

@@ -167,7 +167,6 @@ describe("Hermez ETH test", function() {
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,
-      hermezGovernanceAddress,
       hermezGovernanceAddress
     );
 

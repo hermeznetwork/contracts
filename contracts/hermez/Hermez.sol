@@ -66,7 +66,8 @@ contract Hermez is InstantWithdrawManager {
     uint256 constant _MAX_L1_TX = 256;
 
     // Modulus zkSNARK
-    uint256 constant _RFIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+    uint256 constant _RFIELD =
+        21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
     // [6 bytes] lastIdx + [6 bytes] newLastIdx  + [32 bytes] stateRoot  + [32 bytes] newStRoot  + [32 bytes] newExitRoot +
     // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData + totall1L2TxsDataLength + feeIdxCoordinatorLength + [2 bytes] chainID + [4 bytes] batchNum =
@@ -79,9 +80,8 @@ contract Hermez is InstantWithdrawManager {
     // This ethereum address is used internally for rollup accounts that don't have ethereum address, only Babyjubjub
     // This non-ethereum accounts can be created by the coordinator and allow users to have a rollup
     // account without needing an ethereum address
-    address constant _ETH_ADDRESS_INTERNAL_ONLY = address(
-        0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF
-    );
+    address constant _ETH_ADDRESS_INTERNAL_ONLY =
+        address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF);
 
     // Verifiers array
     VerifierRollup[] public rollupVerifiers;
@@ -269,13 +269,14 @@ contract Hermez is InstantWithdrawManager {
         }
 
         // calculate input
-        uint256 input = _constructCircuitInput(
-            newLastIdx,
-            newStRoot,
-            newExitRoot,
-            l1Batch,
-            verifierIdx
-        );
+        uint256 input =
+            _constructCircuitInput(
+                newLastIdx,
+                newStRoot,
+                newExitRoot,
+                l1Batch,
+                verifierIdx
+            );
 
         // verify proof
         require(
@@ -317,11 +318,9 @@ contract Hermez is InstantWithdrawManager {
     // |:-------:|:-----:|:-----------:|:-------:|:-----------:|:----------:|:-------------------------------:|
     // |    0    |   0   |      0      |  0(SC)  |      X      |  !=0(SC)   |          createAccount          |
     // |    0    |   0   |     !=0     |  0(SC)  |      X      |  !=0(SC)   |      createAccountDeposit       |
-    // |    0    |   1   |      X      |    X    |      X      |  !=0(SC)   |   createAccountDepositAndExit   |
     // |    0    | 255+  |      X      |    X    |      X      |  !=0(SC)   | createAccountDepositAndTransfer |
     // |  255+   |   0   |      X      |  0(SC)  |      X      |   0(SC)    |             Deposit             |
     // |  255+   |   1   |      0      |    X    |      X      |   0(SC)    |              Exit               |
-    // |  255+   |   1   |     !=0     |    X    |      X      |   0(SC)    |         DepositAndExit          |
     // |  255+   | 255+  |      0      |    X    |      X      |   0(SC)    |            Transfer             |
     // |  255+   | 255+  |     !=0     |    X    |      X      |   0(SC)    |       DepositAndTransfer        |
     // As can be seen in the table the type of transaction is determined basically by the "fromIdx" and "toIdx"
@@ -375,18 +374,16 @@ contract Hermez is InstantWithdrawManager {
                 if (permit.length != 0) {
                     _permit(tokenList[tokenID], loadAmount, permit);
                 }
-                uint256 prevBalance = IERC20(tokenList[tokenID]).balanceOf(
-                    address(this)
-                );
+                uint256 prevBalance =
+                    IERC20(tokenList[tokenID]).balanceOf(address(this));
                 _safeTransferFrom(
                     tokenList[tokenID],
                     msg.sender,
                     address(this),
                     loadAmount
                 );
-                uint256 postBalance = IERC20(tokenList[tokenID]).balanceOf(
-                    address(this)
-                );
+                uint256 postBalance =
+                    IERC20(tokenList[tokenID]).balanceOf(address(this));
                 require(
                     postBalance - prevBalance == loadAmount,
                     "Hermez::addL1Transaction: LOADAMOUNT_ERC20_DOES_NOT_MATCH"
@@ -515,13 +512,8 @@ contract Hermez is InstantWithdrawManager {
         }
 
         // build 'key' and 'value' for exit tree
-        uint256[] memory arrayState = _buildTreeState(
-            tokenID,
-            0,
-            amount,
-            babyPubKey,
-            msg.sender
-        );
+        uint256[] memory arrayState =
+            _buildTreeState(tokenID, 0, amount, babyPubKey, msg.sender);
         uint256 stateHash = _hash4Elements(arrayState);
         // get exit root given its index depth
         uint256 exitRoot = exitRootsMap[numExitRoot];
@@ -582,9 +574,12 @@ contract Hermez is InstantWithdrawManager {
         // get exit root given its index depth
         uint256 exitRoot = exitRootsMap[numExitRoot];
 
-        uint256 input = uint256(
-            sha256(abi.encodePacked(exitRoot, msg.sender, tokenID, amount, idx))
-        ) % _RFIELD;
+        uint256 input =
+            uint256(
+                sha256(
+                    abi.encodePacked(exitRoot, msg.sender, tokenID, amount, idx)
+                )
+            ) % _RFIELD;
         // verify zk-snark circuit
         require(
             withdrawVerifier.verifyProof(proofA, proofB, proofC, [input]) ==
@@ -727,21 +722,22 @@ contract Hermez is InstantWithdrawManager {
         uint32 tokenID,
         uint48 toIdx
     ) internal {
-        bytes memory l1Tx = abi.encodePacked(
-            ethAddress,
-            babyPubKey,
-            fromIdx,
-            loadAmountF,
-            amountF,
-            tokenID,
-            toIdx
-        );
+        bytes memory l1Tx =
+            abi.encodePacked(
+                ethAddress,
+                babyPubKey,
+                fromIdx,
+                loadAmountF,
+                amountF,
+                tokenID,
+                toIdx
+            );
 
         // concatenate storage byte array with the new l1Tx
         _concatStorage(mapL1TxQueue[nextL1FillingQueue], l1Tx);
 
-        uint256 lastPosition = mapL1TxQueue[nextL1FillingQueue].length /
-            _L1_USER_TOTALBYTES;
+        uint256 lastPosition =
+            mapL1TxQueue[nextL1FillingQueue].length / _L1_USER_TOTALBYTES;
 
         emit L1UserTxEvent(nextL1FillingQueue, uint8(lastPosition), l1Tx);
         if (lastPosition >= _MAX_L1_USER_TX) {
@@ -882,14 +878,13 @@ contract Hermez is InstantWithdrawManager {
         // l1L2TxsData = l2Bytes * maxTx =
         // ([(nLevels / 8) bytes] fromIdx + [(nLevels / 8) bytes] toIdx + [2 bytes] amountFloat16 + [1 bytes] fee) * maxTx =
         // ((nLevels / 4) bytes + 3 bytes) * maxTx
-        uint256 l1L2TxsDataLength = ((rollupVerifiers[verifierIdx].nLevels /
-            8) *
-            2 +
-            3) * rollupVerifiers[verifierIdx].maxTx;
+        uint256 l1L2TxsDataLength =
+            ((rollupVerifiers[verifierIdx].nLevels / 8) * 2 + 3) *
+                rollupVerifiers[verifierIdx].maxTx;
 
         // [(nLevels / 8) bytes]
-        uint256 feeIdxCoordinatorLength = (rollupVerifiers[verifierIdx]
-            .nLevels / 8) * 64;
+        uint256 feeIdxCoordinatorLength =
+            (rollupVerifiers[verifierIdx].nLevels / 8) * 64;
 
         // the concatenation of all arguments could be done with abi.encodePacked(args), but is suboptimal, especially with a large bytes arrays
         // [6 bytes] lastIdx +
@@ -993,9 +988,10 @@ contract Hermez is InstantWithdrawManager {
      * @dev Clear the current queue, and update the `nextL1ToForgeQueue` and `nextL1FillingQueue` if needed
      */
     function _clearQueue() internal returns (uint16) {
-        uint16 l1UserTxsLen = uint16(
-            mapL1TxQueue[nextL1ToForgeQueue].length / _L1_USER_TOTALBYTES
-        );
+        uint16 l1UserTxsLen =
+            uint16(
+                mapL1TxQueue[nextL1ToForgeQueue].length / _L1_USER_TOTALBYTES
+            );
         delete mapL1TxQueue[nextL1ToForgeQueue];
         nextL1ToForgeQueue++;
         if (nextL1ToForgeQueue == nextL1FillingQueue) {
@@ -1058,9 +1054,8 @@ contract Hermez is InstantWithdrawManager {
         uint256 value
     ) internal {
         /* solhint-disable avoid-low-level-calls */
-        (bool success, bytes memory data) = token.call(
-            abi.encodeWithSelector(_APPROVE_SIGNATURE, to, value)
-        );
+        (bool success, bytes memory data) =
+            token.call(abi.encodeWithSelector(_APPROVE_SIGNATURE, to, value));
         require(
             success && (data.length == 0 || abi.decode(data, (bool))),
             "Hermez::_safeApprove: ERC20_APPROVE_FAILED"
@@ -1085,9 +1080,10 @@ contract Hermez is InstantWithdrawManager {
             require(success, "Hermez::_safeTransfer: ETH_TRANSFER_FAILED");
         } else {
             /* solhint-disable avoid-low-level-calls */
-            (bool success, bytes memory data) = token.call(
-                abi.encodeWithSelector(_TRANSFER_SIGNATURE, to, value)
-            );
+            (bool success, bytes memory data) =
+                token.call(
+                    abi.encodeWithSelector(_TRANSFER_SIGNATURE, to, value)
+                );
             require(
                 success && (data.length == 0 || abi.decode(data, (bool))),
                 "Hermez::_safeTransfer: ERC20_TRANSFER_FAILED"
@@ -1109,9 +1105,15 @@ contract Hermez is InstantWithdrawManager {
         address to,
         uint256 value
     ) internal {
-        (bool success, bytes memory data) = token.call(
-            abi.encodeWithSelector(_TRANSFER_FROM_SIGNATURE, from, to, value)
-        );
+        (bool success, bytes memory data) =
+            token.call(
+                abi.encodeWithSelector(
+                    _TRANSFER_FROM_SIGNATURE,
+                    from,
+                    to,
+                    value
+                )
+            );
         require(
             success && (data.length == 0 || abi.decode(data, (bool))),
             "Hermez::_safeTransferFrom: ERC20_TRANSFERFROM_FAILED"
@@ -1145,10 +1147,11 @@ contract Hermez is InstantWithdrawManager {
             uint8 v,
             bytes32 r,
             bytes32 s
-        ) = abi.decode(
-            _permitData[4:],
-            (address, address, uint256, uint256, uint8, bytes32, bytes32)
-        );
+        ) =
+            abi.decode(
+                _permitData[4:],
+                (address, address, uint256, uint256, uint8, bytes32, bytes32)
+            );
         require(
             owner == msg.sender,
             "Hermez::_permit: PERMIT_OWNER_MUST_BE_THE_SENDER"

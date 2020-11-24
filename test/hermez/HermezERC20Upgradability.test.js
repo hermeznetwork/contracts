@@ -176,7 +176,6 @@ describe("Hermez ERC 20 Upgradability", function () {
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,
-      hermezGovernanceAddress,
       hermezGovernanceAddress
     );
 

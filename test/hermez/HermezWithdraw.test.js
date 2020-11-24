@@ -128,7 +128,6 @@ describe("Hermez instant withdraw manager", function() {
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,
-      hermezGovernanceAddress,
       hermezGovernanceAddress
     );
 

@@ -24,24 +24,6 @@ contract HermezGovernance is Initializable, AccessControlUpgradeSafe {
     }
 
     /**
-     * @dev Function to grant a role to a desired account
-     * @param role it should be the keccak256 of the destination address and the signature of the function to call
-     * @param account account to grant access
-     */
-    function addRole(bytes32 role, address account) public {
-        grantRole(role, account);
-    }
-
-    /**
-     * @dev Function to revoke a role to a desired account
-     * @param role it should be the keccak256 of the destination address and the signature of the function to call
-     * @param account account to grant access
-     */
-    function removeRole(bytes32 role, address account) public {
-        revokeRole(role, account);
-    }
-
-    /**
      * @dev Function to execute a call. The msg.sender should have the role to be able to execute it
      * @param destination address to which the call will be made
      * @param value call value
@@ -60,9 +42,8 @@ contract HermezGovernance is Initializable, AccessControlUpgradeSafe {
             "HermezGovernance::execute: ONLY_ALLOWED_ROLE"
         );
 
-        (bool succcess, bytes memory returnData) = destination.call{
-            value: value
-        }(data);
+        (bool succcess, bytes memory returnData) =
+            destination.call{value: value}(data);
         if (succcess) {
             emit ExecOk(returnData);
         } else {

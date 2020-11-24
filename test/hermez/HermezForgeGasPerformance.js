@@ -153,7 +153,6 @@ describe("Hermez gas performance", function () {
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,
-      hermezGovernanceAddress,
       hermezGovernanceAddress
     );
 

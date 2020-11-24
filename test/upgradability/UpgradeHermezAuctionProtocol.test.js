@@ -8,6 +8,7 @@ const ProxyAdmin = require("@openzeppelin/upgrades-core/artifacts/ProxyAdmin.jso
 const { getAdminAddress } = require("@openzeppelin/upgrades-core");
 
 const TIMEOUT = 400000;
+const bootCoordinatorURL = "https://boot.coordinator.io";
 
 describe("upgradability test", function() {
   this.timeout(TIMEOUT);
@@ -48,7 +49,8 @@ describe("upgradability test", function() {
       initAddress,
       initAddress,
       initAddress,
-      initAddress
+      initAddress,
+      bootCoordinatorURL
     );
   });
   it("should be able to upgrade HermezAuctionProtocol", async () => {
@@ -68,7 +70,8 @@ describe("upgradability test", function() {
       initAddress,
       initAddress,
       initAddress,
-      initAddress
+      initAddress,
+      bootCoordinatorURL
     )).to.be.revertedWith("Contract instance has already been initialized");
 
     await newHermezAuctionProtocolV2.setVersion();

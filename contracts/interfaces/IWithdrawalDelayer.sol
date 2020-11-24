@@ -10,22 +10,15 @@ interface IWithdrawalDelayer {
     function getHermezGovernanceAddress() external view returns (address);
 
     /**
-     * @notice Allows to change the `_hermezGovernanceAddress` if it's called by `_hermezGovernanceAddress`
-     * @param newAddress new `_hermezGovernanceAddress`
+     * @dev Allows the current governance to set the pendingGovernance address.
+     * @param newGovernance The address to transfer governance to.
      */
-    function setHermezGovernanceAddress(address newAddress) external;
+    function transferGovernance(address newGovernance) external;
 
     /**
-     * @notice Getter of the current `_hermezKeeperAddress`
-     * @return The `_hermezKeeperAddress` value
+     * @dev Allows the pendingGovernance address to finalize the transfer.
      */
-    function getHermezKeeperAddress() external view returns (address);
-
-    /**
-     * @notice Allows to change the `_hermezKeeperAddress` if it's called by `_hermezKeeperAddress`
-     * @param newAddress `_hermezKeeperAddress`
-     */
-    function setHermezKeeperAddress(address newAddress) external;
+    function claimGovernance() external;
 
     /**
      * @notice Getter of the current `_whiteHackGroupAddress`
@@ -34,10 +27,16 @@ interface IWithdrawalDelayer {
     function getEmergencyCouncil() external view returns (address);
 
     /**
-     * @notice Allows to change the `_whiteHackGroupAddress` if it's called by `_whiteHackGroupAddress`
-     * @param newAddress new `_whiteHackGroupAddress`
+     * @dev Allows the current governance to set the pendingGovernance address.
+     * @param newEmergencyCouncil The address to transfer governance to.
      */
-    function setEmergencyCouncil(address payable newAddress) external;
+    function transferEmergencyCouncil(address payable newEmergencyCouncil)
+        external;
+
+    /**
+     * @dev Allows the pendingGovernance address to finalize the transfer.
+     */
+    function claimEmergencyCouncil() external;
 
     /**
      * @notice Getter of the current `_emergencyMode` status to know if the emergency mode is enable or disable

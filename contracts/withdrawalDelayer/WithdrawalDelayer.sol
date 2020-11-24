@@ -16,15 +16,12 @@ contract WithdrawalDelayer is
         uint192 amount;
         uint64 depositTimestamp;
     }
-    bytes4 private constant _TRANSFER_SIGNATURE = bytes4(
-        keccak256(bytes("transfer(address,uint256)"))
-    );
-    bytes4 private constant _TRANSFERFROM_SIGNATURE = bytes4(
-        keccak256(bytes("transferFrom(address,address,uint256)"))
-    );
-    bytes4 private constant _DEPOSIT_SIGNATURE = bytes4(
-        keccak256(bytes("deposit(address,address,uint192)"))
-    );
+    bytes4 private constant _TRANSFER_SIGNATURE =
+        bytes4(keccak256(bytes("transfer(address,uint256)")));
+    bytes4 private constant _TRANSFERFROM_SIGNATURE =
+        bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
+    bytes4 private constant _DEPOSIT_SIGNATURE =
+        bytes4(keccak256(bytes("deposit(address,address,uint192)")));
 
     uint64 public constant MAX_WITHDRAWAL_DELAY = 2 weeks; // Maximum time that the return of funds can be delayed
     uint64 public constant MAX_EMERGENCY_MODE_TIME = 26 weeks; // Maximum time in a state of emergency before a
@@ -32,8 +29,9 @@ contract WithdrawalDelayer is
     uint64 private _withdrawalDelay; // Current delay
     uint64 private _emergencyModeStartingTime; // When emergency mode has started
     address private _hermezGovernance; // Governance who control the system parameters
+    address public pendingGovernance;
+    address payable public pendingEmergencyCouncil;
     address payable private _emergencyCouncil; // WHG address who can redeem the funds after MAX_EMERGENCY_MODE_TIME
-    address private _hermezKeeperAddress; // Can enable the emergency mode
     bool private _emergencyMode; // bool to set the emergency mode
     address public hermezRollupAddress; // hermez Rollup Address who can send funds to this smart contract
     mapping(bytes32 => DepositState) public deposits; // Mapping to keep track of deposits
@@ -57,7 +55,7 @@ contract WithdrawalDelayer is
         address indexed token,
         uint256 amount
     );
-    event NewHermezKeeperAddress(address newHermezKeeperAddress);
+
     event NewEmergencyCouncil(address newEmergencyCouncil);
     event NewHermezGovernanceAddress(address newHermezGovernanceAddress);
 
@@ -65,7 +63,6 @@ contract WithdrawalDelayer is
      * @notice withdrawalDelayerInitializer (Constructor)
      * @param _initialWithdrawalDelay Initial withdrawal delay time in seconds to be able to withdraw the funds
      * @param _initialHermezRollup Smart contract responsible of making deposits and it's able to change the delay
-     * @param _initialHermezKeeperAddress can enable emergency mode and modify the delay to make a withdrawal
      * @param _initialHermezGovernanceAddress can claim the funds in an emergency mode
      * @param _initialEmergencyCouncil can claim the funds in an emergency and MAX_EMERGENCY_MODE_TIME exceeded
      */
@@ -73,14 +70,12 @@ contract WithdrawalDelayer is
     function withdrawalDelayerInitializer(
         uint64 _initialWithdrawalDelay,
         address _initialHermezRollup,
-        address _initialHermezKeeperAddress,
         address _initialHermezGovernanceAddress,
         address payable _initialEmergencyCouncil
     ) public initializer {
         __ReentrancyGuard_init_unchained();
         _withdrawalDelay = _initialWithdrawalDelay;
         hermezRollupAddress = _initialHermezRollup;
-        _hermezKeeperAddress = _initialHermezKeeperAddress;
         _hermezGovernance = _initialHermezGovernanceAddress;
         _emergencyCouncil = _initialEmergencyCouncil;
         _emergencyMode = false;
@@ -92,65 +87,71 @@ contract WithdrawalDelayer is
      */
     function getHermezGovernanceAddress()
         external
-        override
         view
+        override
         returns (address)
     {
         return _hermezGovernance;
     }
 
     /**
-     * @notice Allows to change the `_hermezGovernance` if it's called by `_hermezGovernance`
-     * @param newAddress new `_hermezGovernance`
+     * @dev Allows the current governance to set the pendingGovernance address.
+     * @param newGovernance The address to transfer governance to.
      */
-    function setHermezGovernanceAddress(address newAddress) external override {
+    function transferGovernance(address newGovernance) public override {
         require(
             msg.sender == _hermezGovernance,
-            "WithdrawalDelayer::setHermezGovernanceAddress: ONLY_GOVERNANCE"
+            "WithdrawalDelayer::transferGovernance: ONLY_GOVERNANCE"
         );
-        _hermezGovernance = newAddress;
-        emit NewHermezGovernanceAddress(_hermezGovernance);
+        pendingGovernance = newGovernance;
     }
 
     /**
-     * @notice Getter of the current `_hermezKeeperAddress`
-     * @return The `_hermezKeeperAddress` value
+     * @dev Allows the pendingGovernance address to finalize the transfer.
      */
-    function getHermezKeeperAddress() external override view returns (address) {
-        return _hermezKeeperAddress;
-    }
-
-    /**
-     * @notice Allows to change the `_hermezKeeperAddress` if it's called by `_hermezKeeperAddress`
-     * @param newAddress `_hermezKeeperAddress`
-     */
-    function setHermezKeeperAddress(address newAddress) external override {
+    function claimGovernance() public override {
         require(
-            msg.sender == _hermezKeeperAddress,
-            "WithdrawalDelayer::setHermezKeeperAddress: ONLY_KEEPER"
+            msg.sender == pendingGovernance,
+            "WithdrawalDelayer::claimGovernance: ONLY_PENDING_GOVERNANCE"
         );
-        _hermezKeeperAddress = newAddress;
-        emit NewHermezKeeperAddress(_hermezKeeperAddress);
+        _hermezGovernance = pendingGovernance;
+        pendingGovernance = address(0);
+        emit NewHermezGovernanceAddress(_hermezGovernance);
     }
 
     /**
      * @notice Getter of the current `_emergencyCouncil`
      * @return The `_emergencyCouncil` value
      */
-    function getEmergencyCouncil() external override view returns (address) {
+    function getEmergencyCouncil() external view override returns (address) {
         return _emergencyCouncil;
     }
 
     /**
-     * @notice Allows to change the `_emergencyCouncil` if it's called by `_emergencyCouncil`
-     * @param newAddress new `_emergencyCouncil`
+     * @dev Allows the current governance to set the pendingGovernance address.
+     * @param newEmergencyCouncil The address to transfer governance to.
      */
-    function setEmergencyCouncil(address payable newAddress) external override {
+    function transferEmergencyCouncil(address payable newEmergencyCouncil)
+        public
+        override
+    {
         require(
             msg.sender == _emergencyCouncil,
-            "WithdrawalDelayer::setEmergencyCouncil: ONLY_EMERGENCY_COUNCIL"
+            "WithdrawalDelayer::transferEmergencyCouncil: ONLY_EMERGENCY_COUNCIL"
         );
-        _emergencyCouncil = newAddress;
+        pendingEmergencyCouncil = newEmergencyCouncil;
+    }
+
+    /**
+     * @dev Allows the pendingGovernance address to finalize the transfer.
+     */
+    function claimEmergencyCouncil() public override {
+        require(
+            msg.sender == pendingEmergencyCouncil,
+            "WithdrawalDelayer::claimEmergencyCouncil: ONLY_PENDING_GOVERNANCE"
+        );
+        _emergencyCouncil = pendingEmergencyCouncil;
+        pendingEmergencyCouncil = address(0);
         emit NewEmergencyCouncil(_emergencyCouncil);
     }
 
@@ -158,7 +159,7 @@ contract WithdrawalDelayer is
      * @notice Getter of the current `_emergencyMode` status to know if the emergency mode is enable or disable
      * @return The `_emergencyMode` value
      */
-    function isEmergencyMode() external override view returns (bool) {
+    function isEmergencyMode() external view override returns (bool) {
         return _emergencyMode;
     }
 
@@ -166,7 +167,7 @@ contract WithdrawalDelayer is
      * @notice Getter to obtain the current withdrawal delay
      * @return the current withdrawal delay time in seconds: `_withdrawalDelay`
      */
-    function getWithdrawalDelay() external override view returns (uint128) {
+    function getWithdrawalDelay() external view override returns (uint128) {
         return _withdrawalDelay;
     }
 
@@ -176,15 +177,15 @@ contract WithdrawalDelayer is
      */
     function getEmergencyModeStartingTime()
         external
-        override
         view
+        override
         returns (uint128)
     {
         return _emergencyModeStartingTime;
     }
 
     /**
-     * @notice This function enables the emergency mode. Only the keeper of the system can enable this mode. This cannot
+     * @notice This function enables the emergency mode. Only the governance of the system can enable this mode. This cannot
      * be deactivated in any case so it will be irreversible.
      * @dev The activation time is saved in `_emergencyModeStartingTime` and this function can only be called
      * once if it has not been previously activated.
@@ -192,8 +193,8 @@ contract WithdrawalDelayer is
      */
     function enableEmergencyMode() external override {
         require(
-            msg.sender == _hermezKeeperAddress,
-            "WithdrawalDelayer::enableEmergencyMode: ONLY_KEEPER"
+            msg.sender == _hermezGovernance,
+            "WithdrawalDelayer::enableEmergencyMode: ONLY_GOVERNANCE"
         );
         require(
             !_emergencyMode,
@@ -206,7 +207,7 @@ contract WithdrawalDelayer is
     }
 
     /**
-     * @notice This function allows the HermezKeeperAddress to change the withdrawal delay time, this is the time that
+     * @notice This function allows the governance to change the withdrawal delay time, this is the time that
      * anyone needs to wait until a withdrawal of the funds is allowed. Since this time is calculated at the time of
      * withdrawal, this change affects existing deposits. Can never exceed `MAX_WITHDRAWAL_DELAY`
      * @dev It changes `_withdrawalDelay` if `_newWithdrawalDelay` it is less than or equal to MAX_WITHDRAWAL_DELAY
@@ -218,13 +219,13 @@ contract WithdrawalDelayer is
         override
     {
         require(
-            (msg.sender == _hermezKeeperAddress) ||
+            (msg.sender == _hermezGovernance) ||
                 (msg.sender == hermezRollupAddress),
-            "Only hermez keeper or rollup"
+            "WithdrawalDelayer::changeWithdrawalDelay: ONLY_ROLLUP_OR_GOVERNANCE"
         );
         require(
             _newWithdrawalDelay <= MAX_WITHDRAWAL_DELAY,
-            "Exceeds MAX_WITHDRAWAL_DELAY"
+            "WithdrawalDelayer::changeWithdrawalDelay: EXCEEDS_MAX_WITHDRAWAL_DELAY"
         );
         _withdrawalDelay = _newWithdrawalDelay;
         emit NewWithdrawalDelay(_withdrawalDelay);
@@ -239,13 +240,12 @@ contract WithdrawalDelayer is
      */
     function depositInfo(address payable _owner, address _token)
         external
-        override
         view
+        override
         returns (uint192, uint64)
     {
-        DepositState memory ds = deposits[keccak256(
-            abi.encodePacked(_owner, _token)
-        )];
+        DepositState memory ds =
+            deposits[keccak256(abi.encodePacked(_owner, _token))];
         return (ds.amount, ds.depositTimestamp);
     }
 
@@ -263,7 +263,7 @@ contract WithdrawalDelayer is
         address _owner,
         address _token,
         uint192 _amount
-    ) external override payable nonReentrant {
+    ) external payable override nonReentrant {
         require(
             msg.sender == hermezRollupAddress,
             "WithdrawalDelayer::deposit: ONLY_ROLLUP"
@@ -284,14 +284,15 @@ contract WithdrawalDelayer is
                 "WithdrawalDelayer::deposit: NOT_ENOUGH_ALLOWANCE"
             );
             /* solhint-disable avoid-low-level-calls */
-            (bool success, bytes memory data) = address(_token).call(
-                abi.encodeWithSelector(
-                    _TRANSFERFROM_SIGNATURE,
-                    hermezRollupAddress,
-                    address(this),
-                    _amount
-                )
-            );
+            (bool success, bytes memory data) =
+                address(_token).call(
+                    abi.encodeWithSelector(
+                        _TRANSFERFROM_SIGNATURE,
+                        hermezRollupAddress,
+                        address(this),
+                        _amount
+                    )
+                );
             // `transferFrom` method may return (bool) or nothing.
             require(
                 success && (data.length == 0 || abi.decode(data, (bool))),
@@ -433,9 +434,10 @@ contract WithdrawalDelayer is
         uint256 amount
     ) internal {
         /* solhint-disable avoid-low-level-calls */
-        (bool success, bytes memory data) = tokenAddress.call(
-            abi.encodeWithSelector(_TRANSFER_SIGNATURE, to, amount)
-        );
+        (bool success, bytes memory data) =
+            tokenAddress.call(
+                abi.encodeWithSelector(_TRANSFER_SIGNATURE, to, amount)
+            );
 
         require(
             success && (data.length == 0 || abi.decode(data, (bool))),

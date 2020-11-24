@@ -45,11 +45,13 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
     // HermezRollup smartcontract address
     address public hermezRollup;
     // Hermez Governance smartcontract address who controls some parameters and collects HEZ fee
-    address private _governanceAddress;
-    // Boot Coordinator Address
+    address public governanceAddress;
+    // Boot Donation Address
     address private _donationAddress;
     // Boot Coordinator Address
     address private _bootCoordinator;
+    // boot coordinator URL
+    string public bootCoordinatorURL;
     // The minimum bid value in a series of 6 slots
     uint128[6] private _defaultSlotSetBid;
     // First block where the first slot begins
@@ -84,7 +86,10 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
     event NewClosedAuctionSlots(uint16 newClosedAuctionSlots);
     event NewOutbidding(uint16 newOutbidding);
     event NewDonationAddress(address indexed newDonationAddress);
-    event NewBootCoordinator(address indexed newBootCoordinator);
+    event NewBootCoordinator(
+        address indexed newBootCoordinator,
+        string newBootCoordinatorURL
+    );
     event NewOpenAuctionSlots(uint16 newOpenAuctionSlots);
     event NewAllocationRatio(uint16[3] newAllocationRatio);
     event SetCoordinator(
@@ -106,7 +111,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
 
     modifier onlyGovernance() {
         require(
-            _governanceAddress == msg.sender,
+            governanceAddress == msg.sender,
             "HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE"
         );
         _;
@@ -118,16 +123,17 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
      * @param token Hermez Network token with which the bids will be made
      * @param hermezRollupAddress address authorized to forge
      * @param donationAddress address that can claim donated tokens
-     * @param governanceAddress Hermez Governance smartcontract
+     * @param _governanceAddress Hermez Governance smartcontract
      * @param bootCoordinatorAddress Boot Coordinator Address
      */
     function hermezAuctionProtocolInitializer(
         address token,
         uint128 genesis,
         address hermezRollupAddress,
-        address governanceAddress,
+        address _governanceAddress,
         address donationAddress,
-        address bootCoordinatorAddress
+        address bootCoordinatorAddress,
+        string memory _bootCoordinatorURL
     ) public initializer {
         __ReentrancyGuard_init_unchained();
         _outbidding = 1000;
@@ -151,9 +157,10 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
         );
         genesisBlock = genesis;
         hermezRollup = hermezRollupAddress;
-        _governanceAddress = governanceAddress;
+        governanceAddress = _governanceAddress;
         _donationAddress = donationAddress;
         _bootCoordinator = bootCoordinatorAddress;
+        bootCoordinatorURL = _bootCoordinatorURL;
     }
 
     function setVersion() public {
@@ -326,12 +333,13 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
      * @param newBootCoordinator new `_bootCoordinator` uint8[3] array
      * Events: `NewBootCoordinator`
      */
-    function setBootCoordinator(address newBootCoordinator)
-        external
-        onlyGovernance
-    {
+    function setBootCoordinator(
+        address newBootCoordinator,
+        string memory newBootCoordinatorURL
+    ) external onlyGovernance {
         _bootCoordinator = newBootCoordinator;
-        emit NewBootCoordinator(_bootCoordinator);
+        bootCoordinatorURL = newBootCoordinatorURL;
+        emit NewBootCoordinator(_bootCoordinator, newBootCoordinatorURL);
     }
 
     /**
@@ -600,10 +608,11 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
             uint8 v,
             bytes32 r,
             bytes32 s
-        ) = abi.decode(
-            _permitData[4:],
-            (address, address, uint256, uint256, uint8, bytes32, bytes32)
-        );
+        ) =
+            abi.decode(
+                _permitData[4:],
+                (address, address, uint256, uint256, uint8, bytes32, bytes32)
+            );
         require(
             owner == msg.sender,
             "HermezAuctionProtocol::_permit: OWNER_NOT_EQUAL_SENDER"
@@ -687,14 +696,16 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
 
         uint128 slotToForge = getSlotNumber(uint128(blockNumber));
         // Get the relativeBlock to check if the slotDeadline has been exceeded
-        uint128 relativeBlock = uint128(blockNumber).sub(
-            (slotToForge.mul(BLOCKS_PER_SLOT)).add(genesisBlock)
-        );
+        uint128 relativeBlock =
+            uint128(blockNumber).sub(
+                (slotToForge.mul(BLOCKS_PER_SLOT)).add(genesisBlock)
+            );
         // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
         // otherwise the one that has been saved will be used
-        uint128 minBid = (slots[slotToForge].closedMinBid == 0)
-            ? _defaultSlotSetBid[getSlotSet(slotToForge)]
-            : slots[slotToForge].closedMinBid;
+        uint128 minBid =
+            (slots[slotToForge].closedMinBid == 0)
+                ? _defaultSlotSetBid[getSlotSet(slotToForge)]
+                : slots[slotToForge].closedMinBid;
 
         // if the relative block has exceeded the slotDeadline and no batch has been forged, anyone can forge
         if (!slots[slotToForge].fulfilled && (relativeBlock >= _slotDeadline)) {
@@ -738,9 +749,10 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
 
         // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
         // otherwise the one that has been saved will be used
-        uint128 minBid = (slots[slotToForge].closedMinBid == 0)
-            ? _defaultSlotSetBid[getSlotSet(slotToForge)]
-            : slots[slotToForge].closedMinBid;
+        uint128 minBid =
+            (slots[slotToForge].closedMinBid == 0)
+                ? _defaultSlotSetBid[getSlotSet(slotToForge)]
+                : slots[slotToForge].closedMinBid;
 
         // Default values:** Burn: 40% - Donation: 40% - HGT: 20%
         // Allocated is used to know if we have already distributed the HEZ tokens
@@ -756,34 +768,38 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
             ) {
                 // We save the minBid that this block has had
                 slots[slotToForge].closedMinBid = minBid;
-                pendingBalances[slots[slotToForge]
-                    .bidder] = pendingBalances[slots[slotToForge].bidder].add(
-                    slots[slotToForge].bidAmount
-                );
+                pendingBalances[slots[slotToForge].bidder] = pendingBalances[
+                    slots[slotToForge].bidder
+                ]
+                    .add(slots[slotToForge].bidAmount);
                 // In case the winner is forging we have to allocate the tokens according to the desired distribution
             } else if (_bootCoordinator != forger) {
                 // We save the minBid that this block has had
                 slots[slotToForge].closedMinBid = slots[slotToForge].bidAmount;
                 // calculation of token distribution
-                uint128 burnAmount = slots[slotToForge]
-                    .bidAmount
-                    .mul(_allocationRatio[0])
-                    .div(uint128(10000)); // Two decimal precision
-                uint128 donationAmount = slots[slotToForge]
-                    .bidAmount
-                    .mul(_allocationRatio[1])
-                    .div(uint128(10000)); // Two decimal precision
-                uint128 governanceAmount = slots[slotToForge]
-                    .bidAmount
-                    .mul(_allocationRatio[2])
-                    .div(uint128(10000)); // Two decimal precision
+                uint128 burnAmount =
+                    slots[slotToForge].bidAmount.mul(_allocationRatio[0]).div(
+                        uint128(10000)
+                    ); // Two decimal precision
+                uint128 donationAmount =
+                    slots[slotToForge].bidAmount.mul(_allocationRatio[1]).div(
+                        uint128(10000)
+                    ); // Two decimal precision
+                uint128 governanceAmount =
+                    slots[slotToForge].bidAmount.mul(_allocationRatio[2]).div(
+                        uint128(10000)
+                    ); // Two decimal precision
                 // Tokens to burn
                 tokenHEZ.burn(burnAmount);
                 // Tokens to donate
-                pendingBalances[_donationAddress] = pendingBalances[_donationAddress]
+                pendingBalances[_donationAddress] = pendingBalances[
+                    _donationAddress
+                ]
                     .add(donationAmount);
                 // Tokens for the governace address
-                pendingBalances[_governanceAddress] = pendingBalances[_governanceAddress]
+                pendingBalances[governanceAddress] = pendingBalances[
+                    governanceAddress
+                ]
                     .add(governanceAmount);
 
                 emit NewForgeAllocated(
