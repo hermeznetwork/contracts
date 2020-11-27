@@ -44,7 +44,7 @@
     "buidler-spdx-license-identifier": "^1.0.2",
     "chai": "^4.2.0",
     "circom": "^0.5.17",
-    "circomlib": "^0.2.4",
+    "circomlib": "0.3.0",
     "dotenv": "^8.2.0",
     "eth-gas-reporter": "^0.2.17",
     "ethereum-waffle": "^3.0.2",
@@ -58,6 +58,6 @@
     "solidity-coverage": "^0.7.9",
     "solidity-docgen": "^0.5.4",
     "web3": "^1.2.11",
-    "@hermeznetwork/commonjs": "0.0.4"
+    "@hermeznetwork/commonjs": "0.0.5"
   }
 }

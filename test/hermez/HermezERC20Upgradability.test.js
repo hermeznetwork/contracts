@@ -1,7 +1,7 @@
-const {expect} = require("chai");
+const { expect } = require("chai");
 const { ethers, upgrades } = require("@nomiclabs/buidler");
 const SMTMemDB = require("circomlib").SMTMemDB;
-const {time} = require("@openzeppelin/test-helpers");
+const { time } = require("@openzeppelin/test-helpers");
 const Scalar = require("ffjavascript").Scalar;
 const ProxyAdmin = require("@openzeppelin/upgrades-core/artifacts/ProxyAdmin.json");
 const { getAdminAddress } = require("@openzeppelin/upgrades-core");
@@ -63,7 +63,7 @@ describe("Hermez ERC 20 Upgradability", function () {
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
   const INITIAL_DELAY = 0;
-  
+
   beforeEach(async function () {
     [
       owner,
@@ -76,17 +76,17 @@ describe("Hermez ERC 20 Upgradability", function () {
     hermezGovernanceAddress = governance.getAddress();
 
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
-    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+    if (chainIdProvider == 1337) { // solcover, must be a jsonRPC wallet
       const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
-      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic);
       // ownerWalletTest = ownerWallet.connect(ethers.provider);
       ownerWallet = owner;
       ownerWallet.privateKey = ownerWalletTest.privateKey;
-    } 
+    }
     else {
       ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
-   
+
     // const privateKeyBuidler =
     //   "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
     // ownerWallet = new ethers.Wallet(
@@ -113,19 +113,18 @@ describe("Hermez ERC 20 Upgradability", function () {
       "WithdrawalDelayerTest"
     );
     const Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       owner
     );
 
     const Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       owner
     );
-
     const Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       owner
     );
@@ -170,7 +169,7 @@ describe("Hermez ERC 20 Upgradability", function () {
       initializer: undefined,
     });
     await buidlerHermez.deployed();
-    
+
     buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
     await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
@@ -399,7 +398,7 @@ describe("Hermez ERC 20 Upgradability", function () {
       });
       await newHermezV2.setVersion();
       expect(await newHermezV2.getVersion()).to.be.equal(2);
-           
+
       const proofA = ["0", "0"];
       const proofB = [
         ["0", "0"],
@@ -491,7 +490,7 @@ describe("Hermez ERC 20 Upgradability", function () {
       });
       await newHermezV2.setVersion();
       expect(await newHermezV2.getVersion()).to.be.equal(2);
-        
+
       // perform withdraw
       const numExitRoot = await buidlerHermez.lastForgedBatch();
       const instantWithdraw = false;
@@ -505,7 +504,7 @@ describe("Hermez ERC 20 Upgradability", function () {
       ];
       const proofC = ["0", "0"];
 
-      
+
       await expect(
         newHermezV2.withdrawCircuit(
           proofA,

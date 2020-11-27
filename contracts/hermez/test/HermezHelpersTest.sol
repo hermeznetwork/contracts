@@ -17,7 +17,7 @@ contract HermezHelpersTest is HermezHelpers {
         );
     }
 
-    function testHash2Elements(uint256[] memory inputs)
+    function testHash2Elements(uint256[2] memory inputs)
         public
         view
         returns (uint256)
@@ -25,7 +25,7 @@ contract HermezHelpersTest is HermezHelpers {
         return _hash2Elements(inputs);
     }
 
-    function testHash3Elements(uint256[] memory inputs)
+    function testHash3Elements(uint256[3] memory inputs)
         public
         view
         returns (uint256)
@@ -33,7 +33,7 @@ contract HermezHelpersTest is HermezHelpers {
         return _hash3Elements(inputs);
     }
 
-    function testHash4Elements(uint256[] memory inputs)
+    function testHash4Elements(uint256[4] memory inputs)
         public
         view
         returns (uint256)
@@ -72,8 +72,8 @@ contract HermezHelpersTest is HermezHelpers {
         uint256 balance,
         uint256 ay,
         address ethAddress
-    ) public pure returns (uint256[] memory) {
-        uint256[] memory arrayState = _buildTreeState(
+    ) public pure returns (uint256[4] memory) {
+        uint256[4] memory arrayState = _buildTreeState(
             token,
             nonce,
             balance,
@@ -90,7 +90,7 @@ contract HermezHelpersTest is HermezHelpers {
         uint256 ay,
         address ethAddress
     ) public view returns (uint256) {
-        uint256[] memory arrayState = _buildTreeState(
+        uint256[4] memory arrayState = _buildTreeState(
             token,
             nonce,
             balance,

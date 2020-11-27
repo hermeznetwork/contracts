@@ -1,10 +1,10 @@
 require("dotenv").config();
 
 const bre = require("@nomiclabs/buidler");
-const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const { expect } = require("chai");
+const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
-const {BigNumber} = require("ethers");
+const { BigNumber } = require("ethers");
 const {
   calculateInputMaxTxLevels,
   AddToken,
@@ -70,19 +70,19 @@ async function main() {
     "WithdrawalDelayer"
   );
   const Poseidon2Elements = new ethers.ContractFactory(
-    poseidonUnit.abi,
+    poseidonUnit.generateABI(2),
     poseidonUnit.createCode(2),
     owner
   );
 
   const Poseidon3Elements = new ethers.ContractFactory(
-    poseidonUnit.abi,
+    poseidonUnit.generateABI(3),
     poseidonUnit.createCode(3),
     owner
   );
 
   const Poseidon4Elements = new ethers.ContractFactory(
-    poseidonUnit.abi,
+    poseidonUnit.generateABI(4),
     poseidonUnit.createCode(4),
     owner
   );

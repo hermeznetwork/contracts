@@ -1,5 +1,5 @@
-const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const { expect } = require("chai");
+const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {
@@ -67,15 +67,15 @@ describe("Hermez gas performance", function () {
     ] = await ethers.getSigners();
 
     hermezGovernanceAddress = governance.getAddress();
-    
+
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
-    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+    if (chainIdProvider == 1337) { // solcover, must be a jsonRPC wallet
       const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
-      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic);
       // ownerWalletTest = ownerWallet.connect(ethers.provider);
       ownerWallet = owner;
       ownerWallet.privateKey = ownerWalletTest.privateKey;
-    } 
+    }
     else {
       ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
@@ -97,19 +97,18 @@ describe("Hermez gas performance", function () {
       "WithdrawalDelayerTest"
     );
     const Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       owner
     );
 
     const Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       owner
     );
-
     const Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       owner
     );
@@ -234,7 +233,7 @@ describe("Hermez gas performance", function () {
         proofA,
         proofB,
         proofC,
-        {gasLimit: 12500000}
+        { gasLimit: 12500000 }
       );
 
       console.log(
@@ -268,7 +267,7 @@ describe("Hermez gas performance", function () {
           proofA,
           proofB,
           proofC,
-          {gasLimit: 12500000}
+          { gasLimit: 12500000 }
         );
         const receipt = await tx.wait();
         SCGasArray.push(receipt.events[1].args[0].toNumber());
@@ -276,15 +275,13 @@ describe("Hermez gas performance", function () {
 
         // hackmd table
         let log = `|  ${SCGasArray[i]}    |`;
-        log += ` ${
-          (SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i]) -
+        log += ` ${(SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i]) -
           SCGasArray[i]
-        }   |`;
+          }   |`;
         log += ` ${wastedGasarray[i]}   |`;
-        log += ` ${
-          wastedGasarray[i] -
+        log += ` ${wastedGasarray[i] -
           (wastedGasarray[i - 1] ? wastedGasarray[i - 1] : wastedGasarray[i])
-        }   |`;
+          }   |`;
         log += ` ${i}   |`;
         console.log(log);
       }
@@ -354,7 +351,7 @@ describe("Hermez gas performance", function () {
           proofA,
           proofB,
           proofC,
-          {gasLimit: 12500000}
+          { gasLimit: 12500000 }
         );
 
         // forge with events
@@ -370,7 +367,7 @@ describe("Hermez gas performance", function () {
           proofA,
           proofB,
           proofC,
-          {gasLimit: 12500000}
+          { gasLimit: 12500000 }
         );
         const receipt = await tx.wait();
         SCGasArray.push(receipt.events[1].args[0].toNumber());
@@ -378,15 +375,13 @@ describe("Hermez gas performance", function () {
 
         // hackmd table
         let log = `|  ${SCGasArray[i]}    |`;
-        log += ` ${
-          (SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i]) -
+        log += ` ${(SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i]) -
           SCGasArray[i]
-        }   |`;
+          }   |`;
         log += ` ${wastedGasarray[i]}   |`;
-        log += ` ${
-          wastedGasarray[i] -
+        log += ` ${wastedGasarray[i] -
           (wastedGasarray[i - 1] ? wastedGasarray[i - 1] : wastedGasarray[i])
-        }   |`;
+          }   |`;
         log += ` ${i}   |`;
         console.log(log);
       }

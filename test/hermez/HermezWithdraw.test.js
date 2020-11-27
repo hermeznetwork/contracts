@@ -8,7 +8,7 @@ const {
   calculateInputMaxTxLevels,
 } = require("./helpers/helpers");
 
-describe("Hermez instant withdraw manager", function() {
+describe("Hermez instant withdraw manager", function () {
   let buidlerTokenERC20Mock;
   let buidlerHermez;
 
@@ -32,7 +32,7 @@ describe("Hermez instant withdraw manager", function() {
   const INITIAL_DELAY = 0;
 
 
-  this.beforeEach(async function() {
+  this.beforeEach(async function () {
     [
       owner,
       governance,
@@ -76,19 +76,18 @@ describe("Hermez instant withdraw manager", function() {
 
     // deploy helpers
     const Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       owner
     );
 
     const Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       owner
     );
-
     const Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       owner
     );
@@ -153,8 +152,8 @@ describe("Hermez instant withdraw manager", function() {
     chainID = chainSC.toNumber();
   });
 
-  describe("Instant withdraw functionality", function() {
-    it("updateBucketsParameters ", async function() {
+  describe("Instant withdraw functionality", function () {
+    it("updateBucketsParameters ", async function () {
       const numBuckets = 5;
 
       const buckets = [];
@@ -183,7 +182,7 @@ describe("Hermez instant withdraw manager", function() {
       }
     });
 
-    it("test instant withdraw with buckets", async function() {
+    it("test instant withdraw with buckets", async function () {
       const numBuckets = 5;
       const tokenAddress = buidlerTokenERC20Mock.address;
 
@@ -279,11 +278,11 @@ describe("Hermez instant withdraw manager", function() {
       let expectedblockStamp = initialTimestamp + tokenRate * 2;
 
       // 2 withdrawals
-      await expect (buidlerHermez.instantWithdrawalTest(
+      await expect(buidlerHermez.instantWithdrawalTest(
         tokenAddress,
         tokenAmountDecimals
-      )).to.emit(buidlerHermez,"UpdateBucketWithdraw")
-        .withArgs(expectedIdx,expectedblockStamp,expectedWithdrawals);
+      )).to.emit(buidlerHermez, "UpdateBucketWithdraw")
+        .withArgs(expectedIdx, expectedblockStamp, expectedWithdrawals);
 
 
       bucketSC = await buidlerHermez.buckets(bucketIdx);
@@ -295,11 +294,11 @@ describe("Hermez instant withdraw manager", function() {
       expectedWithdrawals = 3;
       expectedblockStamp = initialTimestamp + tokenRate * 5;
 
-      await expect (buidlerHermez.instantWithdrawalTest(
+      await expect(buidlerHermez.instantWithdrawalTest(
         tokenAddress,
         tokenAmountDecimals
-      )).to.emit(buidlerHermez,"UpdateBucketWithdraw")
-        .withArgs(expectedIdx,expectedblockStamp,expectedWithdrawals);
+      )).to.emit(buidlerHermez, "UpdateBucketWithdraw")
+        .withArgs(expectedIdx, expectedblockStamp, expectedWithdrawals);
 
       bucketSC = await buidlerHermez.buckets(bucketIdx);
 
@@ -315,7 +314,7 @@ describe("Hermez instant withdraw manager", function() {
       expect(bucketSC.withdrawals).to.be.equal(2);
     });
 
-    it("test instant withdraw with buckets full, and ERC20Permit", async function() {
+    it("test instant withdraw with buckets full, and ERC20Permit", async function () {
       const numBuckets = 5;
       const tokenAddress = buidlerHEZ.address;
 
@@ -437,11 +436,11 @@ describe("Hermez instant withdraw manager", function() {
       let expectedblockStamp = initialTimestamp + tokenRate * 2;
 
       // 2 withdrawals
-      await expect (buidlerHermez.instantWithdrawalTest(
+      await expect(buidlerHermez.instantWithdrawalTest(
         tokenAddress,
         tokenAmountDecimals
-      )).to.emit(buidlerHermez,"UpdateBucketWithdraw")
-        .withArgs(expectedIdx,expectedblockStamp,expectedWithdrawals);
+      )).to.emit(buidlerHermez, "UpdateBucketWithdraw")
+        .withArgs(expectedIdx, expectedblockStamp, expectedWithdrawals);
 
 
       // 2 withdrawals
@@ -456,12 +455,12 @@ describe("Hermez instant withdraw manager", function() {
       expectedWithdrawals = 3;
       expectedblockStamp = initialTimestamp + tokenRate * 5;
 
-      await expect (buidlerHermez.instantWithdrawalTest(
+      await expect(buidlerHermez.instantWithdrawalTest(
         tokenAddress,
         tokenAmountDecimals
-      )).to.emit(buidlerHermez,"UpdateBucketWithdraw")
-        .withArgs(expectedIdx,expectedblockStamp,expectedWithdrawals);
-        
+      )).to.emit(buidlerHermez, "UpdateBucketWithdraw")
+        .withArgs(expectedIdx, expectedblockStamp, expectedWithdrawals);
+
       bucketSC = await buidlerHermez.buckets(bucketIdx);
       // max withdawals = 4
       expect(bucketSC.withdrawals).to.be.equal(expectedWithdrawals);
@@ -528,7 +527,7 @@ describe("Hermez instant withdraw manager", function() {
       expect(bucketSC.blockStamp).to.be.equal(lastBlock2.toNumber());
     });
 
-    it("update WithdrawalDelay", async function() {
+    it("update WithdrawalDelay", async function () {
       const newWithdrawalDelay = 100000;
 
       expect(await buidlerHermez.withdrawalDelay()).to.equal(
@@ -546,11 +545,11 @@ describe("Hermez instant withdraw manager", function() {
       );
     });
 
-    it("enable safeMode", async function() {
+    it("enable safeMode", async function () {
       await expect(buidlerHermez.safeMode()).to.be.revertedWith(
         "InstantWithdrawManager::onlyGovernance: ONLY_GOVERNANCE_ADDRESS"
       );
-      
+
       const numBuckets = 5;
 
       const buckets = [];

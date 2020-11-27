@@ -83,7 +83,7 @@ async function main() {
     (await donationEthers.getAddress());
   const bootCoordinatorAddress =
     deployParameters[chainId].bootCoordinatorAddress ||
-    (await bootCoordinatorEthers.getAddress()); 
+    (await bootCoordinatorEthers.getAddress());
 
   console.log("whiteHackGroupAddress: " + whiteHackGroupAddress);
   console.log("hermezGovernanceAddress: " + hermezGovernanceAddress);
@@ -96,10 +96,10 @@ async function main() {
   );
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
-  
+
   // get contract factorys
   let Hermez = await ethers.getContractFactory("Hermez");
-  
+
   const HermezAuctionProtocol = await ethers.getContractFactory(
     "HermezAuctionProtocol"
   );
@@ -117,19 +117,19 @@ async function main() {
   );
 
   const Poseidon2Elements = new ethers.ContractFactory(
-    poseidonUnit.abi,
+    poseidonUnit.generateABI(2),
     poseidonUnit.createCode(2),
     deployer
   );
 
   const Poseidon3Elements = new ethers.ContractFactory(
-    poseidonUnit.abi,
+    poseidonUnit.generateABI(3),
     poseidonUnit.createCode(3),
     deployer
   );
 
   const Poseidon4Elements = new ethers.ContractFactory(
-    poseidonUnit.abi,
+    poseidonUnit.generateABI(4),
     poseidonUnit.createCode(4),
     deployer
   );
@@ -329,7 +329,7 @@ async function main() {
       ? deployParameters[chainId].bootCoordinatorAddress
       : signersArray[5]._address,
     accountsFunded: numAccountsFund,
-    buidlerNetwork:deployParameters.buidlerNetwork  
+    buidlerNetwork: deployParameters.buidlerNetwork
   };
 
   fs.writeFileSync(pathOutputJson, JSON.stringify(outputJson, null, 1));
