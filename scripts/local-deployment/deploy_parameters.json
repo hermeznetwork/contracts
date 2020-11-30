@@ -1,0 +1,40 @@
+{
+  "buidlerNetwork":"localhostMnemonic",  
+  "test":true,
+  "mnemonic":"explain tackle mirror kit van hammer degree position ginger unfair soup bonus",
+  "1337": {
+    "numAccountsFund": 10,
+    "genesisBlock": "",
+    "genesisBlockOffsetCurrent": 81,
+    "feeAddToken": 10,
+    "forgeL1L2BatchTimeout": 10,
+    "withdrawalDelay": 1209600,
+    "maxTxVerifier": [512],
+    "nLevelsVerifer": [32],
+    "hermezKeeperAddress": "",
+    "hermezGovernanceAddress": "",
+    "whiteHackGroupAddress": "",
+    "donationAddress": "",
+    "bootCoordinatorAddress": "",
+    "libVerifiersAddress": [],
+    "libPoseidonsAddress": [],
+    "libVerifiersWithdrawAddress": ""
+  },
+  "4": {
+    "hermezKeeperAddress": "",
+    "hermezGovernanceAddress": "",
+    "whiteHackGroupAddress": "",
+    "donationAddress": "",
+    "bootCoordinatorAddress": "",
+    "genesisBlock": "",
+    "genesisBlockOffsetCurrent": 0,
+    "feeAddToken": 10,
+    "forgeL1L2BatchTimeout": 10,
+    "withdrawalDelay": 1209600,
+    "maxTxVerifier": [512],
+    "nLevelsVerifer": [32],
+    "libVerifiersAddress": [],
+    "libposeidonsAddress": [],
+    "libVerifiersWithdrawAddress": ""
+  }
+}

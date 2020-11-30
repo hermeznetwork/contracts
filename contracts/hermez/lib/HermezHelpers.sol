@@ -5,19 +5,33 @@ pragma solidity ^0.6.12;
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 /**
- * @dev Interface poseidon hash function
+ * @dev Interface poseidon hash function 2 elements
  */
-contract PoseidonUnit {
-    function poseidon(uint256[] memory) public pure returns (uint256) {}
+contract PoseidonUnit2 {
+    function poseidon(uint256[2] memory) public pure returns (uint256) {}
+}
+
+/**
+ * @dev Interface poseidon hash function 3 elements
+ */
+contract PoseidonUnit3 {
+    function poseidon(uint256[3] memory) public pure returns (uint256) {}
+}
+
+/**
+ * @dev Interface poseidon hash function 4 elements
+ */
+contract PoseidonUnit4 {
+    function poseidon(uint256[4] memory) public pure returns (uint256) {}
 }
 
 /**
  * @dev Rollup helper functions
  */
 contract HermezHelpers is Initializable {
-    PoseidonUnit _insPoseidonUnit2;
-    PoseidonUnit _insPoseidonUnit3;
-    PoseidonUnit _insPoseidonUnit4;
+    PoseidonUnit2 _insPoseidonUnit2;
+    PoseidonUnit3 _insPoseidonUnit3;
+    PoseidonUnit4 _insPoseidonUnit4;
 
     uint256 private constant _WORD_SIZE = 32;
 
@@ -32,9 +46,9 @@ contract HermezHelpers is Initializable {
         address _poseidon3Elements,
         address _poseidon4Elements
     ) internal initializer {
-        _insPoseidonUnit2 = PoseidonUnit(_poseidon2Elements);
-        _insPoseidonUnit3 = PoseidonUnit(_poseidon3Elements);
-        _insPoseidonUnit4 = PoseidonUnit(_poseidon4Elements);
+        _insPoseidonUnit2 = PoseidonUnit2(_poseidon2Elements);
+        _insPoseidonUnit3 = PoseidonUnit3(_poseidon3Elements);
+        _insPoseidonUnit4 = PoseidonUnit4(_poseidon4Elements);
     }
 
     /**
@@ -42,7 +56,7 @@ contract HermezHelpers is Initializable {
      * @param inputs Poseidon input array of 2 elements
      * @return Poseidon hash
      */
-    function _hash2Elements(uint256[] memory inputs)
+    function _hash2Elements(uint256[2] memory inputs)
         internal
         view
         returns (uint256)
@@ -55,7 +69,7 @@ contract HermezHelpers is Initializable {
      * @param inputs Poseidon input array of 3 elements
      * @return Poseidon hash
      */
-    function _hash3Elements(uint256[] memory inputs)
+    function _hash3Elements(uint256[3] memory inputs)
         internal
         view
         returns (uint256)
@@ -68,7 +82,7 @@ contract HermezHelpers is Initializable {
      * @param inputs Poseidon input array of 4 elements
      * @return Poseidon hash
      */
-    function _hash4Elements(uint256[] memory inputs)
+    function _hash4Elements(uint256[4] memory inputs)
         internal
         view
         returns (uint256)
@@ -87,7 +101,7 @@ contract HermezHelpers is Initializable {
         view
         returns (uint256)
     {
-        uint256[] memory inputs = new uint256[](2);
+        uint256[2] memory inputs;
         inputs[0] = left;
         inputs[1] = right;
         return _hash2Elements(inputs);
@@ -104,7 +118,7 @@ contract HermezHelpers is Initializable {
         view
         returns (uint256)
     {
-        uint256[] memory inputs = new uint256[](3);
+        uint256[3] memory inputs;
         inputs[0] = key;
         inputs[1] = value;
         inputs[2] = 1;
@@ -155,8 +169,8 @@ contract HermezHelpers is Initializable {
         uint256 balance,
         uint256 ay,
         address ethAddress
-    ) internal pure returns (uint256[] memory) {
-        uint256[] memory stateArray = new uint256[](4);
+    ) internal pure returns (uint256[4] memory) {
+        uint256[4] memory stateArray;
 
         stateArray[0] = token;
         stateArray[0] |= nonce << 32;

@@ -1,5 +1,5 @@
-const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const { expect } = require("chai");
+const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {
@@ -61,17 +61,17 @@ describe("Hermez Queue", function () {
     hermezGovernanceAddress = governance.getAddress();
 
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
-    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+    if (chainIdProvider == 1337) { // solcover, must be a jsonRPC wallet
       const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
-      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic);
       // ownerWalletTest = ownerWallet.connect(ethers.provider);
       ownerWallet = owner;
       ownerWallet.privateKey = ownerWalletTest.privateKey;
-    } 
+    }
     else {
       ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
-    
+
     // factory helpers
     let TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
     const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
@@ -89,19 +89,19 @@ describe("Hermez Queue", function () {
       "WithdrawalDelayerTest"
     );
     let Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       owner
     );
 
     let Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       owner
     );
 
     let Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       owner
     );

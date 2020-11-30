@@ -518,7 +518,7 @@ contract HermezV2 is InstantWithdrawManager {
         }
 
         // build 'key' and 'value' for exit tree
-        uint256[] memory arrayState = _buildTreeState(
+        uint256[4] memory arrayState = _buildTreeState(
             tokenID,
             0,
             amount,

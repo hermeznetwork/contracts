@@ -1,7 +1,7 @@
-const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const { expect } = require("chai");
+const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const SMTMemDB = require("circomlib").SMTMemDB;
-const {time} = require("@openzeppelin/test-helpers");
+const { time } = require("@openzeppelin/test-helpers");
 const Scalar = require("ffjavascript").Scalar;
 
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
@@ -61,7 +61,7 @@ describe("Hermez ERC 20", function () {
     accounts.push(newAccount);
   }
 
-      
+
   const tokenInitialAmount = ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
   const maxL1Tx = 256;
   const maxTx = 512;
@@ -70,7 +70,7 @@ describe("Hermez ERC 20", function () {
   const feeAddToken = 10;
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
   const INITIAL_DELAY = 0;
-  
+
   beforeEach(async function () {
     [
       owner,
@@ -83,17 +83,17 @@ describe("Hermez ERC 20", function () {
     hermezGovernanceAddress = governance.getAddress();
 
     const chainIdProvider = (await ethers.provider.getNetwork()).chainId;
-    if (chainIdProvider == 1337){ // solcover, must be a jsonRPC wallet
+    if (chainIdProvider == 1337) { // solcover, must be a jsonRPC wallet
       const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
-      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic); 
+      let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic);
       // ownerWalletTest = ownerWallet.connect(ethers.provider);
       ownerWallet = owner;
       ownerWallet.privateKey = ownerWalletTest.privateKey;
-    } 
+    }
     else {
       ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
-   
+
     // const privateKeyBuidler =
     //   "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
     // ownerWallet = new ethers.Wallet(
@@ -120,19 +120,18 @@ describe("Hermez ERC 20", function () {
       "WithdrawalDelayerTest"
     );
     const Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       owner
     );
 
     const Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       owner
     );
-
     const Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       owner
     );
@@ -173,7 +172,7 @@ describe("Hermez ERC 20", function () {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
-    
+
     buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
     await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
@@ -324,10 +323,10 @@ describe("Hermez ERC 20", function () {
 
       const l2TxUserArray = [];
 
-      const amount = 40;  
+      const amount = 40;
 
       let nonce = 0;
-      for (let i = 0; i < 180; i++){
+      for (let i = 0; i < 180; i++) {
         const tx = {
           fromIdx: accounts[0].idx,
           toIdx: accounts[1].idx,
@@ -395,10 +394,10 @@ describe("Hermez ERC 20", function () {
 
       const l2TxUserArray = [];
 
-      const amount = 40;  
+      const amount = 40;
 
       let nonce = 0;
-      for (let i = 0; i < 180; i++){
+      for (let i = 0; i < 180; i++) {
         const tx = {
           fromIdx: accounts[0].idx,
           toIdx: accounts[1].idx,
@@ -413,7 +412,7 @@ describe("Hermez ERC 20", function () {
 
       const l1TxUserArray2 = [];
 
-      for (let i = 0; i < 127; i++){
+      for (let i = 0; i < 127; i++) {
         l1TxUserArray2.push(
           await l1UserTxCreateAccountDeposit(
             loadAmount,
@@ -428,7 +427,7 @@ describe("Hermez ERC 20", function () {
 
       const l1TCoordinatorArray = [];
       // add L1-Tx Coordinator with eth signature
-      for (let i = 0; i < 127; i++){
+      for (let i = 0; i < 127; i++) {
         l1TCoordinatorArray.push(
           await l1CoordinatorTxEth(
             tokenIdERC20,

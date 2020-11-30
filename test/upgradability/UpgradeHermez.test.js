@@ -71,22 +71,21 @@ describe("upgradability test Hermez", function() {
     );
 
     const Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       deployer
     );
-
     const Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       deployer
     );
-
     const Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       deployer
     );
+    
     // Deploy smart contacts:
     hermezAuctionProtocol = await upgrades.deployProxy(
       HermezAuctionProtocol,

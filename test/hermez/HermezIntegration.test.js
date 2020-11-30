@@ -46,7 +46,7 @@ let iface = new ethers.utils.Interface(ABIbid);
 const INITIAL_DELAY = 0;
 
 
-describe("Hermez integration", function() {
+describe("Hermez integration", function () {
   let buidlerTokenHermez;
   let buidlerHermez;
   let buidlerWithdrawalDelayer;
@@ -75,7 +75,7 @@ describe("Hermez integration", function() {
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
   const INITIAL_DELAY = 60; //seconds
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     [
       owner,
       governance,
@@ -120,19 +120,18 @@ describe("Hermez integration", function() {
       "WithdrawalDelayerTest"
     );
     const Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       owner
     );
 
     const Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       owner
     );
-
     const Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       owner
     );
@@ -215,14 +214,14 @@ describe("Hermez integration", function() {
 
     expect(buidlerWithdrawalDelayer.address).to.equal(WithdrawalDelayerAddress);
     expect(buidlerHermez.address).to.equal(HermezAddress);
-    
+
     const chainSC = await buidlerHermez.getChainID();
     chainID = chainSC.toNumber();
     chainIDHex = chainSC.toHexString();
   });
 
-  describe("Forge Batch", function() {
-    it("forge L1 user & Coordiator Tx batch using consensus mechanism", async function() {
+  describe("Forge Batch", function () {
+    it("forge L1 user & Coordiator Tx batch using consensus mechanism", async function () {
       // consensus operations
       let startingBlock = (
         await buidlerHermezAuctionProtocol.genesisBlock()
@@ -389,7 +388,7 @@ describe("Hermez integration", function() {
       // forge batch with all the L1 tx
       await forgerTest.forgeBatch(true, l1TxUserArray, l1TxCoordiatorArray);
     });
-    it("test delayed withdraw with consensus mechanism and withdrawal delayer", async function() {
+    it("test delayed withdraw with consensus mechanism and withdrawal delayer", async function () {
       // consensus operations
       let startingBlock = (
         await buidlerHermezAuctionProtocol.genesisBlock()

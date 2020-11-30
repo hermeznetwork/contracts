@@ -33,7 +33,7 @@ const {
   BatchBuilder,
 } = require("@hermeznetwork/commonjs");
 
-describe("Hermez ERC 20", function() {
+describe("Hermez ERC 20", function () {
   let buidlerTokenERC20Mock;
   let buidlerHermez;
   let buidlerWithdrawalDelayer;
@@ -62,7 +62,7 @@ describe("Hermez ERC 20", function() {
   const withdrawalDelay = 60 * 60 * 24 * 7 * 2; // 2 weeks
   const INITIAL_DELAY = 0;
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     [
       owner,
       governance,
@@ -111,19 +111,18 @@ describe("Hermez ERC 20", function() {
       "WithdrawalDelayerTest"
     );
     const Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       owner
     );
 
     const Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       owner
     );
-
     const Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       owner
     );
@@ -198,8 +197,8 @@ describe("Hermez ERC 20", function() {
     chainIDHex = chainSC.toHexString();
   });
 
-  describe("test tokens contract", function() {
-    it("Should share tokens", async function() {
+  describe("test tokens contract", function () {
+    it("Should share tokens", async function () {
       await buidlerTokenERC20Mock.transfer(await id1.getAddress(), 50);
       const id1Balance = await buidlerTokenERC20Mock.balanceOf(
         await id1.getAddress()
@@ -215,8 +214,8 @@ describe("Hermez ERC 20", function() {
     });
   });
 
-  describe("Utils", function() {
-    it("should revert if token with 0 supply", async function() {
+  describe("Utils", function () {
+    it("should revert if token with 0 supply", async function () {
 
       const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
       // deploy tokens
@@ -236,7 +235,7 @@ describe("Hermez ERC 20", function() {
 
     });
 
-    it("Add Token", async function() {
+    it("Add Token", async function () {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -251,8 +250,8 @@ describe("Hermez ERC 20", function() {
   });
 
   // You can nest describe calls to create subsections.
-  describe("L1-user-Tx", function() {
-    it("createAccountDeposit", async function() {
+  describe("L1-user-Tx", function () {
+    it("createAccountDeposit", async function () {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -274,7 +273,7 @@ describe("Hermez ERC 20", function() {
       );
     });
 
-    it("deposit", async function() {
+    it("deposit", async function () {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -298,7 +297,7 @@ describe("Hermez ERC 20", function() {
         buidlerTokenERC20Mock
       );
     });
-    it("depositTransfer", async function() {
+    it("depositTransfer", async function () {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -326,7 +325,7 @@ describe("Hermez ERC 20", function() {
         buidlerTokenERC20Mock
       );
     });
-    it("createAccountDepositTransfer", async function() {
+    it("createAccountDepositTransfer", async function () {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -354,7 +353,7 @@ describe("Hermez ERC 20", function() {
         buidlerTokenERC20Mock
       );
     });
-    it("forceTransfer", async function() {
+    it("forceTransfer", async function () {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -379,7 +378,7 @@ describe("Hermez ERC 20", function() {
         buidlerHermez
       );
     });
-    it("forceExit", async function() {
+    it("forceExit", async function () {
       await AddToken(
         buidlerHermez,
         buidlerTokenERC20Mock,
@@ -398,8 +397,8 @@ describe("Hermez ERC 20", function() {
     });
   });
 
-  describe("Forge Batch", function() {
-    it("test L1 deadline", async function() {
+  describe("Forge Batch", function () {
+    it("test L1 deadline", async function () {
       // dummy batch
       const proofA = ["0", "0"];
       const proofB = [
@@ -490,7 +489,7 @@ describe("Hermez ERC 20", function() {
       ).to.be.revertedWith("Hermez::forgeBatch: L1L2BATCH_REQUIRED");
     });
 
-    it("handle L1 Coordinator Queue Test", async function() {
+    it("handle L1 Coordinator Queue Test", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const currentQueue = await buidlerHermez.nextL1ToForgeQueue();
@@ -562,7 +561,7 @@ describe("Hermez ERC 20", function() {
         .withArgs(simulateBatchbuilderL1TxData);
     });
 
-    it("forge L1-Coordiator-tx Batch ", async function() {
+    it("forge L1-Coordiator-tx Batch ", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
 
@@ -600,7 +599,7 @@ describe("Hermez ERC 20", function() {
       expect("0x").to.equal(await buidlerHermez.mapL1TxQueue(currentQueue));
     });
 
-    it("expect L1-Tx Queue same as batchbuilder ", async function() {
+    it("expect L1-Tx Queue same as batchbuilder ", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -777,7 +776,7 @@ describe("Hermez ERC 20", function() {
         .withArgs(simulateBatchbuilderL1TxData);
     });
 
-    it("forge L1 user & Coordiator Tx batch", async function() {
+    it("forge L1 user & Coordiator Tx batch", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -894,7 +893,7 @@ describe("Hermez ERC 20", function() {
       await forgerTest.forgeBatch(true, l1TxUserArray, l1TxCoordiatorArray);
     });
 
-    it("test instant withdraw circuit", async function() {
+    it("test instant withdraw circuit", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -982,7 +981,7 @@ describe("Hermez ERC 20", function() {
         parseInt(initialOwnerBalance) + amount
       );
     });
-    it("test delayed withdraw circuit", async function() {
+    it("test delayed withdraw circuit", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -1071,7 +1070,7 @@ describe("Hermez ERC 20", function() {
         parseInt(initialOwnerBalance) + amount
       );
     });
-    it("test instant withdraw merkle proof", async function() {
+    it("test instant withdraw merkle proof", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -1150,7 +1149,7 @@ describe("Hermez ERC 20", function() {
         parseInt(initialOwnerBalance) + amount
       );
     });
-    it("test delayed withdraw merkle proof", async function() {
+    it("test delayed withdraw merkle proof", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -1231,7 +1230,7 @@ describe("Hermez ERC 20", function() {
       );
     });
 
-    it("test instant withdraw merkle proof with more leafs", async function() {
+    it("test instant withdraw merkle proof with more leafs", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float16.float2Fix(float16.fix2Float(1000));
@@ -1328,8 +1327,8 @@ describe("Hermez ERC 20", function() {
       );
     });
   });
-  describe("Governance update aprameters", function() {
-    it("update forgeL1L2BatchTimeout", async function() {
+  describe("Governance update aprameters", function () {
+    it("update forgeL1L2BatchTimeout", async function () {
       const newForgeL1Timeout = 100;
 
       expect(await buidlerHermez.forgeL1L2BatchTimeout()).to.equal(
@@ -1352,7 +1351,7 @@ describe("Hermez ERC 20", function() {
       ).to.be.revertedWith("Hermez::updateForgeL1L2BatchTimeout: MAX_FORGETIMEOUT_EXCEED");
     });
 
-    it("update FeeAddToken", async function() {
+    it("update FeeAddToken", async function () {
       const newFeeAddToken = 100;
 
       expect(await buidlerHermez.feeAddToken()).to.equal(feeAddToken);

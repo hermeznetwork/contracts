@@ -1,15 +1,15 @@
-const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const { expect } = require("chai");
+const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const poseidonHashJs = require("circomlib").poseidon;
 const Scalar = require("ffjavascript").Scalar;
-const {smt} = require("circomlib");
+const { smt } = require("circomlib");
 const babyJub = require("circomlib").babyJub;
 const utilsScalar = require("ffjavascript").utils;
 
-const {HermezAccount, stateUtils} = require("@hermeznetwork/commonjs");
+const { HermezAccount, stateUtils } = require("@hermeznetwork/commonjs");
 
-const {signBjjAuth} = require("./helpers/helpers");
+const { signBjjAuth } = require("./helpers/helpers");
 
 let tree;
 const key1 = Scalar.e(7);
@@ -49,19 +49,19 @@ describe("Hermez Helpers", function () {
     );
 
     let Poseidon2Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(2),
       poseidonUnit.createCode(2),
       owner
     );
 
     let Poseidon3Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(3),
       poseidonUnit.createCode(3),
       owner
     );
 
     let Poseidon4Elements = new ethers.ContractFactory(
-      poseidonUnit.abi,
+      poseidonUnit.generateABI(4),
       poseidonUnit.createCode(4),
       owner
     );
