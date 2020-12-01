@@ -133,6 +133,7 @@ contract HermezTest is Hermez {
         lastIdx = newLastIdx;
         stateRootMap[lastForgedBatch] = newStRoot;
         exitRootsMap[lastForgedBatch] = newExitRoot;
+        l1L2TxsDataHashMap[lastForgedBatch] = sha256(l1L2TxsData);
 
         uint16 l1UserTxsLen;
         if (l1Batch) {

@@ -101,6 +101,9 @@ contract Hermez is InstantWithdrawManager {
     // Each batch forged will have a correlated 'exit tree' represented by the exit root
     mapping(uint32 => uint256) public exitRootsMap;
 
+    // Each batch forged will have a correlated 'l1L2TxDataHash'
+    mapping(uint32 => bytes32) public l1L2TxsDataHashMap;
+
     // Mapping of exit nullifiers, only allowing each withdrawal to be made once
     // rootId => (Idx => true/false)
     mapping(uint32 => mapping(uint48 => bool)) public exitNullifierMap;
@@ -293,7 +296,8 @@ contract Hermez is InstantWithdrawManager {
         lastIdx = newLastIdx;
         stateRootMap[lastForgedBatch] = newStRoot;
         exitRootsMap[lastForgedBatch] = newExitRoot;
-
+        l1L2TxsDataHashMap[lastForgedBatch] = sha256(l1L2TxsData);
+        
         uint16 l1UserTxsLen;
         if (l1Batch) {
             // restart the timeout
