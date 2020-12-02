@@ -47,8 +47,9 @@ contract ERC20PermitMock is ERC20 {
         _burn(account, amount);
     }
 
-    function burn(uint256 amount) public {
-        _burn(msg.sender, amount);
+    function burn(uint256 value) external returns (bool) {
+        _burn(msg.sender, value);
+        return true;
     }
 
     function transferInternal(
