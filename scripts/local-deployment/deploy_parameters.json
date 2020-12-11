@@ -11,7 +11,6 @@
     "withdrawalDelay": 1209600,
     "maxTxVerifier": [512],
     "nLevelsVerifer": [32],
-    "hermezKeeperAddress": "",
     "hermezGovernanceAddress": "",
     "whiteHackGroupAddress": "",
     "donationAddress": "",
@@ -21,7 +20,6 @@
     "libVerifiersWithdrawAddress": ""
   },
   "4": {
-    "hermezKeeperAddress": "",
     "hermezGovernanceAddress": "",
     "whiteHackGroupAddress": "",
     "donationAddress": "",

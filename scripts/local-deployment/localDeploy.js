@@ -34,7 +34,6 @@ async function main() {
 
   const [
     deployer,
-    hermezKeeperEthers,
     hermezGovernanceEthers,
     whiteHackGroupEthers,
     donationEthers,
