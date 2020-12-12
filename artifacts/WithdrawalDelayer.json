@@ -74,6 +74,31 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "uint64",
+          "name": "_initialWithdrawalDelay",
+          "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_initialHermezGovernanceAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_initialEmergencyCouncil",
+          "type": "address"
+        }
+      ],
+      "name": "InitializeWithdrawalDelayerEvent",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "address",
           "name": "newEmergencyCouncil",
           "type": "address"
