@@ -32,13 +32,19 @@ async function main() {
   // load Mnemonic accounts:
   const signersArray = await ethers.getSigners();
 
-  const [
-    deployer,
-    hermezGovernanceEthers,
-    whiteHackGroupEthers,
-    donationEthers,
-    bootCoordinatorEthers,
-  ] = signersArray;
+  // index 0 would use as the deployer address
+  const [deployer] = signersArray;
+
+  // Default index to load ethereum addresses if not specified on deploy parameters
+  const hermezGovernanceIndex = 1;
+  const whiteHackGroupIndex = 2;
+  const donationIndex = 3;
+  const bootCoordinatorIndex = 4;
+
+  const hermezGovernanceEthers = signersArray[hermezGovernanceIndex];
+  const whiteHackGroupEthers = signersArray[whiteHackGroupIndex];
+  const donationEthers = signersArray[donationIndex];
+  const bootCoordinatorEthers = signersArray[bootCoordinatorIndex];
 
   // get chain ID
   const chainId = (await ethers.provider.getNetwork()).chainId;
@@ -292,24 +298,20 @@ async function main() {
     hermezGovernanceIndex: deployParameters[chainId]
       .hermezGovernanceAddress
       ? null
-      : 1,
-    hermezGovernanceAddress: deployParameters[chainId].hermezGovernanceAddress
-      ? deployParameters[chainId].hermezGovernanceAddress
-      : signersArray[2]._address,
+      : hermezGovernanceIndex,
+    hermezGovernanceAddress,
     whiteHackGroupIndex: deployParameters[chainId].whiteHackGroupAddress
       ? null
-      : 2,
-    whiteHackGroupAddress: deployParameters[chainId].whiteHackGroupAddress
-      ? deployParameters[chainId].whiteHackGroupAddress
-      : signersArray[3]._address,
-    donationIndex: deployParameters[chainId].donationAddress ? null : 3,
-    donationAddress: deployParameters[chainId].donationAddress ? deployParameters[chainId].donationAddress : signersArray[4]._address,
+      : whiteHackGroupIndex,
+    whiteHackGroupAddress,
+    donationIndex: deployParameters[chainId].donationAddress
+      ? null
+      : donationIndex,
+    donationAddress,
     bootCoordinatorIndex: deployParameters[chainId].bootCoordinatorAddress
       ? null
-      : 4,
-    bootCoordinatorAddress: deployParameters[chainId].bootCoordinatorAddress
-      ? deployParameters[chainId].bootCoordinatorAddress
-      : signersArray[5]._address,
+      : bootCoordinatorIndex,
+    bootCoordinatorAddress,
     accountsFunded: numAccountsFund,
     buidlerNetwork: deployParameters.buidlerNetwork,
     mnemonic: deployParameters.mnemonic,
