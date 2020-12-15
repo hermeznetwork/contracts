@@ -21,8 +21,8 @@ interface IWithdrawalDelayer {
     function claimGovernance() external;
 
     /**
-     * @notice Getter of the current `_whiteHackGroupAddress`
-     * @return The `_whiteHackGroupAddress` value
+     * @notice Getter of the current `_emergencyCouncil`
+     * @return The `_emergencyCouncil` value
      */
     function getEmergencyCouncil() external view returns (address);
 

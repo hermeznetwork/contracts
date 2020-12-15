@@ -32,13 +32,19 @@ async function main() {
   // load Mnemonic accounts:
   const signersArray = await ethers.getSigners();
 
-  const [
-    deployer,
-    hermezGovernanceEthers,
-    whiteHackGroupEthers,
-    donationEthers,
-    bootCoordinatorEthers,
-  ] = signersArray;
+  // index 0 would use as the deployer address
+  const [deployer] = signersArray;
+
+  // Default index to load ethereum addresses if not specified on deploy parameters
+  const hermezGovernanceIndex = 1;
+  const emergencyCouncilIndex = 2;
+  const donationIndex = 3;
+  const bootCoordinatorIndex = 4;
+
+  const hermezGovernanceEthers = signersArray[hermezGovernanceIndex];
+  const emergencyCouncilEthers = signersArray[emergencyCouncilIndex];
+  const donationEthers = signersArray[donationIndex];
+  const bootCoordinatorEthers = signersArray[bootCoordinatorIndex];
 
   // get chain ID
   const chainId = (await ethers.provider.getNetwork()).chainId;
@@ -72,9 +78,9 @@ async function main() {
   }
 
   // get address
-  const whiteHackGroupAddress =
-    deployParameters[chainId].whiteHackGroupAddress ||
-    (await whiteHackGroupEthers.getAddress());
+  const emergencyCouncilAddress =
+    deployParameters[chainId].emergencyCouncilAddress ||
+    (await emergencyCouncilEthers.getAddress());
   const hermezGovernanceAddress =
     deployParameters[chainId].hermezGovernanceAddress ||
     (await hermezGovernanceEthers.getAddress());
@@ -85,7 +91,7 @@ async function main() {
     deployParameters[chainId].bootCoordinatorAddress ||
     (await bootCoordinatorEthers.getAddress());
 
-  console.log("whiteHackGroupAddress: " + whiteHackGroupAddress);
+  console.log("emergencyCouncilAddress: " + emergencyCouncilAddress);
   console.log("hermezGovernanceAddress: " + hermezGovernanceAddress);
   console.log("donationAddress: " + donationAddress);
   console.log("bootCoordinatorAddress: " + bootCoordinatorAddress);
@@ -256,7 +262,7 @@ async function main() {
     INITIAL_WITHDRAWAL_DELAY,
     hermez.address,
     hermezGovernanceAddress,
-    whiteHackGroupAddress
+    emergencyCouncilAddress
   );
 
   console.log("withdrawalDelayer initialized");
@@ -310,24 +316,20 @@ async function main() {
     hermezGovernanceIndex: deployParameters[chainId]
       .hermezGovernanceAddress
       ? null
-      : 1,
-    hermezGovernanceAddress: deployParameters[chainId].hermezGovernanceAddress
-      ? deployParameters[chainId].hermezGovernanceAddress
-      : signersArray[2]._address,
-    whiteHackGroupIndex: deployParameters[chainId].whiteHackGroupAddress
+      : hermezGovernanceIndex,
+    hermezGovernanceAddress,
+    emergencyCouncilIndex: deployParameters[chainId].emergencyCouncilAddress
       ? null
-      : 2,
-    whiteHackGroupAddress: deployParameters[chainId].whiteHackGroupAddress
-      ? deployParameters[chainId].whiteHackGroupAddress
-      : signersArray[3]._address,
-    donationIndex: deployParameters[chainId].donationAddress ? null : 3,
-    donationAddress: deployParameters[chainId].donationAddress ? deployParameters[chainId].donationAddress : signersArray[4]._address,
+      : emergencyCouncilIndex,
+    emergencyCouncilAddress,
+    donationIndex: deployParameters[chainId].donationAddress
+      ? null
+      : donationIndex,
+    donationAddress,
     bootCoordinatorIndex: deployParameters[chainId].bootCoordinatorAddress
       ? null
-      : 4,
-    bootCoordinatorAddress: deployParameters[chainId].bootCoordinatorAddress
-      ? deployParameters[chainId].bootCoordinatorAddress
-      : signersArray[5]._address,
+      : bootCoordinatorIndex,
+    bootCoordinatorAddress,
     accountsFunded: numAccountsFund,
     buidlerNetwork: deployParameters.buidlerNetwork
   };
