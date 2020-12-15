@@ -37,12 +37,12 @@ async function main() {
 
   // Default index to load ethereum addresses if not specified on deploy parameters
   const hermezGovernanceIndex = 1;
-  const whiteHackGroupIndex = 2;
+  const emergencyCouncilIndex = 2;
   const donationIndex = 3;
   const bootCoordinatorIndex = 4;
 
   const hermezGovernanceEthers = signersArray[hermezGovernanceIndex];
-  const whiteHackGroupEthers = signersArray[whiteHackGroupIndex];
+  const emergencyCouncilEthers = signersArray[emergencyCouncilIndex];
   const donationEthers = signersArray[donationIndex];
   const bootCoordinatorEthers = signersArray[bootCoordinatorIndex];
 
@@ -78,9 +78,9 @@ async function main() {
   }
 
   // get address
-  const whiteHackGroupAddress =
-    deployParameters[chainId].whiteHackGroupAddress ||
-    (await whiteHackGroupEthers.getAddress());
+  const emergencyCouncilAddress =
+    deployParameters[chainId].emergencyCouncilAddress ||
+    (await emergencyCouncilEthers.getAddress());
   const hermezGovernanceAddress =
     deployParameters[chainId].hermezGovernanceAddress ||
     (await hermezGovernanceEthers.getAddress());
@@ -91,7 +91,7 @@ async function main() {
     deployParameters[chainId].bootCoordinatorAddress ||
     (await bootCoordinatorEthers.getAddress());
 
-  console.log("whiteHackGroupAddress: " + whiteHackGroupAddress);
+  console.log("emergencyCouncilAddress: " + emergencyCouncilAddress);
   console.log("hermezGovernanceAddress: " + hermezGovernanceAddress);
   console.log("donationAddress: " + donationAddress);
   console.log("bootCoordinatorAddress: " + bootCoordinatorAddress);
@@ -262,7 +262,7 @@ async function main() {
     INITIAL_WITHDRAWAL_DELAY,
     hermez.address,
     hermezGovernanceAddress,
-    whiteHackGroupAddress
+    emergencyCouncilAddress
   );
 
   console.log("withdrawalDelayer initialized");
@@ -318,10 +318,10 @@ async function main() {
       ? null
       : hermezGovernanceIndex,
     hermezGovernanceAddress,
-    whiteHackGroupIndex: deployParameters[chainId].whiteHackGroupAddress
+    emergencyCouncilIndex: deployParameters[chainId].emergencyCouncilAddress
       ? null
-      : whiteHackGroupIndex,
-    whiteHackGroupAddress,
+      : emergencyCouncilIndex,
+    emergencyCouncilAddress,
     donationIndex: deployParameters[chainId].donationAddress
       ? null
       : donationIndex,

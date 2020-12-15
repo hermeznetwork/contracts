@@ -1,7 +1,7 @@
 {
-  "buidlerNetwork":"localhostMnemonic",  
-  "test":true,
-  "mnemonic":"explain tackle mirror kit van hammer degree position ginger unfair soup bonus",
+  "buidlerNetwork": "localhostMnemonic",
+  "test": true,
+  "mnemonic": "explain tackle mirror kit van hammer degree position ginger unfair soup bonus",
   "1337": {
     "numAccountsFund": 10,
     "genesisBlock": "",
@@ -9,10 +9,14 @@
     "feeAddToken": 10,
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelay": 1209600,
-    "maxTxVerifier": [512],
-    "nLevelsVerifer": [32],
+    "maxTxVerifier": [
+      512
+    ],
+    "nLevelsVerifer": [
+      32
+    ],
     "hermezGovernanceAddress": "",
-    "whiteHackGroupAddress": "",
+    "emergencyCouncilAddress": "",
     "donationAddress": "",
     "bootCoordinatorAddress": "",
     "libVerifiersAddress": [],
@@ -21,7 +25,7 @@
   },
   "4": {
     "hermezGovernanceAddress": "",
-    "whiteHackGroupAddress": "",
+    "emergencyCouncilAddress": "",
     "donationAddress": "",
     "bootCoordinatorAddress": "",
     "genesisBlock": "",
@@ -29,8 +33,12 @@
     "feeAddToken": 10,
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelay": 1209600,
-    "maxTxVerifier": [512],
-    "nLevelsVerifer": [32],
+    "maxTxVerifier": [
+      512
+    ],
+    "nLevelsVerifer": [
+      32
+    ],
     "libVerifiersAddress": [],
     "libposeidonsAddress": [],
     "libVerifiersWithdrawAddress": ""

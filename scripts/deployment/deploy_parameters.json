@@ -1,5 +1,5 @@
 {
-  "buidlerNetwork":"localhostMnemonic",  
+  "buidlerNetwork": "localhostMnemonic",
   "31337": {
     "numAccountsFund": 10,
     "genesisBlock": "",
@@ -7,10 +7,14 @@
     "feeAddToken": 10,
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelay": 1209600,
-    "maxTxVerifier": [512],
-    "nLevelsVerifer": [32],
+    "maxTxVerifier": [
+      512
+    ],
+    "nLevelsVerifer": [
+      32
+    ],
     "hermezGovernanceAddress": "",
-    "whiteHackGroupAddress": "",
+    "emergencyCouncilAddress": "",
     "donationAddress": "",
     "bootCoordinatorAddress": "",
     "libVerifiersAddress": [],
@@ -19,7 +23,7 @@
   },
   "4": {
     "hermezGovernanceAddress": "",
-    "whiteHackGroupAddress": "",
+    "emergencyCouncilAddress": "",
     "donationAddress": "",
     "bootCoordinatorAddress": "",
     "genesisBlock": "",
@@ -27,8 +31,12 @@
     "feeAddToken": 10,
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelay": 1209600,
-    "maxTxVerifier": [512],
-    "nLevelsVerifer": [32],
+    "maxTxVerifier": [
+      512
+    ],
+    "nLevelsVerifer": [
+      32
+    ],
     "libVerifiersAddress": [],
     "libposeidonsAddress": [],
     "libVerifiersWithdrawAddress": ""
