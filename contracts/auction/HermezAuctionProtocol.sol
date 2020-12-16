@@ -152,6 +152,12 @@ contract HermezAuctionProtocol is
         string memory _bootCoordinatorURL
     ) public initializer {
         __ReentrancyGuard_init_unchained();
+
+        require(
+            hermezRollupAddress != address(0),
+            "HermezAuctionProtocol::hermezAuctionProtocolInitializer ADDRESS_0_NOT_VALID"
+        );
+
         _outbidding = 1000;
         _slotDeadline = 20;
         _closedAuctionSlots = 2;
@@ -166,11 +172,13 @@ contract HermezAuctionProtocol is
             INITIAL_MINIMAL_BIDDING
         ];
 
-        tokenHEZ = IHEZToken(token);
         require(
             genesis >= block.number + (BLOCKS_PER_SLOT * _closedAuctionSlots),
             "HermezAuctionProtocol::hermezAuctionProtocolInitializer GENESIS_BELOW_MINIMAL"
         );
+
+        tokenHEZ = IHEZToken(token);
+
         genesisBlock = genesis;
         hermezRollup = hermezRollupAddress;
         governanceAddress = _governanceAddress;
@@ -847,7 +855,11 @@ contract HermezAuctionProtocol is
                         .div(uint128(10000)); // Two decimal precision
 
                     // Tokens to burn
-                    tokenHEZ.burn(amountToBurn);
+                    require(
+                        tokenHEZ.burn(amountToBurn),
+                        "HermezAuctionProtocol::forge: TOKEN_BURN_FAILED"
+                    );
+
                     // Tokens to donate
                     pendingBalances[_donationAddress] = pendingBalances[_donationAddress]
                         .add(donationAmount);

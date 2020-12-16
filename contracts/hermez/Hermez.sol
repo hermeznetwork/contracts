@@ -192,6 +192,12 @@ contract Hermez is InstantWithdrawManager {
         uint64 _withdrawalDelay,
         address _withdrawDelayerContract
     ) external initializer {
+        require(
+            _hermezAuctionContract != address(0) &&
+                _withdrawDelayerContract != address(0),
+            "WithdrawalDelayer::withdrawalDelayerInitializer ADDRESS_0_NOT_VALID"
+        );
+
         // set state variables
         _initializeVerifiers(_verifiers, _verifiersParams);
         withdrawVerifier = VerifierWithdrawInterface(_withdrawVerifier);

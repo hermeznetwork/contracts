@@ -48,13 +48,13 @@ interface IWithdrawalDelayer {
      * @notice Getter to obtain the current withdrawal delay
      * @return the current withdrawal delay time in seconds: `_withdrawalDelay`
      */
-    function getWithdrawalDelay() external view returns (uint128);
+    function getWithdrawalDelay() external view returns (uint64);
 
     /**
      * @notice Getter to obtain when emergency mode started
      * @return the emergency mode starting time in seconds: `_emergencyModeStartingTime`
      */
-    function getEmergencyModeStartingTime() external view returns (uint128);
+    function getEmergencyModeStartingTime() external view returns (uint64);
 
     /**
      * @notice This function enables the emergency mode. Only the keeper of the system can enable this mode. This cannot

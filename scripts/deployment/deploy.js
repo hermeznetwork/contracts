@@ -1,3 +1,5 @@
+// Work in progress deployment script!!!
+
 const path = require("path");
 const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
 const pathOutputJson = path.join(__dirname, "./deploy_output.json");
@@ -258,12 +260,20 @@ async function main() {
   // initialize upgradable smart contracts
 
   // initialize withdrawal delayer
-  await withdrawalDelayer.withdrawalDelayerInitializer(
-    INITIAL_WITHDRAWAL_DELAY,
-    hermez.address,
-    hermezGovernanceAddress,
-    emergencyCouncilAddress
-  );
+  await expect(
+    withdrawalDelayer.withdrawalDelayerInitializer(
+      INITIAL_WITHDRAWAL_DELAY,
+      hermez.address,
+      hermezGovernanceAddress,
+      emergencyCouncilAddress
+    )
+  )
+    .to.emit(withdrawalDelayer, "InitializeWithdrawalDelayerEvent")
+    .withArgs(
+      INITIAL_WITHDRAWAL_DELAY,
+      hermezGovernanceAddress,
+      emergencyCouncilAddress
+    );
 
   console.log("withdrawalDelayer initialized");
 
@@ -275,35 +285,62 @@ async function main() {
       parseInt(deployParameters[chainId].genesisBlockOffsetCurrent);
   }
 
-  await hermezAuctionProtocol.hermezAuctionProtocolInitializer(
-    buidlerHEZToken.address,
-    genesisBlock,
-    hermez.address,
-    hermezGovernanceAddress,
-    donationAddress,
-    bootCoordinatorAddress,
-    bootCoordinatorURL
-  );
+  const outbidding = 1000;
+  const slotDeadline = 20;
+  const closedAuctionSlots = 2;
+  const openAuctionSlots = 4320;
+  const allocationRatio = [4000, 4000, 2000];
+
+  await expect(
+    hermezAuctionProtocol.hermezAuctionProtocolInitializer(
+      buidlerHEZToken.address,
+      genesisBlock,
+      hermez.address,
+      hermezGovernanceAddress,
+      donationAddress,
+      bootCoordinatorAddress,
+      bootCoordinatorURL
+    )
+  )
+    .to.emit(hermezAuctionProtocol, "InitializeHermezAuctionProtocolEvent")
+    .withArgs( 
+      donationAddress,
+      bootCoordinatorAddress, 
+      bootCoordinatorURL,
+      outbidding,
+      slotDeadline,
+      closedAuctionSlots,
+      openAuctionSlots,
+      allocationRatio
+    );
 
   console.log("hermezAuctionProtocol Initialized");
 
   // initialize Hermez
 
-  await hermez.initializeHermez(
-    libVerifiersAddress,
-    calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
-    libverifiersWithdrawAddress,
-    hermezAuctionProtocol.address,
-    buidlerHEZToken.address,
-    deployParameters[chainId].forgeL1L2BatchTimeout,
-    deployParameters[chainId].feeAddToken,
-    libposeidonsAddress[0],
-    libposeidonsAddress[1],
-    libposeidonsAddress[2],
-    hermezGovernanceAddress,
-    deployParameters[chainId].withdrawalDelay,
-    withdrawalDelayer.address
-  );
+  await expect(
+    hermez.initializeHermez(
+      libVerifiersAddress,
+      calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
+      libverifiersWithdrawAddress,
+      hermezAuctionProtocol.address,
+      buidlerHEZToken.address,
+      deployParameters[chainId].forgeL1L2BatchTimeout,
+      deployParameters[chainId].feeAddToken,
+      libposeidonsAddress[0],
+      libposeidonsAddress[1],
+      libposeidonsAddress[2],
+      hermezGovernanceAddress,
+      deployParameters[chainId].withdrawalDelay,
+      withdrawalDelayer.address
+    )
+  )   
+    .to.emit(hermez, "InitializeHermezEvent")
+    .withArgs(
+      deployParameters[chainId].forgeL1L2BatchTimeout,
+      deployParameters[chainId].feeAddToken,
+      deployParameters[chainId].withdrawalDelay,
+    );
 
   console.log("hermez Initialized");
 
