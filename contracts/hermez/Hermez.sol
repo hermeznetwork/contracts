@@ -757,14 +757,14 @@ contract Hermez is InstantWithdrawManager {
             toIdx
         );
 
+        uint256 currentPosition = mapL1TxQueue[nextL1FillingQueue].length /
+            _L1_USER_TOTALBYTES;
+
         // concatenate storage byte array with the new l1Tx
         _concatStorage(mapL1TxQueue[nextL1FillingQueue], l1Tx);
 
-        uint256 lastPosition = mapL1TxQueue[nextL1FillingQueue].length /
-            _L1_USER_TOTALBYTES;
-
-        emit L1UserTxEvent(nextL1FillingQueue, uint8(lastPosition), l1Tx);
-        if (lastPosition >= _MAX_L1_USER_TX) {
+        emit L1UserTxEvent(nextL1FillingQueue, uint8(currentPosition), l1Tx);
+        if (currentPosition + 1 >= _MAX_L1_USER_TX) {
             nextL1FillingQueue++;
         }
     }
