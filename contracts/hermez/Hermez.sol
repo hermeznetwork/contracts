@@ -168,9 +168,9 @@ contract Hermez is InstantWithdrawManager {
 
     // Event emitted when the contract is initialized
     event InitializeHermezEvent(
-        uint8 _forgeL1L2BatchTimeout,
-        uint256 _feeAddToken,
-        uint64 _withdrawalDelay
+        uint8 forgeL1L2BatchTimeout,
+        uint256 feeAddToken,
+        uint64 withdrawalDelay
     );
 
     /**

@@ -64,9 +64,9 @@ contract WithdrawalDelayer is
 
     // Event emitted when the contract is initialized
     event InitializeWithdrawalDelayerEvent(
-        uint64 _initialWithdrawalDelay,
-        address _initialHermezGovernanceAddress,
-        address _initialEmergencyCouncil
+        uint64 initialWithdrawalDelay,
+        address initialHermezGovernanceAddress,
+        address initialEmergencyCouncil
     );
 
     /**
