@@ -117,7 +117,7 @@ describe("Hermez integration", function () {
       "HermezAuctionProtocol"
     );
     const WithdrawalDelayer = await ethers.getContractFactory(
-      "WithdrawalDelayerTest"
+      "WithdrawalDelayer"
     );
     const Poseidon2Elements = new ethers.ContractFactory(
       poseidonUnit.generateABI(2),
@@ -175,42 +175,78 @@ describe("Hermez integration", function () {
 
     const latest = (await time.latestBlock()).toNumber();
 
-    await buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
-      buidlerTokenHermez.address,
-      latest + 1 + MIN_BLOCKS,
-      HermezAddress,
-      hermezGovernanceAddress,
-      await donation.getAddress(), // donation address
-      ownerAddress, // bootCoordinatorAddress
-      bootCoordinatorURL
-    );
+
+    const outbidding = 1000;
+    const slotDeadline = 20;
+    const closedAuctionSlots = 2;
+    const openAuctionSlots = 4320;
+    const allocationRatio = [4000, 4000, 2000];
+    await expect (
+      buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
+        buidlerTokenHermez.address,
+        latest + 1 + MIN_BLOCKS,
+        HermezAddress,
+        hermezGovernanceAddress,
+        await donation.getAddress(), // donation address
+        ownerAddress, // bootCoordinatorAddress
+        bootCoordinatorURL
+      )
+    )
+      .to.emit(buidlerHermezAuctionProtocol, "InitializeHermezAuctionProtocolEvent")
+      .withArgs( 
+        await donation.getAddress(), // donation address
+        ownerAddress, // bootCoordinatorAddress
+        bootCoordinatorURL,
+        outbidding,
+        slotDeadline,
+        closedAuctionSlots,
+        openAuctionSlots,
+        allocationRatio
+      );
 
     buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
-    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
-      INITIAL_DELAY,
-      HermezAddress,
-      hermezGovernanceAddress,
-      whiteHackGroupAddress.getAddress()
-    );
+
+    await expect (
+      buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+        INITIAL_DELAY,
+        HermezAddress,
+        hermezGovernanceAddress,
+        await whiteHackGroupAddress.getAddress()
+      )
+    )     
+      .to.emit(buidlerWithdrawalDelayer, "InitializeWithdrawalDelayerEvent")
+      .withArgs(
+        INITIAL_DELAY,
+        hermezGovernanceAddress,
+        await whiteHackGroupAddress.getAddress()
+      );
+
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
 
-    await buidlerHermez.initializeHermez(
-      [buidlerVerifierRollupHelper.address],
-      calculateInputMaxTxLevels([maxTx], [nLevels]),
-      buidlerVerifierWithdrawHelper.address,
-      buidlerHermezAuctionProtocol.address,
-      buidlerTokenHermez.address,
-      forgeL1L2BatchTimeout,
-      feeAddToken,
-      poseidonAddr2,
-      poseidonAddr3,
-      poseidonAddr4,
-      hermezGovernanceAddress,
-      withdrawalDelay,
-      WithdrawalDelayerAddress
-    );
+    await expect (
+      buidlerHermez.initializeHermez(
+        [buidlerVerifierRollupHelper.address],
+        calculateInputMaxTxLevels([maxTx], [nLevels]),
+        buidlerVerifierWithdrawHelper.address,
+        buidlerHermezAuctionProtocol.address,
+        buidlerTokenHermez.address,
+        forgeL1L2BatchTimeout,
+        feeAddToken,
+        poseidonAddr2,
+        poseidonAddr3,
+        poseidonAddr4,
+        hermezGovernanceAddress,
+        withdrawalDelay,
+        WithdrawalDelayerAddress
+      ))
+      .to.emit(buidlerHermez, "InitializeHermezEvent")
+      .withArgs(
+        forgeL1L2BatchTimeout,
+        feeAddToken,
+        withdrawalDelay,
+      );
 
     expect(buidlerWithdrawalDelayer.address).to.equal(WithdrawalDelayerAddress);
     expect(buidlerHermez.address).to.equal(HermezAddress);

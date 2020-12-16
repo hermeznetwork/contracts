@@ -62,6 +62,13 @@ contract WithdrawalDelayer is
     event NewEmergencyCouncil(address newEmergencyCouncil);
     event NewHermezGovernanceAddress(address newHermezGovernanceAddress);
 
+    // Event emitted when the contract is initialized
+    event InitializeWithdrawalDelayerEvent(
+        uint64 initialWithdrawalDelay,
+        address initialHermezGovernanceAddress,
+        address initialEmergencyCouncil
+    );
+
     /**
      * @notice withdrawalDelayerInitializer (Constructor)
      * @param _initialWithdrawalDelay Initial withdrawal delay time in seconds to be able to withdraw the funds
@@ -82,6 +89,12 @@ contract WithdrawalDelayer is
         _hermezGovernance = _initialHermezGovernanceAddress;
         _emergencyCouncil = _initialEmergencyCouncil;
         _emergencyMode = false;
+
+        emit InitializeWithdrawalDelayerEvent(
+            _initialWithdrawalDelay,
+            _initialHermezGovernanceAddress,
+            _initialEmergencyCouncil
+        );
     }
 
     /**

@@ -109,6 +109,18 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
     event NewForge(address indexed forger, uint128 indexed slotToForge);
     event HEZClaimed(address indexed owner, uint128 amount);
 
+    // Event emitted when the contract is initialized
+    event InitializeHermezAuctionProtocolEvent(
+        address donationAddress,
+        address bootCoordinatorAddress,
+        string bootCoordinatorURL,
+        uint16 outbidding,
+        uint8 slotDeadline,
+        uint16 closedAuctionSlots,
+        uint16 openAuctionSlots,
+        uint16[3] allocationRatio
+    );
+
     modifier onlyGovernance() {
         require(
             governanceAddress == msg.sender,
@@ -161,6 +173,17 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
         _donationAddress = donationAddress;
         _bootCoordinator = bootCoordinatorAddress;
         bootCoordinatorURL = _bootCoordinatorURL;
+
+        emit InitializeHermezAuctionProtocolEvent(
+            donationAddress,
+            bootCoordinatorAddress,
+            _bootCoordinatorURL,
+            _outbidding,
+            _slotDeadline,
+            _closedAuctionSlots,
+            _openAuctionSlots,
+            _allocationRatio
+        );
     }
 
     function setVersion() public {
@@ -608,11 +631,10 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
             uint8 v,
             bytes32 r,
             bytes32 s
-        ) =
-            abi.decode(
-                _permitData[4:],
-                (address, address, uint256, uint256, uint8, bytes32, bytes32)
-            );
+        ) = abi.decode(
+            _permitData[4:],
+            (address, address, uint256, uint256, uint8, bytes32, bytes32)
+        );
         require(
             owner == msg.sender,
             "HermezAuctionProtocol::_permit: OWNER_NOT_EQUAL_SENDER"
@@ -696,16 +718,14 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
 
         uint128 slotToForge = getSlotNumber(uint128(blockNumber));
         // Get the relativeBlock to check if the slotDeadline has been exceeded
-        uint128 relativeBlock =
-            uint128(blockNumber).sub(
-                (slotToForge.mul(BLOCKS_PER_SLOT)).add(genesisBlock)
-            );
+        uint128 relativeBlock = uint128(blockNumber).sub(
+            (slotToForge.mul(BLOCKS_PER_SLOT)).add(genesisBlock)
+        );
         // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
         // otherwise the one that has been saved will be used
-        uint128 minBid =
-            (slots[slotToForge].closedMinBid == 0)
-                ? _defaultSlotSetBid[getSlotSet(slotToForge)]
-                : slots[slotToForge].closedMinBid;
+        uint128 minBid = (slots[slotToForge].closedMinBid == 0)
+            ? _defaultSlotSetBid[getSlotSet(slotToForge)]
+            : slots[slotToForge].closedMinBid;
 
         // if the relative block has exceeded the slotDeadline and no batch has been forged, anyone can forge
         if (!slots[slotToForge].fulfilled && (relativeBlock >= _slotDeadline)) {
@@ -749,10 +769,9 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
 
         // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
         // otherwise the one that has been saved will be used
-        uint128 minBid =
-            (slots[slotToForge].closedMinBid == 0)
-                ? _defaultSlotSetBid[getSlotSet(slotToForge)]
-                : slots[slotToForge].closedMinBid;
+        uint128 minBid = (slots[slotToForge].closedMinBid == 0)
+            ? _defaultSlotSetBid[getSlotSet(slotToForge)]
+            : slots[slotToForge].closedMinBid;
 
         // Default values:** Burn: 40% - Donation: 40% - HGT: 20%
         // Allocated is used to know if we have already distributed the HEZ tokens
@@ -768,38 +787,34 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeSafe {
             ) {
                 // We save the minBid that this block has had
                 slots[slotToForge].closedMinBid = minBid;
-                pendingBalances[slots[slotToForge].bidder] = pendingBalances[
-                    slots[slotToForge].bidder
-                ]
-                    .add(slots[slotToForge].bidAmount);
+                pendingBalances[slots[slotToForge]
+                    .bidder] = pendingBalances[slots[slotToForge].bidder].add(
+                    slots[slotToForge].bidAmount
+                );
                 // In case the winner is forging we have to allocate the tokens according to the desired distribution
             } else if (_bootCoordinator != forger) {
                 // We save the minBid that this block has had
                 slots[slotToForge].closedMinBid = slots[slotToForge].bidAmount;
                 // calculation of token distribution
-                uint128 burnAmount =
-                    slots[slotToForge].bidAmount.mul(_allocationRatio[0]).div(
-                        uint128(10000)
-                    ); // Two decimal precision
-                uint128 donationAmount =
-                    slots[slotToForge].bidAmount.mul(_allocationRatio[1]).div(
-                        uint128(10000)
-                    ); // Two decimal precision
-                uint128 governanceAmount =
-                    slots[slotToForge].bidAmount.mul(_allocationRatio[2]).div(
-                        uint128(10000)
-                    ); // Two decimal precision
+                uint128 burnAmount = slots[slotToForge]
+                    .bidAmount
+                    .mul(_allocationRatio[0])
+                    .div(uint128(10000)); // Two decimal precision
+                uint128 donationAmount = slots[slotToForge]
+                    .bidAmount
+                    .mul(_allocationRatio[1])
+                    .div(uint128(10000)); // Two decimal precision
+                uint128 governanceAmount = slots[slotToForge]
+                    .bidAmount
+                    .mul(_allocationRatio[2])
+                    .div(uint128(10000)); // Two decimal precision
                 // Tokens to burn
                 tokenHEZ.burn(burnAmount);
                 // Tokens to donate
-                pendingBalances[_donationAddress] = pendingBalances[
-                    _donationAddress
-                ]
+                pendingBalances[_donationAddress] = pendingBalances[_donationAddress]
                     .add(donationAmount);
                 // Tokens for the governace address
-                pendingBalances[governanceAddress] = pendingBalances[
-                    governanceAddress
-                ]
+                pendingBalances[governanceAddress] = pendingBalances[governanceAddress]
                     .add(governanceAmount);
 
                 emit NewForgeAllocated(

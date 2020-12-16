@@ -169,6 +169,13 @@ contract HermezV2 is InstantWithdrawManager {
         bool indexed instantWithdraw
     );
 
+    // Event emitted when the contract is initialized
+    event InitializeHermezEvent(
+        uint8 _forgeL1L2BatchTimeout,
+        uint256 _feeAddToken,
+        uint64 _withdrawalDelay
+    );
+
     /**
      * @dev Initializer function (equivalent to the constructor). Since we use
      * upgradeable smartcontracts the state vars have to be initialized here.
@@ -214,6 +221,12 @@ contract HermezV2 is InstantWithdrawManager {
             _hermezGovernanceAddress,
             _withdrawalDelay,
             _withdrawDelayerContract
+        );
+
+        emit InitializeHermezEvent(
+            _forgeL1L2BatchTimeout,
+            _feeAddToken,
+            _withdrawalDelay
         );
     }
 
