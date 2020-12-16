@@ -16,15 +16,15 @@ contract WithdrawalDelayer is
         uint192 amount;
         uint64 depositTimestamp;
     }
-    bytes4 private constant _TRANSFER_SIGNATURE = bytes4(
-        keccak256(bytes("transfer(address,uint256)"))
-    );
-    bytes4 private constant _TRANSFERFROM_SIGNATURE = bytes4(
-        keccak256(bytes("transferFrom(address,address,uint256)"))
-    );
-    bytes4 private constant _DEPOSIT_SIGNATURE = bytes4(
-        keccak256(bytes("deposit(address,address,uint192)"))
-    );
+
+    // bytes4(keccak256(bytes("transfer(address,uint256)")));
+    bytes4 constant _TRANSFER_SIGNATURE = 0xa9059cbb;
+
+    // bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
+    bytes4 constant _TRANSFERFROM_SIGNATURE = 0x23b872dd;
+
+    // bytes4(keccak256(bytes("deposit(address,address,uint192)")));
+    bytes4 constant _DEPOSIT_SIGNATURE = 0xcfc0b641;
 
     uint64 public constant MAX_WITHDRAWAL_DELAY = 2 weeks; // Maximum time that the return of funds can be delayed
     uint64 public constant MAX_EMERGENCY_MODE_TIME = 26 weeks; // Maximum time in a state of emergency before a
@@ -84,6 +84,11 @@ contract WithdrawalDelayer is
         address payable _initialEmergencyCouncil
     ) public initializer {
         __ReentrancyGuard_init_unchained();
+        require(
+            _initialHermezRollup != address(0),
+            "WithdrawalDelayer::withdrawalDelayerInitializer ADDRESS_0_NOT_VALID"
+        );
+
         _withdrawalDelay = _initialWithdrawalDelay;
         hermezRollupAddress = _initialHermezRollup;
         _hermezGovernance = _initialHermezGovernanceAddress;
@@ -183,7 +188,7 @@ contract WithdrawalDelayer is
      * @notice Getter to obtain the current withdrawal delay
      * @return the current withdrawal delay time in seconds: `_withdrawalDelay`
      */
-    function getWithdrawalDelay() external override view returns (uint128) {
+    function getWithdrawalDelay() external override view returns (uint64) {
         return _withdrawalDelay;
     }
 
@@ -195,7 +200,7 @@ contract WithdrawalDelayer is
         external
         override
         view
-        returns (uint128)
+        returns (uint64)
     {
         return _emergencyModeStartingTime;
     }
