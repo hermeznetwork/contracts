@@ -199,7 +199,7 @@ async function l1UserTxCreateAccountDeposit(
         )
       )
         .to.emit(buidlerHermez, "L1UserTxEvent")
-        .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+        .withArgs(lastQueue, currentIndex, l1Txbytes);
 
       const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
@@ -249,7 +249,7 @@ async function l1UserTxCreateAccountDeposit(
         )
       )
         .to.emit(buidlerHermez, "L1UserTxEvent")
-        .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+        .withArgs(lastQueue, currentIndex, l1Txbytes);
 
       const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
@@ -278,7 +278,7 @@ async function l1UserTxCreateAccountDeposit(
       )
     )
       .to.emit(buidlerHermez, "L1UserTxEvent")
-      .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+      .withArgs(lastQueue, currentIndex, l1Txbytes);
 
     const finalOwnerBalance = await wallet.getBalance();
 
@@ -342,7 +342,7 @@ async function l1UserTxDeposit(
         )
       )
         .to.emit(buidlerHermez, "L1UserTxEvent")
-        .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+        .withArgs(lastQueue, currentIndex, l1Txbytes);
 
       const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
@@ -392,7 +392,7 @@ async function l1UserTxDeposit(
         )
       )
         .to.emit(buidlerHermez, "L1UserTxEvent")
-        .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+        .withArgs(lastQueue, currentIndex, l1Txbytes);
 
       const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
@@ -422,7 +422,7 @@ async function l1UserTxDeposit(
       )
     )
       .to.emit(buidlerHermez, "L1UserTxEvent")
-      .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+      .withArgs(lastQueue, currentIndex, l1Txbytes);
 
     const finalOwnerBalance = await wallet.getBalance();
 
@@ -488,7 +488,7 @@ async function l1UserTxDepositTransfer(
         )
       )
         .to.emit(buidlerHermez, "L1UserTxEvent")
-        .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+        .withArgs(lastQueue, currentIndex, l1Txbytes);
 
       const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
@@ -538,7 +538,7 @@ async function l1UserTxDepositTransfer(
         )
       )
         .to.emit(buidlerHermez, "L1UserTxEvent")
-        .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+        .withArgs(lastQueue, currentIndex, l1Txbytes);
 
       const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
@@ -568,7 +568,7 @@ async function l1UserTxDepositTransfer(
       )
     )
       .to.emit(buidlerHermez, "L1UserTxEvent")
-      .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+      .withArgs(lastQueue, currentIndex, l1Txbytes);
 
     const finalOwnerBalance = await wallet.getBalance();
 
@@ -634,7 +634,7 @@ async function l1UserTxCreateAccountDepositTransfer(
         )
       )
         .to.emit(buidlerHermez, "L1UserTxEvent")
-        .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+        .withArgs(lastQueue, currentIndex, l1Txbytes);
 
       const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
@@ -684,7 +684,7 @@ async function l1UserTxCreateAccountDepositTransfer(
         )
       )
         .to.emit(buidlerHermez, "L1UserTxEvent")
-        .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+        .withArgs(lastQueue, currentIndex, l1Txbytes);
 
       const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
         await wallet.getAddress()
@@ -714,7 +714,7 @@ async function l1UserTxCreateAccountDepositTransfer(
       )
     )
       .to.emit(buidlerHermez, "L1UserTxEvent")
-      .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+      .withArgs(lastQueue, currentIndex, l1Txbytes);
 
     const finalOwnerBalance = await wallet.getBalance();
 
@@ -764,7 +764,7 @@ async function l1UserTxForceTransfer(
     )
   )
     .to.emit(buidlerHermez, "L1UserTxEvent")
-    .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+    .withArgs(lastQueue, currentIndex, l1Txbytes);
 
   return l1Txbytes;
 }
@@ -807,7 +807,7 @@ async function l1UserTxForceExit(
     )
   )
     .to.emit(buidlerHermez, "L1UserTxEvent")
-    .withArgs(lastQueue, currentIndex + 1, l1Txbytes);
+    .withArgs(lastQueue, currentIndex, l1Txbytes);
 
   return l1Txbytes;
 }
