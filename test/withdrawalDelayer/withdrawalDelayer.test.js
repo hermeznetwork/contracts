@@ -115,7 +115,7 @@ describe("WithdrawalDelayer Tests", function() {
             hermezGovernanceAddress,
             whiteHackGroupAddress
           )
-        ).to.be.revertedWith("Contract instance has already been initialized");
+        ).to.be.revertedWith("Initializable: contract is already initialized");
       });
       it("should be able to make a ERC20 deposit", async function() {
         // Event Deposit

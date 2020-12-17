@@ -139,7 +139,7 @@ describe("Auction Protocol", function() {
         bootCoordinator,
         bootCoordinatorURL
       )
-    ).to.be.revertedWith("Contract instance has already been initialized");
+    ).to.be.revertedWith("Initializable: contract is already initialized");
   });
 
   describe("Coordinator registration", function() {

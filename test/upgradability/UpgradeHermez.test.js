@@ -223,7 +223,7 @@ describe("upgradability test Hermez", function() {
       hermezGovernanceAddress,
       1209600,
       withdrawalDelayer.address
-    )).to.be.revertedWith("Contract instance has already been initialized");
+    )).to.be.revertedWith("Initializable: contract is already initialized");
 
     await newHermezV2.setVersion();
     expect(await newHermezV2.getVersion()).to.be.equal(2);

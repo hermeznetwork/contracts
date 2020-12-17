@@ -4,8 +4,8 @@ pragma solidity 0.6.12;
 import "../math/SafeMathUint128.sol";
 import "../interfaces/IHEZToken.sol";
 import "../interfaces/IHermezAuctionProtocol.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @dev Hermez will run an auction to incentivise efficiency in coordinators,
@@ -17,7 +17,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard
  */
 contract HermezAuctionProtocol is
     Initializable,
-    ReentrancyGuardUpgradeSafe,
+    ReentrancyGuardUpgradeable,
     IHermezAuctionProtocol
 {
     using SafeMath128 for uint128;
