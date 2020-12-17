@@ -72,7 +72,7 @@ describe("upgradability test", function() {
       initAddress,
       initAddress,
       bootCoordinatorURL
-    )).to.be.revertedWith("Contract instance has already been initialized");
+    )).to.be.revertedWith("Initializable: contract is already initialized");
 
     await newHermezAuctionProtocolV2.setVersion();
     expect(await newHermezAuctionProtocolV2.getVersion()).to.be.equal(2);

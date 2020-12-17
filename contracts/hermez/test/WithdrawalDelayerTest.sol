@@ -3,15 +3,15 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 contract WithdrawalDelayerTest is ReentrancyGuard, Initializable {
     address public hermezRollupAddress;
 
-    bytes4 private constant _TRANSFERFROM_SIGNATURE =
-        bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
+    bytes4 private constant _TRANSFERFROM_SIGNATURE = bytes4(
+        keccak256(bytes("transferFrom(address,address,uint256)"))
+    );
 
     event Deposit(
         address indexed owner,
@@ -70,15 +70,14 @@ contract WithdrawalDelayerTest is ReentrancyGuard, Initializable {
                 "WithdrawalDelayer::deposit: NOT_ENOUGH_ALLOWANCE"
             );
             /* solhint-disable avoid-low-level-calls */
-            (bool success, bytes memory data) =
-                address(_token).call(
-                    abi.encodeWithSelector(
-                        _TRANSFERFROM_SIGNATURE,
-                        hermezRollupAddress,
-                        address(this),
-                        _amount
-                    )
-                );
+            (bool success, bytes memory data) = address(_token).call(
+                abi.encodeWithSelector(
+                    _TRANSFERFROM_SIGNATURE,
+                    hermezRollupAddress,
+                    address(this),
+                    _amount
+                )
+            );
             // `transferFrom` method may return (bool) or nothing.
             require(
                 success && (data.length == 0 || abi.decode(data, (bool))),

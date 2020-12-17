@@ -2,13 +2,13 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /**
  * @dev Smart Contract in charge of managing Hermez's governance through access control by using roles
  */
-contract HermezGovernance is Initializable, AccessControlUpgradeSafe {
+contract HermezGovernance is Initializable, AccessControlUpgradeable {
     event ExecOk(bytes returnData);
     event ExecFail(bytes returnData);
 
@@ -42,8 +42,9 @@ contract HermezGovernance is Initializable, AccessControlUpgradeSafe {
             "HermezGovernance::execute: ONLY_ALLOWED_ROLE"
         );
 
-        (bool succcess, bytes memory returnData) =
-            destination.call{value: value}(data);
+        (bool succcess, bytes memory returnData) = destination.call{
+            value: value
+        }(data);
         if (succcess) {
             emit ExecOk(returnData);
         } else {

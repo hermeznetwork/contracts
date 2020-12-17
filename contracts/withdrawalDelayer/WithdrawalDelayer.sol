@@ -4,12 +4,12 @@ pragma solidity 0.6.12;
 
 import "../interfaces/IWithdrawalDelayer.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 contract WithdrawalDelayer is
     Initializable,
-    ReentrancyGuardUpgradeSafe,
+    ReentrancyGuardUpgradeable,
     IWithdrawalDelayer
 {
     struct DepositState {

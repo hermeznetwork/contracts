@@ -2,7 +2,7 @@
 
 pragma solidity ^0.6.12;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 /**
  * @dev Interface poseidon hash function 2 elements
