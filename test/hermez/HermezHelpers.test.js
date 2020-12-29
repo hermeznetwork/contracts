@@ -7,9 +7,7 @@ const { smt } = require("circomlib");
 const babyJub = require("circomlib").babyJub;
 const utilsScalar = require("ffjavascript").utils;
 
-const { HermezAccount, stateUtils } = require("@hermeznetwork/commonjs");
-
-const { signBjjAuth } = require("./helpers/helpers");
+const { HermezAccount, stateUtils, txUtils } = require("@hermeznetwork/commonjs");
 
 let tree;
 const key1 = Scalar.e(7);
@@ -90,7 +88,7 @@ describe("Hermez Helpers", function () {
   describe("utility helpers", function () {
     it("checkSig", async function () {
       const babyjub = accounts[0].bjjCompressed;
-      const flatSig = await signBjjAuth(owner, babyjub, chainIDHex, buidlerHermezHelpersTest.address);
+      const flatSig = await txUtils.signBjjAuth(owner, babyjub, chainIDHex, buidlerHermezHelpersTest.address);
       let sig = ethers.utils.splitSignature(flatSig);
 
       expect(

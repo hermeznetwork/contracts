@@ -8,7 +8,6 @@ const { getAdminAddress } = require("@openzeppelin/upgrades-core");
 
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {
-  signBjjAuth,
   l1UserTxCreateAccountDeposit,
   l1UserTxDeposit,
   l1UserTxDepositTransfer,

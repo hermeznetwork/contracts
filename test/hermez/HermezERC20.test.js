@@ -6,7 +6,6 @@ const Scalar = require("ffjavascript").Scalar;
 
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {
-  signBjjAuth,
   l1UserTxCreateAccountDeposit,
   l1UserTxDeposit,
   l1UserTxDepositTransfer,
