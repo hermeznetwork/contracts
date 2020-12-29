@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 //usePlugin("buidler-deploy");
 usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
@@ -69,7 +68,7 @@ module.exports = {
   etherscan: {
     // The url for the Etherscan API you want to use.
     // For example, here we're using the one for the Ropsten test network
-    url: "https://api-rinkeby.etherscan.io/api",
+    //url: "https://api-rinkeby.etherscan.io/api",
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     apiKey: process.env.ETHERSCAN_API_KEY,
