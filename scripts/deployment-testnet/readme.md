@@ -4,22 +4,24 @@ In repository root:
 
 1. Install the dependencies with npm or yarn: `yarn install`
 
-2. Terminal 1: `npx buidler node`
+2. Go to `scripts/deployment-testnet`
 
-3. If you want to use a custom mnemonic go to the root of the repository and edit `.env.example`, change the variable `MNEMONIC` and save it as `.env`
-   The path `m/44'/60'/0'/0` will be used, starting from index '0'
+3. Edit the `.env.example` with your parameters and save it as `.env`
+   The account of the mnemonic derived from the the path `m/44'/60'/0'/0` will deploy all the contracts, be assure that has enough ether.
+   All parameters are required, except for the `ETHERSCAN_API_KEY` wich it's only use is for verify the contracts, wich is an optional step.
 
-4. Terminal 2: - Enter in `scripts/deployment` folder and edit the `deploy_parameters.json`
-   The json contains all the deployment parameters, indexed with a `chainID` and the `buidlerNetwork` that buidler will use
-   The `31337` which is already included, is the chainId of `buidlerevm`
-
-   - The `numAccountsFund` are the number of accounts, starting with index '0' of the mnemonic to fund with ether and HEZ **ether funding only available in evmbuidler enviroment**
-   - Then there are some configuration parameters, related with the Smart contracts constructor
-   - Lastly are some parameters which only has more relevance in testnet:
-
-     - Some address which can perform especial operations in the SC, if empty, the accounts in mnemonic will be used in order
-     - Finally libraries, if empty, will be deployed
-
-   - A `deploy_output.json` will be created with all the address of the SC created, and the mnemonic index of the relevant accounts
+4. Edit the `deploy_parameters.json`
+   The json contains all the deployment parameters, indexed with a `chainID`.
+   You can set the libraries that are already deployed (if the field is empty will be deployed). Also the contructor parameters of all smart contracts and finally the `tokens` field wich are the address of the tokens that will be automatically added to the Hermez at the end of the deployment
 
 5. Run the deployment script:`node deploy.js`
+
+> Be aware that a `.openzeppelin` folder will be created. That folder it's usefull in case of redeployment of the contracts because the logic (or implementation) contract can be reused as a libreary and only a new proxy contract will be deployed.
+
+6. (optional) Verify the smart contracts in etherscan!
+   For this step a `ETHERSCAN_API_KEY` must be provided in the .env file, contracts must be deployed and the `.openzeppelin` must be created.
+   Be aware that once the contracts are verified in a chain, etherscan recognizes them and there's no need to verify them again. So this process should only be used once. That's why also there's no need to verify the proxy contract.
+   Due a bug of the buidler plugin, more contracts than jsut the source of the implementation are pushed to the verification, allowing etherescan to verify the contract and allowing users to "read" the data of the transactions, but it's messy if some user want to read the smart contract from here.
+   That's why in mainet this process will be done manually to assure the polite correctness of the verifications
+
+   - Run `node verifyContracts`
