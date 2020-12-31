@@ -5,7 +5,6 @@ const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const { time } = require("@openzeppelin/test-helpers");
 
 const {
-  signBjjAuth,
   l1UserTxCreateAccountDeposit,
   l1UserTxDeposit,
   l1UserTxDepositTransfer,
@@ -181,7 +180,7 @@ describe("Hermez integration", function () {
     const closedAuctionSlots = 2;
     const openAuctionSlots = 4320;
     const allocationRatio = [4000, 4000, 2000];
-    await expect (
+    await expect(
       buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
         buidlerTokenHermez.address,
         latest + 1 + MIN_BLOCKS,
@@ -193,7 +192,7 @@ describe("Hermez integration", function () {
       )
     )
       .to.emit(buidlerHermezAuctionProtocol, "InitializeHermezAuctionProtocolEvent")
-      .withArgs( 
+      .withArgs(
         await donation.getAddress(), // donation address
         ownerAddress, // bootCoordinatorAddress
         bootCoordinatorURL,
@@ -206,14 +205,14 @@ describe("Hermez integration", function () {
 
     buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
 
-    await expect (
+    await expect(
       buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
         INITIAL_DELAY,
         HermezAddress,
         hermezGovernanceAddress,
         await whiteHackGroupAddress.getAddress()
       )
-    )     
+    )
       .to.emit(buidlerWithdrawalDelayer, "InitializeWithdrawalDelayerEvent")
       .withArgs(
         INITIAL_DELAY,
@@ -225,7 +224,7 @@ describe("Hermez integration", function () {
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
 
-    await expect (
+    await expect(
       buidlerHermez.initializeHermez(
         [buidlerVerifierRollupHelper.address],
         calculateInputMaxTxLevels([maxTx], [nLevels]),

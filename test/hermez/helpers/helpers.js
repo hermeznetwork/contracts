@@ -54,15 +54,15 @@ class ForgerTest {
 
     expect(SCL1TxData).to.equal(`0x${jsL1TxData}`);
 
-  
+
     if (l1TxCoordiatorArray) {
       for (let tx of l1TxCoordiatorArray) {
         bb.addTx(txUtils.decodeL1TxFull(tx.l1TxBytes));
       }
     }
 
-    
-    if (l2txArray){
+
+    if (l2txArray) {
       for (let tx of l2txArray) {
         bb.addTx(tx);
       }
@@ -126,22 +126,6 @@ class ForgerTest {
     await this.rollupDB.consolidate(bb);
   }
 }
-
-async function signBjjAuth(wallet, babyjub, chainIdHex, hermezAddress) {
-  const AccountCreationAuthMsgArray = ethers.utils.toUtf8Bytes(
-    "I authorize this babyjubjub key for hermez rollup account creation"
-  ); // 66 bytes
-
-  // 66 bytes + 32 bytes + 2 bytes + 20 bytes = 120 bytes
-  const messageHex =
-    ethers.utils.hexlify(AccountCreationAuthMsgArray) + babyjub + ethers.utils.hexZeroPad(chainIdHex, 2).slice(2) + hermezAddress.slice(2); 
-  const messageArray = ethers.utils.arrayify(messageHex);
-  // other approach could be babyjub arrify, concat with AccountCreationAuthMsgArray and sign
-  const flatSig = await wallet.signMessage(messageArray); // automatically concat "\x19Ethereum Signed Message:\n98" to the messageArray, where `98`is the length of the messageArray
-  const signatureParams = ethers.utils.splitSignature(flatSig);
-  return flatSig.slice(0, -2) + signatureParams.v.toString(16);
-}
-
 
 async function l1UserTxCreateAccountDeposit(
   loadAmount,
@@ -815,7 +799,7 @@ async function l1UserTxForceExit(
 async function l1CoordinatorTxEth(tokenID, babyjub, wallet, buidlerHermez, chainIdHex) {
   // equivalent L1 transaction:
 
-  const flatSig = await signBjjAuth(wallet, babyjub.slice(2), chainIdHex, buidlerHermez.address);
+  const flatSig = await txUtils.signBjjAuth(wallet, babyjub.slice(2), chainIdHex, buidlerHermez.address);
 
   let sig = ethers.utils.splitSignature(flatSig);
 
@@ -977,7 +961,6 @@ async function createPermitSignature(buidlerToken, wallet, spenderAddress, value
 
 module.exports = {
   ForgerTest,
-  signBjjAuth,
   l1UserTxCreateAccountDeposit,
   l1UserTxDeposit,
   l1UserTxDepositTransfer,

@@ -3,7 +3,6 @@ const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {
-  signBjjAuth,
   l1UserTxCreateAccountDeposit,
   l1UserTxDeposit,
   l1UserTxDepositTransfer,
