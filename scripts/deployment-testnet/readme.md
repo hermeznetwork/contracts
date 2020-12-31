@@ -1,3 +1,13 @@
+# Quick Guide
+
+In repository root:
+
+1. `yarn install`
+2. `cd scripts/deployment-testnet`
+3. `git clone https://github.com/hermeznetwork/testnet-private-configs`
+4. `cp testnet-private-configs/.env .env`
+5. `node deploy.js`
+
 # Guide:
 
 In repository root:

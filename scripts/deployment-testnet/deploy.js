@@ -327,24 +327,11 @@ async function main() {
     hermezAddress: hermez.address,
     withdrawalDelayeAddress: withdrawalDelayer.address,
     HEZTokenAddress: buidlerHEZToken.address,
-    hermezGovernanceIndex: deployParameters[chainId]
-      .hermezGovernanceAddress
-      ? null
-      : hermezGovernanceIndex,
     hermezGovernanceAddress,
-    emergencyCouncilIndex: deployParameters[chainId].emergencyCouncilAddress
-      ? null
-      : emergencyCouncilIndex,
     emergencyCouncilAddress,
-    donationIndex: deployParameters[chainId].donationAddress
-      ? null
-      : donationIndex,
     donationAddress,
-    bootCoordinatorIndex: deployParameters[chainId].bootCoordinatorAddress
-      ? null
-      : bootCoordinatorIndex,
     bootCoordinatorAddress,
-    buidlerNetwork: deployParameters.buidlerNetwork
+    network: deployParameters.buidlerNetwork
   };
 
   fs.writeFileSync(pathOutputJson, JSON.stringify(outputJson, null, 1));
