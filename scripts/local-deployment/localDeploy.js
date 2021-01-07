@@ -7,6 +7,9 @@ process.env.BUIDLER_NETWORK = deployParameters.buidlerNetwork;
 const bre = require("@nomiclabs/buidler");
 const { ethers, upgrades } = require("@nomiclabs/buidler");
 
+require("@openzeppelin/test-helpers/configure")({
+  provider: ethers.provider._buidlerProvider._url || "http://localhost:8545",
+});
 const { time } = require("@openzeppelin/test-helpers");
 const fs = require("fs");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
