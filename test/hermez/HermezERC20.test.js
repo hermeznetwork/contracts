@@ -488,6 +488,75 @@ describe("Hermez ERC 20", function () {
       ).to.be.revertedWith("Hermez::forgeBatch: L1L2BATCH_REQUIRED");
     });
 
+    it("test feeIdxCoordinator", async function () {
+
+      for (let i = 0; i < 65; i = i + 10) {
+        // dummy batch
+        const proofA = ["0", "0"];
+        const proofB = [
+          ["0", "0"],
+          ["0", "0"],
+        ];
+        const proofC = ["0", "0"];
+
+        const newLastIdx = 255;
+        const newStateRoot = 0;
+        const newExitRoot = 0;
+        const compressedL1CoordinatorTx = "0x00";
+        const L1L2TxsData = "0x00";
+        const verifierIdx = 0;
+        const l1Batch = true;
+
+        // test different paddings
+        const feeIdxCoordinator = `0x${utils.padZeros(
+          "",
+          ((nLevels / 8) * 2) * i
+        )}`;
+
+        const tx = await buidlerHermez.calculateInputTest(
+          newLastIdx,
+          newStateRoot,
+          newExitRoot,
+          compressedL1CoordinatorTx,
+          L1L2TxsData,
+          feeIdxCoordinator,
+          l1Batch,
+          verifierIdx
+        );
+        const receipt = await tx.wait();
+        const input = receipt.events[0].args[0];
+
+        // check that the padding of the SC works as expected!
+        await expect( 
+          buidlerHermez.calculateInputTest(
+            newLastIdx,
+            newStateRoot,
+            newExitRoot,
+            compressedL1CoordinatorTx,
+            L1L2TxsData,
+            "0x",
+            l1Batch,
+            verifierIdx
+          )
+        ).to.emit(buidlerHermez, "ReturnUint256")
+          .withArgs(input);
+
+        await buidlerHermez.forgeBatch(
+          newLastIdx,
+          newStateRoot,
+          newExitRoot,
+          compressedL1CoordinatorTx,
+          L1L2TxsData,
+          feeIdxCoordinator,
+          verifierIdx,
+          l1Batch,
+          proofA,
+          proofB,
+          proofC
+        );
+      }
+    });
+
     it("handle L1 Coordinator Queue Test", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;

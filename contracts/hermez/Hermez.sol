@@ -983,7 +983,7 @@ contract Hermez is InstantWithdrawManager {
         // Copy the FeeIdxCoordinator from the calldata
         (dPtr, dLen) = _getCallData(5);
         require(
-            dLen == feeIdxCoordinatorLength,
+            dLen <= feeIdxCoordinatorLength,
             "Hermez::_constructCircuitInput: INVALID_FEEIDXCOORDINATOR_LENGTH"
         );
         assembly {
