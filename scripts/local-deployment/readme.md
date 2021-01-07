@@ -20,6 +20,6 @@ In repository root:
      - Some address which can perform especial operations in the SC, if empty, the accounts in mnemonic will be used in order
      - Finally libraries, if empty, will be deployed
 
-   - A `deploy_output.json` will be created with all the address of the SC created, and the mnemonic index of the relevant accounts
+   - A `deploy_output.json` will be created in the same folder by default with all the address of the SC created, and the mnemonic index of the relevant accounts. The path can be set with the `pathOutputJson` parameter
 
 5. Run the deployment script:`node localDeploy.js`

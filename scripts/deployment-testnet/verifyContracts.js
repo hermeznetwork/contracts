@@ -4,7 +4,6 @@ const openzeppelinUpgrade = require("./.openzeppelin/rinkeby.json");
 
 
 async function main() {
-  console.log({openzeppelinUpgrade});
   for (const property in openzeppelinUpgrade.impls) {
     const address = openzeppelinUpgrade.impls[property].address;
     console.log({address});

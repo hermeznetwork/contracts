@@ -1,5 +1,3 @@
-// Work in progress deployment script!!!
-
 const {expect} = require("chai");
 require("dotenv").config();
 const path = require("path");
@@ -19,17 +17,14 @@ const {
 } = require("../../test/hermez/helpers/helpers");
 
 const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
-const pathOutputJson = path.join(__dirname, "./deploy_output.json");
 const deployParameters = require(pathDeployParameters);
+const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 
-const INITIAL_WITHDRAWAL_DELAY = 3600; //seconds
 const maxTxVerifierConstant = 512;
 const nLevelsVeriferConstant = 32;
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
-const bootCoordinatorURL = "https://boot.coordinator.io";
-
 
 async function main() {
 
@@ -241,13 +236,13 @@ async function main() {
   // initialize withdrawal delayer
 
   const withdrawalDelayerTx = await  withdrawalDelayer.withdrawalDelayerInitializer(
-    INITIAL_WITHDRAWAL_DELAY,
+    deployParameters[chainId].initialWithdrawalDelay,
     hermez.address,
     hermezGovernanceAddress,
     emergencyCouncilAddress
   );
   const receiptWithdrawal = await withdrawalDelayerTx.wait();
-  expect(receiptWithdrawal.events[0].args.initialWithdrawalDelay).to.be.equal(INITIAL_WITHDRAWAL_DELAY);
+  expect(receiptWithdrawal.events[0].args.initialWithdrawalDelay).to.be.equal(deployParameters[chainId].initialWithdrawalDelay);
   expect(receiptWithdrawal.events[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
   expect(receiptWithdrawal.events[0].args.initialEmergencyCouncil).to.be.equal(emergencyCouncilAddress);
 
@@ -272,12 +267,12 @@ async function main() {
     hermezGovernanceAddress,
     donationAddress,
     bootCoordinatorAddress,
-    bootCoordinatorURL
+    deployParameters[chainId].bootCoordinatorURL
   );
   const receiptAuction = await hermezAuctionTx.wait();
   expect(receiptAuction.events[0].args.donationAddress).to.be.equal(donationAddress);
   expect(receiptAuction.events[0].args.bootCoordinatorAddress).to.be.equal(bootCoordinatorAddress);
-  expect(receiptAuction.events[0].args.bootCoordinatorURL).to.be.equal(bootCoordinatorURL);
+  expect(receiptAuction.events[0].args.bootCoordinatorURL).to.be.equal(deployParameters[chainId].bootCoordinatorURL);
   expect(receiptAuction.events[0].args.outbidding).to.be.equal(outbidding);
   expect(receiptAuction.events[0].args.slotDeadline).to.be.equal(slotDeadline);
   expect(receiptAuction.events[0].args.closedAuctionSlots).to.be.equal(closedAuctionSlots);
@@ -302,13 +297,13 @@ async function main() {
     libposeidonsAddress[1],
     libposeidonsAddress[2],
     hermezGovernanceAddress,
-    deployParameters[chainId].withdrawalDelay,
+    deployParameters[chainId].withdrawalDelayHermez,
     withdrawalDelayer.address
   );
   const receiptHermez = await hermezTx.wait();
   expect(receiptHermez.events[0].args.forgeL1L2BatchTimeout).to.be.equal(deployParameters[chainId].forgeL1L2BatchTimeout);
   expect(receiptHermez.events[0].args.feeAddToken).to.be.equal(deployParameters[chainId].feeAddToken);
-  expect(receiptHermez.events[0].args.withdrawalDelay).to.be.equal(deployParameters[chainId].withdrawalDelay);
+  expect(receiptHermez.events[0].args.withdrawalDelay).to.be.equal(deployParameters[chainId].withdrawalDelayHermez);
 
   console.log("hermez Initialized");
 
