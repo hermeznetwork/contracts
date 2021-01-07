@@ -10,6 +10,7 @@ require("@openzeppelin/test-helpers/configure")({
   provider: ethers.provider._buidlerProvider._url || "http://localhost:8545",
 });
 const { time } = require("@openzeppelin/test-helpers");
+
 const fs = require("fs");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 
@@ -254,7 +255,7 @@ async function main() {
   let genesisBlock = deployParameters[chainId].genesisBlock;
   if (genesisBlock == "") {
     genesisBlock =
-      (await ethers.provider.getBlockNumber()) +
+    (await time.latestBlock()).toNumber() +
       parseInt(deployParameters[chainId].genesisBlockOffsetCurrent);
   }
 
