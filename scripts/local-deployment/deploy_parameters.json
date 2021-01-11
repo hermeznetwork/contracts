@@ -10,7 +10,7 @@
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelayHermez": 1209600,
     "initialWithdrawalDelay": 3600,
-    "bootCoordinatorURL":"http://localhost",
+    "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
       512
     ],
@@ -36,7 +36,7 @@
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelayHermez": 1209600,
     "initialWithdrawalDelay": 3600,
-    "bootCoordinatorURL":"http://localhost",
+    "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
       512
     ],
@@ -47,5 +47,5 @@
     "libposeidonsAddress": [],
     "libVerifiersWithdrawAddress": ""
   },
-  "pathOutputJson":""
+  "pathOutputJson": ""
 }

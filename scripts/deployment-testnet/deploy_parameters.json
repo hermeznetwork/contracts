@@ -1,8 +1,14 @@
 {
   "buidlerNetwork": "rinkeby",
   "4": {
-    "libVerifiersAddress": ["0x86AAD337f0EcD4F81e5B770Ad84BCa505f1B1027"],
-    "libposeidonsAddress": ["0x5bc822aD044dfbD8C54a02f3aab2317CE588c3D6", "0xB4D18800FD0e394d43f60792F447073DC5802176", "0xfE7dcf6bC1b9139F82c9a871884e0cdd9b418e80"],
+    "libVerifiersAddress": [
+      "0x86AAD337f0EcD4F81e5B770Ad84BCa505f1B1027"
+    ],
+    "libposeidonsAddress": [
+      "0x5bc822aD044dfbD8C54a02f3aab2317CE588c3D6",
+      "0xB4D18800FD0e394d43f60792F447073DC5802176",
+      "0xfE7dcf6bC1b9139F82c9a871884e0cdd9b418e80"
+    ],
     "libVerifiersWithdrawAddress": "0x8A4027F0f2EF9B29b00e7d8Ce5419949C1c5824A",
     "hermezGovernanceAddress": "0x9CEC5F3d5d9747DCCB36d8e22c03aF8221445c0D",
     "emergencyCouncilAddress": "0x82AA0Fcb77B6CF3E8baC5994043De98687B95E8E",
@@ -14,14 +20,16 @@
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelayHermez": 1209600,
     "initialWithdrawalDelay": 3600,
-    "bootCoordinatorURL":"http://localhost",
+    "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
       512
     ],
     "nLevelsVerifer": [
       32
     ],
-    "tokens":["0x95b58a6bff3d14b7db2f5cb5f0ad413dc2940658"]
+    "tokens": [
+      "0x95b58a6bff3d14b7db2f5cb5f0ad413dc2940658"
+    ]
   },
-  "pathOutputJson":""
+  "pathOutputJson": ""
 }
