@@ -1,7 +1,7 @@
 const path = require("path");
 const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
-const pathOutputJson = path.join(__dirname, "./deploy_output.json");
 const deployParameters = require(pathDeployParameters);
+const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 
 process.env.BUIDLER_NETWORK = deployParameters.buidlerNetwork;
 const bre = require("@nomiclabs/buidler");
@@ -19,14 +19,16 @@ const {
 } = require("../../test/hermez/helpers/helpers");
 
 
-const INITIAL_WITHDRAWAL_DELAY = 3600; //seconds
 const maxTxVerifierConstant = 512;
 const nLevelsVeriferConstant = 32;
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
-const bootCoordinatorURL = "https://boot.coordinator.io";
 
+// for compatibility with previous deploy_parameters versions
+const defaultWithdrawalDelay = 3600;
+const bootCoordinatorURL = "http://localhost:8086";
+const defaultHermezWithdrawalDelay = 1209600;
 
 async function main() {
   // compìle contracts
@@ -244,7 +246,7 @@ async function main() {
 
   // initialize withdrawal delayer
   await withdrawalDelayer.withdrawalDelayerInitializer(
-    INITIAL_WITHDRAWAL_DELAY,
+    deployParameters[chainId].initialWithdrawalDelay || defaultWithdrawalDelay,
     hermez.address,
     hermezGovernanceAddress,
     emergencyCouncilAddress
@@ -267,7 +269,7 @@ async function main() {
     hermezGovernanceAddress,
     donationAddress,
     bootCoordinatorAddress,
-    bootCoordinatorURL
+    deployParameters[chainId].bootCoordinatorURL || bootCoordinatorURL
   );
 
   console.log("hermezAuctionProtocol Initialized");
@@ -286,7 +288,7 @@ async function main() {
     libposeidonsAddress[1],
     libposeidonsAddress[2],
     hermezGovernanceAddress,
-    deployParameters[chainId].withdrawalDelay,
+    deployParameters[chainId].withdrawalDelayHermez || defaultHermezWithdrawalDelay,
     withdrawalDelayer.address
   );
 

@@ -1,11 +1,6 @@
-// Work in progress deployment script!!!
-
+const {expect} = require("chai");
+require("dotenv").config();
 const path = require("path");
-const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
-const pathOutputJson = path.join(__dirname, "./deploy_output.json");
-const deployParameters = require(pathDeployParameters);
-
-process.env.BUIDLER_NETWORK = deployParameters.buidlerNetwork;
 const bre = require("@nomiclabs/buidler");
 const { ethers, upgrades } = require("@nomiclabs/buidler");
 
@@ -13,6 +8,7 @@ require("@openzeppelin/test-helpers/configure")({
   provider: ethers.provider._buidlerProvider._url || "http://localhost:8545",
 });
 const { time } = require("@openzeppelin/test-helpers");
+
 const fs = require("fs");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 
@@ -20,17 +16,18 @@ const {
   calculateInputMaxTxLevels,
 } = require("../../test/hermez/helpers/helpers");
 
+const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
+const deployParameters = require(pathDeployParameters);
+const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 
-const INITIAL_WITHDRAWAL_DELAY = 3600; //seconds
 const maxTxVerifierConstant = 512;
 const nLevelsVeriferConstant = 32;
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
-const bootCoordinatorURL = "https://boot.coordinator.io";
-
 
 async function main() {
+
   // compìle contracts
   await bre.run("compile");
 
@@ -53,34 +50,6 @@ async function main() {
 
   // get chain ID
   const chainId = (await ethers.provider.getNetwork()).chainId;
-
-  // fund the accounts with ether
-  const numAccountsFund = deployParameters[chainId].numAccountsFund
-    ? deployParameters[chainId].numAccountsFund
-    : 0;
-  if (numAccountsFund > 0 && chainId == 31337) {
-    // load default account 0 from buidlerEvm
-    // Account #0: 0xc783df8a850f42e7f7e57013759c285caa701eb6 (10000 ETH)
-    // Private Key: 0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122
-    const privateKeyBuidler =
-      "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
-    const signerDefaultAccount = new ethers.Wallet(
-      privateKeyBuidler,
-      ethers.provider
-    );
-
-    // fund all accounts with  at leats 100 ethers with " default account 0"
-    for (let i = 0; i < numAccountsFund; i++) {
-      const signerBalance = await signersArray[i].getBalance();
-      if (signerBalance.lt(ethers.utils.parseEther("100.0"))) {
-        let tx = {
-          to: await signersArray[i].getAddress(),
-          value: ethers.utils.parseEther("200.0"),
-        };
-        await signerDefaultAccount.sendTransaction(tx);
-      }
-    }
-  }
 
   // get address
   const emergencyCouncilAddress =
@@ -150,7 +119,7 @@ async function main() {
   // deploy smart contracts with proxy https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-buidler/test/initializers.js
   // or intializer undefined and call initialize later
 
-  // Deploy auction with proxy
+  //Deploy auction with proxy
   const hermezAuctionProtocol = await upgrades.deployProxy(
     HermezAuctionProtocol,
     [],
@@ -175,9 +144,15 @@ async function main() {
   console.log("hermez deployed at: ", hermez.address);
 
   // Deploy withdrawalDelayer
-  const withdrawalDelayer = await WithdrawalDelayer.deploy();
+  const withdrawalDelayer = await upgrades.deployProxy(
+    WithdrawalDelayer,
+    [],
+    {
+      unsafeAllowCustomTypes: true,
+      initializer: undefined,
+    }
+  );
   await withdrawalDelayer.deployed();
-
   console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
   // deploy HEZ (erc20Permit) token
@@ -189,18 +164,6 @@ async function main() {
   );
   await buidlerHEZToken.deployed();
   console.log("HEZToken deployed at: ", buidlerHEZToken.address);
-
-  // fund accounts with HEZ tokens
-  if (numAccountsFund > 0) {
-    // fund all accounts with tokens
-    const accountToFund = await ethers.getSigners();
-    for (let i = 0; i < numAccountsFund; i++) {
-      await buidlerHEZToken.transfer(
-        await accountToFund[i].getAddress(),
-        ethers.utils.parseEther("10000")
-      );
-    }
-  }
   // load or deploy libs
 
   // poseidon libs
@@ -232,6 +195,10 @@ async function main() {
     let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
     await buidlerVerifierRollupHelper.deployed();
     libVerifiersAddress = [buidlerVerifierRollupHelper.address];
+    console.log("deployed verifiers libs");
+    console.log("verifiers deployed at: ", libVerifiersAddress);
+  } else {
+    console.log("verifier libs already depoloyed");
   }
 
   // maxTx and nLevelsVerifer must have the same number of elements as verifiers
@@ -258,33 +225,32 @@ async function main() {
     let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
     await buidlerVerifierWithdrawHelper.deployed();
     libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
+    console.log("deployed withdraw verifiers libs");
+    console.log("withdraw verifiers deployed at: ", libverifiersWithdrawAddress);
+  } else {
+    console.log("withdraw verifier libs already depoloyed");
   }
 
   // initialize upgradable smart contracts
 
   // initialize withdrawal delayer
-  await expect(
-    withdrawalDelayer.withdrawalDelayerInitializer(
-      INITIAL_WITHDRAWAL_DELAY,
-      hermez.address,
-      hermezGovernanceAddress,
-      emergencyCouncilAddress
-    )
-  )
-    .to.emit(withdrawalDelayer, "InitializeWithdrawalDelayerEvent")
-    .withArgs(
-      INITIAL_WITHDRAWAL_DELAY,
-      hermezGovernanceAddress,
-      emergencyCouncilAddress
-    );
 
-  console.log("withdrawalDelayer initialized");
+  const withdrawalDelayerTx = await  withdrawalDelayer.withdrawalDelayerInitializer(
+    deployParameters[chainId].initialWithdrawalDelay,
+    hermez.address,
+    hermezGovernanceAddress,
+    emergencyCouncilAddress
+  );
+  const receiptWithdrawal = await withdrawalDelayerTx.wait();
+  expect(receiptWithdrawal.events[0].args.initialWithdrawalDelay).to.be.equal(deployParameters[chainId].initialWithdrawalDelay);
+  expect(receiptWithdrawal.events[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
+  expect(receiptWithdrawal.events[0].args.initialEmergencyCouncil).to.be.equal(emergencyCouncilAddress);
 
   // initialize auction hermez
   let genesisBlock = deployParameters[chainId].genesisBlock;
   if (genesisBlock == "") {
     genesisBlock =
-      (await time.latestBlock()).toNumber() +
+    (await time.latestBlock()).toNumber() +
       parseInt(deployParameters[chainId].genesisBlockOffsetCurrent);
   }
 
@@ -294,58 +260,62 @@ async function main() {
   const openAuctionSlots = 4320;
   const allocationRatio = [4000, 4000, 2000];
 
-  await expect(
-    hermezAuctionProtocol.hermezAuctionProtocolInitializer(
-      buidlerHEZToken.address,
-      genesisBlock,
-      hermez.address,
-      hermezGovernanceAddress,
-      donationAddress,
-      bootCoordinatorAddress,
-      bootCoordinatorURL
-    )
-  )
-    .to.emit(hermezAuctionProtocol, "InitializeHermezAuctionProtocolEvent")
-    .withArgs( 
-      donationAddress,
-      bootCoordinatorAddress, 
-      bootCoordinatorURL,
-      outbidding,
-      slotDeadline,
-      closedAuctionSlots,
-      openAuctionSlots,
-      allocationRatio
-    );
+  const hermezAuctionTx = await hermezAuctionProtocol.hermezAuctionProtocolInitializer(
+    buidlerHEZToken.address,
+    genesisBlock,
+    hermez.address,
+    hermezGovernanceAddress,
+    donationAddress,
+    bootCoordinatorAddress,
+    deployParameters[chainId].bootCoordinatorURL
+  );
+  const receiptAuction = await hermezAuctionTx.wait();
+  expect(receiptAuction.events[0].args.donationAddress).to.be.equal(donationAddress);
+  expect(receiptAuction.events[0].args.bootCoordinatorAddress).to.be.equal(bootCoordinatorAddress);
+  expect(receiptAuction.events[0].args.bootCoordinatorURL).to.be.equal(deployParameters[chainId].bootCoordinatorURL);
+  expect(receiptAuction.events[0].args.outbidding).to.be.equal(outbidding);
+  expect(receiptAuction.events[0].args.slotDeadline).to.be.equal(slotDeadline);
+  expect(receiptAuction.events[0].args.closedAuctionSlots).to.be.equal(closedAuctionSlots);
+  expect(receiptAuction.events[0].args.openAuctionSlots).to.be.equal(openAuctionSlots);
+  expect(receiptAuction.events[0].args.allocationRatio[0]).to.be.equal(allocationRatio[0]);
+  expect(receiptAuction.events[0].args.allocationRatio[1]).to.be.equal(allocationRatio[1]);
+  expect(receiptAuction.events[0].args.allocationRatio[2]).to.be.equal(allocationRatio[2]);
 
   console.log("hermezAuctionProtocol Initialized");
 
   // initialize Hermez
 
-  await expect(
-    hermez.initializeHermez(
-      libVerifiersAddress,
-      calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
-      libverifiersWithdrawAddress,
-      hermezAuctionProtocol.address,
-      buidlerHEZToken.address,
-      deployParameters[chainId].forgeL1L2BatchTimeout,
-      deployParameters[chainId].feeAddToken,
-      libposeidonsAddress[0],
-      libposeidonsAddress[1],
-      libposeidonsAddress[2],
-      hermezGovernanceAddress,
-      deployParameters[chainId].withdrawalDelay,
-      withdrawalDelayer.address
-    )
-  )   
-    .to.emit(hermez, "InitializeHermezEvent")
-    .withArgs(
-      deployParameters[chainId].forgeL1L2BatchTimeout,
-      deployParameters[chainId].feeAddToken,
-      deployParameters[chainId].withdrawalDelay,
-    );
+  const hermezTx = await hermez.initializeHermez(
+    libVerifiersAddress,
+    calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
+    libverifiersWithdrawAddress,
+    hermezAuctionProtocol.address,
+    buidlerHEZToken.address,
+    deployParameters[chainId].forgeL1L2BatchTimeout,
+    deployParameters[chainId].feeAddToken,
+    libposeidonsAddress[0],
+    libposeidonsAddress[1],
+    libposeidonsAddress[2],
+    hermezGovernanceAddress,
+    deployParameters[chainId].withdrawalDelayHermez,
+    withdrawalDelayer.address
+  );
+  const receiptHermez = await hermezTx.wait();
+  expect(receiptHermez.events[0].args.forgeL1L2BatchTimeout).to.be.equal(deployParameters[chainId].forgeL1L2BatchTimeout);
+  expect(receiptHermez.events[0].args.feeAddToken).to.be.equal(deployParameters[chainId].feeAddToken);
+  expect(receiptHermez.events[0].args.withdrawalDelay).to.be.equal(deployParameters[chainId].withdrawalDelayHermez);
 
   console.log("hermez Initialized");
+
+
+  console.log("Add Tokens to the hermez");
+  const addTokens = deployParameters[chainId].tokens;
+  if (addTokens.length > 0) {
+    await buidlerHEZToken.approve(hermez.address, deployParameters[chainId].feeAddToken*addTokens.length);
+    for (let i = 0; i < addTokens.length; i++) {
+      await hermez.addToken(addTokens[i], "0x",{gasLimit: 300000});
+    }
+  }
 
   // in case the mnemonic accounts are used, return the index, otherwise, return null
   const outputJson = {
@@ -353,25 +323,11 @@ async function main() {
     hermezAddress: hermez.address,
     withdrawalDelayeAddress: withdrawalDelayer.address,
     HEZTokenAddress: buidlerHEZToken.address,
-    hermezGovernanceIndex: deployParameters[chainId]
-      .hermezGovernanceAddress
-      ? null
-      : hermezGovernanceIndex,
     hermezGovernanceAddress,
-    emergencyCouncilIndex: deployParameters[chainId].emergencyCouncilAddress
-      ? null
-      : emergencyCouncilIndex,
     emergencyCouncilAddress,
-    donationIndex: deployParameters[chainId].donationAddress
-      ? null
-      : donationIndex,
     donationAddress,
-    bootCoordinatorIndex: deployParameters[chainId].bootCoordinatorAddress
-      ? null
-      : bootCoordinatorIndex,
     bootCoordinatorAddress,
-    accountsFunded: numAccountsFund,
-    buidlerNetwork: deployParameters.buidlerNetwork
+    network: deployParameters.buidlerNetwork
   };
 
   fs.writeFileSync(pathOutputJson, JSON.stringify(outputJson, null, 1));
