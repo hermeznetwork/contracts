@@ -35,7 +35,7 @@
     "feeAddToken": 10,
     "forgeL1L2BatchTimeout": 10,
     "withdrawalDelayHermez": 1209600,
-    "initialWithdrawalDelay": 3600,
+    "initialWithdrawalDelay": 60,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
       512
