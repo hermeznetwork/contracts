@@ -26,7 +26,7 @@ const tokenInitialAmount = ethers.BigNumber.from(
 );
 
 // for compatibility with previous deploy_parameters versions
-const defaultWithdrawalDelay = 3600;
+const defaultWithdrawalDelay = 60;
 const bootCoordinatorURL = "http://localhost:8086";
 const defaultHermezWithdrawalDelay = 1209600;
 
