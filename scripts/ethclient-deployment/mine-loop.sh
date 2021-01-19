@@ -8,29 +8,36 @@ genid() {
         python3 -c "import random; print(random.randint(0,2**64), end='')"
 }
 
-mine() {
-        local DATE=$(date +%s)
+rpc() {
+        local method="$1"
+        local params="$2"
         local id=`genid`
         curl -s -X POST --data \ "{\"jsonrpc\":\"2.0\",\
-                \"method\":\"evm_mine\",\
-                \"params\":[${DATE}],\
+                \"method\":\"${method}\",\
+                \"params\":[${params}],\
                 \"id\":${id}}" \
                 ${URL}
+}
+
+minerstop() {
+        rpc miner_stop ""
+        echo
+}
+
+mine() {
+        local DATE=$(date +%s)
+        rpc evm_mine "${DATE}"
         echo
 }
 
 getblock() {
-        local DATE=$(date +%s)
-        local id=`genid`
-        local result=`curl -s -X POST --data "{\"jsonrpc\":\"2.0\",\
-                \"method\":\"eth_getBlockByNumber\",\
-                \"params\":[\"latest\", false],\
-                \"id\":${id}}" \
-                ${URL}`
+        local result=`rpc eth_getBlockByNumber "\"latest\", false"`
         # echo ${result} | jq
         local block_hex=`echo ${result} | jq .result.number | sed s/\"//g`
         printf "%d" "${block_hex}"
 }
+
+minerstop
 
 while [ true ]; do
         block=`getblock`
@@ -46,5 +53,5 @@ done
 
 while [ true ]; do
         mine
-        sleep 2
+        sleep 1
 done

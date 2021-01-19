@@ -1,0 +1,9 @@
+{
+ "genesisBlock": 98,
+ "auction": "0x317113D2593e3efF1FfAE0ba2fF7A61861Df7ae5",
+ "auctionTest": "0x2b7dEe2CF60484325716A1c6A193519c8c3b19F3",
+ "tokenHEZ": "0x5D94e3e7aeC542aB0F9129B9a7BAdeb5B3Ca0f77",
+ "hermez": "0x8EEaea23686c319133a7cC110b840d1591d9AeE0",
+ "wdelayer": "0x5E0816F0f8bC560cB2B9e9C87187BeCac8c2021F",
+ "wdelayerTest": "0xc8F466fFeF9E9788fb363c2F4fBDdF2cAe477805"
+}
