@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("../../node_modules/@nomiclabs/buidler");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
+const axios = require("axios");
 const {
   l1UserTxCreateAccountDeposit,
   l1UserTxDeposit,
@@ -16,7 +17,7 @@ const {
   calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
-  float40,
+  float16,
   HermezAccount,
   txUtils,
   stateUtils,
@@ -28,6 +29,12 @@ const {
   BatchBuilder,
 } = require("@hermeznetwork/commonjs");
 const INITIAL_DELAY = 0;
+const { stringifyBigInts, unstringifyBigInts } = require("ffjavascript").utils;
+
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 describe("Hermez gas performance", function () {
   let buidlerTokenERC20Mock;
@@ -43,7 +50,8 @@ describe("Hermez gas performance", function () {
 
   let chainID;
   let chainIDHex;
-
+  let forgerTest;
+  
   const accounts = [];
   for (let i = 0; i < 10; i++) {
     accounts.push(new HermezAccount());
@@ -84,7 +92,7 @@ describe("Hermez gas performance", function () {
     const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
-      "VerifierRollupHelper"
+      "Verifier"
     );
     const VerifierWithdrawHelper = await ethers.getContractFactory(
       "VerifierWithdrawHelper"
@@ -146,7 +154,8 @@ describe("Hermez gas performance", function () {
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,
@@ -176,6 +185,15 @@ describe("Hermez gas performance", function () {
     const chainSC = await buidlerHermez.getChainID();
     chainID = chainSC.toNumber();
     chainIDHex = chainSC.toHexString();
+    const rollupDB = await RollupDB(new SMTMemDB(), chainID);
+    forgerTest = new ForgerTestGas(
+      maxTx,
+      maxL1Tx,
+      nLevels,
+      buidlerHermez,
+      rollupDB,
+      true
+    );
   });
 
   describe("Test Queue", function () {
@@ -192,47 +210,11 @@ describe("Hermez gas performance", function () {
         ownerWallet,
         feeAddToken
       );
-      const proofA = ["0", "0"];
-      const proofB = [
-        ["0", "0"],
-        ["0", "0"],
-      ];
-      const proofC = ["0", "0"];
 
-      const newLastIdx = 257;
-      const newStateRoot = 123;
-      const newExitRoot = 456;
-      const compressedL1CoordinatorTx = "0x00";
-
-      const L2TxsData = `0x${"1".repeat(((nLevels / 8) * 2 + 3) * maxTx * 2)}`;
-      // const L2TxsData = `0x${utils.padZeros(
-      //   "",
-      //   ((nLevels / 8) * 2 + 3) * maxTx * 2
-      // )}`;
-      //const L2TxsData = "0x00";
-
-      const feeIdxCoordinator = `0x${utils.padZeros(
-        "",
-        ((nLevels * 64) / 8) * 2
-      )}`;
-      const verifierIdx = 0;
       const SCGasArray = [];
       const wastedGasarray = [];
 
-      let tx = await buidlerHermez.forgeGasTest(
-        newLastIdx,
-        newStateRoot,
-        newExitRoot,
-        compressedL1CoordinatorTx,
-        L2TxsData,
-        feeIdxCoordinator,
-        verifierIdx,
-        true,
-        proofA,
-        proofB,
-        proofC,
-        { gasLimit: 12500000 }
-      );
+      await forgerTest.forgeBatch(true, [], []);
 
       console.log(
         "|   SC gas left    | Decrement | wastedGas | Increment | operatorTx |"
@@ -248,25 +230,7 @@ describe("Hermez gas performance", function () {
           );
         }
 
-        stringL1CoordinatorTx = "";
-        for (let tx of l1TxCoordiatorArray) {
-          stringL1CoordinatorTx =
-            stringL1CoordinatorTx + tx.l1TxCoordinatorbytes.slice(2); // retireve the 0x
-        }
-        let tx = await buidlerHermez.forgeGasTest(
-          newLastIdx,
-          newStateRoot,
-          newExitRoot,
-          `0x${stringL1CoordinatorTx}`,
-          L2TxsData,
-          feeIdxCoordinator,
-          verifierIdx,
-          true,
-          proofA,
-          proofB,
-          proofC,
-          { gasLimit: 12500000 }
-        );
+        let tx = await forgerTest.forgeBatch(true, [], l1TxCoordiatorArray);
         const receipt = await tx.wait();
         SCGasArray.push(receipt.events[1].args[0].toNumber());
         wastedGasarray.push(receipt.gasUsed.toNumber());
@@ -289,7 +253,7 @@ describe("Hermez gas performance", function () {
       this.timeout(0);
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float40.round(1);
+      const loadAmount = float16.float2Fix(float16.fix2Float(1));
 
       await AddToken(
         buidlerHermez,
@@ -298,23 +262,7 @@ describe("Hermez gas performance", function () {
         ownerWallet,
         feeAddToken
       );
-      const proofA = ["0", "0"];
-      const proofB = [
-        ["0", "0"],
-        ["0", "0"],
-      ];
-      const proofC = ["0", "0"];
 
-      const newLastIdx = 257;
-      const newStateRoot = 123;
-      const newExitRoot = 456;
-      const compressedL1CoordinatorTx = "0x00";
-      const L2TxsData = "0x00";
-      const feeIdxCoordinator = `0x${utils.padZeros(
-        "",
-        ((nLevels * 64) / 8) * 2
-      )}`;
-      const verifierIdx = 0;
       const SCGasArray = [];
       const wastedGasarray = [];
 
@@ -326,47 +274,23 @@ describe("Hermez gas performance", function () {
       );
 
       for (let i = 0; i < 124; i++) {
+        const l1TxUserArray = [];
+
         for (let j = 0; j < i; j++) {
-          let txUser = await l1UserTxCreateAccountDeposit(
+          l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
             loadAmount,
             tokenID,
             babyjub,
             ownerWallet,
             buidlerHermez,
             buidlerTokenERC20Mock
-          );
+          ));
         }
 
-        await buidlerHermez.forgeBatch(
-          newLastIdx,
-          newStateRoot,
-          newExitRoot,
-          compressedL1CoordinatorTx,
-          L2TxsData,
-          feeIdxCoordinator,
-          verifierIdx,
-          true,
-          proofA,
-          proofB,
-          proofC,
-          { gasLimit: 12500000 }
-        );
 
-        // forge with events
-        let tx = await buidlerHermez.forgeGasTest(
-          newLastIdx,
-          newStateRoot,
-          newExitRoot,
-          compressedL1CoordinatorTx,
-          L2TxsData,
-          feeIdxCoordinator,
-          verifierIdx,
-          true,
-          proofA,
-          proofB,
-          proofC,
-          { gasLimit: 12500000 }
-        );
+        await forgerTest.forgeBatch(true, [], []);
+        const tx = await forgerTest.forgeBatch(true, l1TxUserArray, []);
+
         const receipt = await tx.wait();
         SCGasArray.push(receipt.events[1].args[0].toNumber());
         wastedGasarray.push(receipt.gasUsed.toNumber());
@@ -386,3 +310,128 @@ describe("Hermez gas performance", function () {
     });
   });
 });
+
+
+
+class ForgerTestGas {
+  constructor(maxTx, maxL1Tx, nLevels, buidlerHermez, rollupDB, realVerifier) {
+    this.rollupDB = rollupDB;
+    this.maxTx = maxTx;
+    this.maxL1Tx = maxL1Tx;
+    this.nLevels = nLevels;
+    this.buidlerHermez = buidlerHermez;
+    this.realVerifier = realVerifier;
+
+    this.L1TxB = 544;
+  }
+
+  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray) {
+    const bb = await this.rollupDB.buildBatch(
+      this.maxTx,
+      this.nLevels,
+      this.maxL1Tx
+    );
+
+    let jsL1TxData = "";
+    for (let tx of l1TxUserArray) {
+      bb.addTx(txUtils.decodeL1TxFull(tx));
+      jsL1TxData = jsL1TxData + tx.slice(2);
+    }
+
+    // check L1 user tx are the same in batchbuilder and contract
+    const currentQueue = await this.buidlerHermez.nextL1ToForgeQueue();
+    const SCL1TxData = await this.buidlerHermez.mapL1TxQueue(currentQueue);
+
+    expect(SCL1TxData).to.equal(`0x${jsL1TxData}`);
+
+
+    if (l1TxCoordiatorArray) {
+      for (let tx of l1TxCoordiatorArray) {
+        bb.addTx(txUtils.decodeL1TxFull(tx.l1TxBytes));
+      }
+    }
+
+
+    if (l2txArray) {
+      for (let tx of l2txArray) {
+        bb.addTx(tx);
+      }
+    }
+
+    await bb.build();
+
+    let stringL1CoordinatorTx = "";
+    for (let tx of l1TxCoordiatorArray) {
+      stringL1CoordinatorTx =
+        stringL1CoordinatorTx + tx.l1TxCoordinatorbytes.slice(2); // retireve the 0x
+    }
+
+
+    let proofA, proofB, proofC;
+
+    if (this.realVerifier == true) {
+      // real verifier
+      const inputJson = stringifyBigInts(bb.getInput());
+      await axios.post("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/input", inputJson);
+      let response;
+      do {
+        await sleep(1000);
+        response = await axios.get("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/status");
+      } while (response.data.status == "busy");
+
+      proofA = [JSON.parse(response.data.proof).pi_a[0],
+        JSON.parse(response.data.proof).pi_a[1]
+      ];
+      proofB = [
+        [
+          JSON.parse(response.data.proof).pi_b[0][1],
+          JSON.parse(response.data.proof).pi_b[0][0]
+        ],
+        [
+          JSON.parse(response.data.proof).pi_b[1][1],
+          JSON.parse(response.data.proof).pi_b[1][0]
+        ]
+      ];
+      proofC =  [JSON.parse(response.data.proof).pi_c[0],
+        JSON.parse(response.data.proof).pi_c[1]
+      ];    
+
+      const input = JSON.parse(response.data.pubData);
+      expect(input[0]).to.equal(bb.getHashInputs().toString());
+
+    } else {
+      // mock verifier
+      proofA = ["0", "0"];
+      proofB = [
+        ["0", "0"],
+        ["0", "0"],
+      ];
+      proofC = ["0", "0"];
+    }
+
+    const newLastIdx = bb.getNewLastIdx();
+    const newStateRoot = bb.getNewStateRoot();
+    const newExitRoot = bb.getNewExitRoot();
+    const compressedL1CoordinatorTx = `0x${stringL1CoordinatorTx}`;
+    const L1L2TxsData = bb.getL1L2TxsDataSM();
+    const feeIdxCoordinator = bb.getFeeTxsDataSM();
+    const verifierIdx = 0;
+
+    let tx = await this.buidlerHermez.forgeGasTest(
+      newLastIdx,
+      newStateRoot,
+      newExitRoot,
+      compressedL1CoordinatorTx,
+      L1L2TxsData,
+      feeIdxCoordinator,
+      verifierIdx,
+      l1Batch,
+      proofA,
+      proofB,
+      proofC,
+      { gasLimit: 12500000 }
+    );
+    await this.rollupDB.consolidate(bb);
+    return tx;
+  }
+}

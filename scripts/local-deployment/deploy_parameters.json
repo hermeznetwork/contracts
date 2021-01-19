@@ -12,10 +12,13 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512
+      512, 376, 376
     ],
     "nLevelsVerifer": [
-      32
+      32, 32, 32
+    ],
+    "verifierType": [ 
+      "mock", "mock", "real"
     ],
     "hermezGovernanceAddress": "",
     "emergencyCouncilAddress": "",
@@ -38,10 +41,13 @@
     "initialWithdrawalDelay": 60,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512
+      512, 376, 376
     ],
     "nLevelsVerifer": [
-      32
+      32, 32, 32
+    ],
+    "verifierType": [ 
+      "mock", "mock", "real"
     ],
     "libVerifiersAddress": [],
     "libposeidonsAddress": [],
