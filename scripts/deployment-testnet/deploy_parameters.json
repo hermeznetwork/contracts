@@ -31,5 +31,36 @@
       "0x95b58a6bff3d14b7db2f5cb5f0ad413dc2940658"
     ]
   },
+  "3": {
+    "libVerifiersAddress": [
+      "0x707dE023c5091E6262371F07630413Ef2c37E094"
+    ],
+    "libposeidonsAddress": [
+      "0xaAa08C49F6DB8056eA39B663CA6eA5b1C4Af84cB",
+      "0x3094F5CC377F661899C5EE65B1833B49cB09123d",
+      "0x9267B747a2d4C2e82Dc18D46785a49808130F8dF"
+    ],
+    "libVerifiersWithdrawAddress": "0x5ae870790B80Ad2c53c2495a3c646cB5f986eA53",
+    "hermezGovernanceAddress": "0x9CEC5F3d5d9747DCCB36d8e22c03aF8221445c0D",
+    "emergencyCouncilAddress": "0x82AA0Fcb77B6CF3E8baC5994043De98687B95E8E",
+    "donationAddress": "0x929297764aB2cb291C5DbcC1A8D2a0867CafdBDe",
+    "bootCoordinatorAddress": "0x601f4005b90Db8f6Bbf06555f0b20Cf60798EBD8",
+    "genesisBlock": "",
+    "genesisBlockOffsetCurrent": 90,
+    "feeAddToken": 10,
+    "forgeL1L2BatchTimeout": 10,
+    "withdrawalDelayHermez": 1209600,
+    "initialWithdrawalDelay": 3600,
+    "bootCoordinatorURL": "http://localhost:8086",
+    "maxTxVerifier": [
+      512
+    ],
+    "nLevelsVerifer": [
+      32
+    ],
+    "tokens": [
+      "0xad6d458402f60fd3bd25163575031acdce07538d"
+    ]
+  },
   "pathOutputJson": ""
 }
