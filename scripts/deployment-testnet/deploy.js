@@ -327,7 +327,7 @@ async function main() {
     emergencyCouncilAddress,
     donationAddress,
     bootCoordinatorAddress,
-    network: deployParameters.buidlerNetwork
+    network: process.env.BUIDLER_NETWORK
   };
 
   fs.writeFileSync(pathOutputJson, JSON.stringify(outputJson, null, 1));
