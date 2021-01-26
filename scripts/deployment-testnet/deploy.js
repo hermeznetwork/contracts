@@ -26,6 +26,9 @@ const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
 
+const NARGS_WITH_BOOT_COORDINATOR_ADDRESS=3;
+const BOOT_COORDINATOR_ADDRESS_POSITION=2;
+
 async function main() {
 
   // compìle contracts
@@ -61,7 +64,7 @@ async function main() {
   const donationAddress =
     deployParameters[chainId].donationAddress ||
     (await donationEthers.getAddress());
-  const bootCoordinatorAddress =
+  const bootCoordinatorAddress = process.argv.length == NARGS_WITH_BOOT_COORDINATOR_ADDRESS ? process.argv[BOOT_COORDINATOR_ADDRESS_POSITION] :
     deployParameters[chainId].bootCoordinatorAddress ||
     (await bootCoordinatorEthers.getAddress());
 
