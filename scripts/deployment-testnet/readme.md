@@ -11,7 +11,8 @@ In repository root:
      - rinkeby
      - goerli
      - ropsten
-6. `node deploy.js`
+6. `node deploy.js <coordinator-address>`
+**NOTE** coordinator-address is necessary only is different from deploy_parameters.json file
 
 # Guide:
 
