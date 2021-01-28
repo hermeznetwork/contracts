@@ -102,9 +102,18 @@ async function main() {
   const HEZToken = await ethers.getContractFactory("ERC20PermitMock");
 
   // hermez libs
-  const VerifierRollupHelper = await ethers.getContractFactory(
-    "VerifierRollupHelper"
-  );
+  let VerifierRollupHelper;
+  
+  if (!deployParameters[chainId].realVerifier || deployParameters[chainId].realVerifier == false) {
+    VerifierRollupHelper = await ethers.getContractFactory(
+      "VerifierRollupHelper"
+    );
+  } else {
+    VerifierRollupHelper = await ethers.getContractFactory(
+      "Verifier"
+    );
+  }
+
   const VerifierWithdrawHelper = await ethers.getContractFactory(
     "VerifierWithdrawHelper"
   );

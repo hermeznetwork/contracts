@@ -12,7 +12,7 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512
+      376
     ],
     "nLevelsVerifer": [
       32
@@ -23,7 +23,8 @@
     "bootCoordinatorAddress": "",
     "libVerifiersAddress": [],
     "libPoseidonsAddress": [],
-    "libVerifiersWithdrawAddress": ""
+    "libVerifiersWithdrawAddress": "",
+    "realVerifier": false
   },
   "4": {
     "hermezGovernanceAddress": "",
@@ -38,14 +39,15 @@
     "initialWithdrawalDelay": 60,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512
+      376
     ],
     "nLevelsVerifer": [
       32
     ],
     "libVerifiersAddress": [],
     "libposeidonsAddress": [],
-    "libVerifiersWithdrawAddress": ""
+    "libVerifiersWithdrawAddress": "",
+    "realVerifier": false
   },
   "pathOutputJson": ""
 }

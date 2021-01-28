@@ -24,109 +24,6 @@ let ABIbid = [
 
 let iface = new ethers.utils.Interface(ABIbid);
 
-class ForgerVerifier {
-  constructor(maxTx, maxL1Tx, nLevels, buidlerHermez, rollupDB) {
-    this.rollupDB = rollupDB;
-    this.maxTx = maxTx;
-    this.maxL1Tx = maxL1Tx;
-    this.nLevels = nLevels;
-    this.buidlerHermez = buidlerHermez;
-
-    this.L1TxB = 544;
-  }
-
-  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray) {
-    const bb = await this.rollupDB.buildBatch(
-      this.maxTx,
-      this.nLevels,
-      this.maxL1Tx
-    );
-
-    let jsL1TxData = "";
-    for (let tx of l1TxUserArray) {
-      bb.addTx(txUtils.decodeL1TxFull(tx));
-      jsL1TxData = jsL1TxData + tx.slice(2);
-    }
-
-    // check L1 user tx are the same in batchbuilder and contract
-    const currentQueue = await this.buidlerHermez.nextL1ToForgeQueue();
-    const SCL1TxData = await this.buidlerHermez.mapL1TxQueue(currentQueue);
-
-    expect(SCL1TxData).to.equal(`0x${jsL1TxData}`);
-
-
-    if (l1TxCoordiatorArray) {
-      for (let tx of l1TxCoordiatorArray) {
-        bb.addTx(txUtils.decodeL1TxFull(tx.l1TxBytes));
-      }
-    }
-
-
-    if (l2txArray) {
-      for (let tx of l2txArray) {
-        bb.addTx(tx);
-      }
-    }
-
-    await bb.build();
-
-    let stringL1CoordinatorTx = "";
-    for (let tx of l1TxCoordiatorArray) {
-      stringL1CoordinatorTx =
-        stringL1CoordinatorTx + tx.l1TxCoordinatorbytes.slice(2); // retireve the 0x
-    }
-
-    const proofA = ["0", "0"];
-    const proofB = [
-      ["0", "0"],
-      ["0", "0"],
-    ];
-    const proofC = ["0", "0"];
-
-    const newLastIdx = bb.getNewLastIdx();
-    const newStateRoot = bb.getNewStateRoot();
-    const newExitRoot = bb.getNewExitRoot();
-    const compressedL1CoordinatorTx = `0x${stringL1CoordinatorTx}`;
-    const L1L2TxsData = bb.getL1L2TxsDataSM();
-    const feeIdxCoordinator = bb.getFeeTxsDataSM();
-    const verifierIdx = 0;
-
-    await expect(
-      this.buidlerHermez.calculateInputTest(
-        newLastIdx,
-        newStateRoot,
-        newExitRoot,
-        compressedL1CoordinatorTx,
-        L1L2TxsData,
-        feeIdxCoordinator,
-        l1Batch,
-        verifierIdx
-      )
-    )
-      .to.emit(this.buidlerHermez, "ReturnUint256")
-      .withArgs(bb.getHashInputs());
-
-    await expect(
-      this.buidlerHermez.forgeBatch(
-        newLastIdx,
-        newStateRoot,
-        newExitRoot,
-        compressedL1CoordinatorTx,
-        L1L2TxsData,
-        feeIdxCoordinator,
-        verifierIdx,
-        l1Batch,
-        proofA,
-        proofB,
-        proofC
-      )
-    ).to.emit(this.buidlerHermez, "ForgeBatch")
-      .withArgs(bb.batchNumber, l1TxUserArray.length);
-
-    await this.rollupDB.consolidate(bb);
-  }
-}
-
 class ForgerTest {
   constructor(maxTx, maxL1Tx, nLevels, buidlerHermez, rollupDB) {
     this.rollupDB = rollupDB;
@@ -1075,6 +972,5 @@ module.exports = {
   AddToken,
   createAccounts,
   calculateInputMaxTxLevels,
-  createPermitSignature,
-  ForgerVerifier
+  createPermitSignature
 };

@@ -1,9 +1,7 @@
 {
   "buidlerNetwork": "rinkeby",
   "4": {
-    "libVerifiersAddress": [
-      "0x86AAD337f0EcD4F81e5B770Ad84BCa505f1B1027"
-    ],
+    "libVerifiersAddress": [],
     "libposeidonsAddress": [
       "0x5bc822aD044dfbD8C54a02f3aab2317CE588c3D6",
       "0xB4D18800FD0e394d43f60792F447073DC5802176",
@@ -22,14 +20,15 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512
+      376
     ],
     "nLevelsVerifer": [
       32
     ],
     "tokens": [
       "0x95b58a6bff3d14b7db2f5cb5f0ad413dc2940658"
-    ]
+    ],
+    "realVerifier": false
   },
   "3": {
     "libVerifiersAddress": [
@@ -53,14 +52,15 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512
+      376
     ],
     "nLevelsVerifer": [
       32
     ],
     "tokens": [
       "0xad6d458402f60fd3bd25163575031acdce07538d"
-    ]
+    ],
+    "realVerifier": false
   },
   "pathOutputJson": ""
 }
