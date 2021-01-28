@@ -19,8 +19,8 @@ const {
 } = require("../../test/hermez/helpers/helpers");
 
 
-const maxTxVerifierConstant = 512;
-const nLevelsVeriferConstant = 32;
+const maxTxVerifierDefault = [376,512];
+const nLevelsVeriferDefault = [32,32];
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
@@ -213,35 +213,33 @@ async function main() {
     console.log("posidon libs already depoloyed");
   }
 
+  // maxTx and nLevelsVerifer must have the same number of elements as verifiers
+  let maxTxVerifier = deployParameters[chainId].maxTxVerifier || maxTxVerifierDefault;
+  let nLevelsVerifer = deployParameters[chainId].nLevelsVerifer || nLevelsVeriferDefault;
+
   // verifiers rollup libs
   let libVerifiersAddress = deployParameters[chainId].libVerifiersAddress;
   if (!libVerifiersAddress || libVerifiersAddress.length == 0) {
-
-    const buidlerVerifierRollupMock = await VerifierRollupMock.deploy();
-    await buidlerVerifierRollupMock.deployed();
-
-    const buidlerVerifierRollupReal = await VerifierRollupReal.deploy();
-    await buidlerVerifierRollupReal.deployed();
-
-    libVerifiersAddress = [buidlerVerifierRollupReal.address, buidlerVerifierRollupMock.address];
+    libVerifiersAddress = [];
+    console.log("deployed verifiers libs");
+    for (let i = 0; i < maxTxVerifier.length; i++) {
+      if (maxTxVerifier[i] == 376) {
+        const buidlerVerifierRollupReal = await VerifierRollupReal.deploy();
+        await buidlerVerifierRollupReal.deployed();
+        libVerifiersAddress.push(buidlerVerifierRollupReal.address);
+        console.log("verifiers Real deployed at: ", buidlerVerifierRollupReal.address);
+      }
+      else {
+        const buidlerVerifierRollupMock = await VerifierRollupMock.deploy();
+        await buidlerVerifierRollupMock.deployed();
+        libVerifiersAddress.push(buidlerVerifierRollupMock.address);
+        console.log("verifiers Mock deployed at: ", buidlerVerifierRollupMock.address);
+      }
+    }
+  } else {
+    console.log("verifier libs already depoloyed");
   }
 
-  // maxTx and nLevelsVerifer must have the same number of elements as verifiers
-  let maxTxVerifier = deployParameters[chainId].maxTxVerifier;
-  let nLevelsVerifer = deployParameters[chainId].nLevelsVerifer;
-  if (
-    !maxTxVerifier ||
-    !nLevelsVerifer ||
-    maxTxVerifier.length != nLevelsVerifer.length ||
-    maxTxVerifier.length != libVerifiersAddress.length
-  ) {
-    maxTxVerifier = [];
-    nLevelsVerifer = [];
-    libVerifiersAddress.forEach(() => {
-      maxTxVerifier.push(maxTxVerifierConstant);
-      nLevelsVerifer.push(nLevelsVeriferConstant);
-    });
-  }
 
   // verifier withdraw lib
   let libverifiersWithdrawAddress =
