@@ -89,17 +89,12 @@ async function main() {
   const HEZToken = await ethers.getContractFactory("ERC20PermitMock");
 
   // hermez libs
-  let VerifierRollupHelper;
-  
-  if (!deployParameters[chainId].realVerifier || deployParameters[chainId].realVerifier == false) {
-    VerifierRollupHelper = await ethers.getContractFactory(
-      "VerifierRollupHelper"
-    );
-  } else {
-    VerifierRollupHelper = await ethers.getContractFactory(
-      "Verifier"
-    );
-  }
+  const VerifierRollupMock = await ethers.getContractFactory(
+    "VerifierRollupHelper"
+  );
+  const VerifierRollupReal = await ethers.getContractFactory(
+    "Verifier"
+  );
 
   const VerifierWithdrawHelper = await ethers.getContractFactory(
     "VerifierWithdrawHelper"
@@ -201,11 +196,16 @@ async function main() {
   // verifiers rollup libs
   let libVerifiersAddress = deployParameters[chainId].libVerifiersAddress;
   if (!libVerifiersAddress || libVerifiersAddress.length == 0) {
-    let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
-    await buidlerVerifierRollupHelper.deployed();
-    libVerifiersAddress = [buidlerVerifierRollupHelper.address];
+    const buidlerVerifierRollupMock = await VerifierRollupMock.deploy();
+    await buidlerVerifierRollupMock.deployed();
+
+    const buidlerVerifierRollupReal = await VerifierRollupReal.deploy();
+    await buidlerVerifierRollupReal.deployed();
+    libVerifiersAddress = [buidlerVerifierRollupReal.address, buidlerVerifierRollupMock.address];
     console.log("deployed verifiers libs");
-    console.log("verifiers deployed at: ", libVerifiersAddress);
+    console.log("verifiers Real deployed at: ", buidlerVerifierRollupReal.address);
+    console.log("verifiers Mock deployed at: ", buidlerVerifierRollupMock.address);
+
   } else {
     console.log("verifier libs already depoloyed");
   }

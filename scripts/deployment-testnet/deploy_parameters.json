@@ -20,10 +20,10 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      376
+      376, 512
     ],
     "nLevelsVerifer": [
-      32
+      32, 32
     ],
     "tokens": [
       "0x95b58a6bff3d14b7db2f5cb5f0ad413dc2940658"
@@ -31,9 +31,7 @@
     "realVerifier": false
   },
   "3": {
-    "libVerifiersAddress": [
-      "0x707dE023c5091E6262371F07630413Ef2c37E094"
-    ],
+    "libVerifiersAddress": [],
     "libposeidonsAddress": [
       "0xaAa08C49F6DB8056eA39B663CA6eA5b1C4Af84cB",
       "0x3094F5CC377F661899C5EE65B1833B49cB09123d",
@@ -52,10 +50,10 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      376
+      376, 512
     ],
     "nLevelsVerifer": [
-      32
+      32, 32
     ],
     "tokens": [
       "0xad6d458402f60fd3bd25163575031acdce07538d"
