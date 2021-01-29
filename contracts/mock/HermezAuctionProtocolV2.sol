@@ -3,6 +3,7 @@
 pragma solidity 0.6.12;
 import "../math/SafeMathUint128.sol";
 import "../interfaces/IHEZToken.sol";
+import "../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
@@ -14,7 +15,11 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
  * define the rules to coordinate this auction where the bids will be placed
  * only in HEZ utility token.
  */
-contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
+contract HermezAuctionProtocolV2 is
+    Initializable,
+    ReentrancyGuardUpgradeable,
+    IHermezAuctionProtocol
+{
     using SafeMath128 for uint128;
 
     struct Coordinator {
@@ -27,6 +32,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
     struct SlotState {
         address bidder;
         bool fulfilled;
+        bool forgerCommitment;
         uint128 bidAmount; // Since the total supply of HEZ will be less than 100M, with 128 bits it is enough to
         uint128 closedMinBid; // store the bidAmount and closed minBid. bidAmount is the bidding for an specific slot.
     }
@@ -56,9 +62,9 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
     uint128[6] private _defaultSlotSetBid;
     // First block where the first slot begins
     uint128 public genesisBlock;
-    // Distance (#slots) to the closest slot to which you can bid ( 2 Slots = 2 * 40 Blocks = 20 min )
+    // Number of closed slots after the current slot ( 2 Slots = 2 * 40 Blocks = 20 min )
     uint16 private _closedAuctionSlots;
-    // Distance (#slots) to the farthest slot to which you can bid ( 30 days = 4320 slots )
+    // Total number of open slots which you can bid ( 30 days = 4320 slots )
     uint16 private _openAuctionSlots;
     // How the HEZ tokens deposited by the slot winner are distributed ( Burn: 40.00% - Donation: 40.00% - HGT: 20.00% )
     uint16[3] private _allocationRatio; // Two decimal precision
@@ -148,6 +154,12 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
         string memory _bootCoordinatorURL
     ) public initializer {
         __ReentrancyGuard_init_unchained();
+
+        require(
+            hermezRollupAddress != address(0),
+            "HermezAuctionProtocol::hermezAuctionProtocolInitializer ADDRESS_0_NOT_VALID"
+        );
+
         _outbidding = 1000;
         _slotDeadline = 20;
         _closedAuctionSlots = 2;
@@ -162,11 +174,13 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
             INITIAL_MINIMAL_BIDDING
         ];
 
-        tokenHEZ = IHEZToken(token);
         require(
             genesis >= block.number + (BLOCKS_PER_SLOT * _closedAuctionSlots),
             "HermezAuctionProtocol::hermezAuctionProtocolInitializer GENESIS_BELOW_MINIMAL"
         );
+
+        tokenHEZ = IHEZToken(token);
+
         genesisBlock = genesis;
         hermezRollup = hermezRollupAddress;
         governanceAddress = _governanceAddress;
@@ -198,7 +212,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @notice Getter of the current `_slotDeadline`
      * @return The `_slotDeadline` value
      */
-    function getSlotDeadline() external view returns (uint8) {
+    function getSlotDeadline() external override view returns (uint8) {
         return _slotDeadline;
     }
 
@@ -207,7 +221,11 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @param newDeadline new `_slotDeadline`
      * Events: `NewSlotDeadline`
      */
-    function setSlotDeadline(uint8 newDeadline) external onlyGovernance {
+    function setSlotDeadline(uint8 newDeadline)
+        external
+        override
+        onlyGovernance
+    {
         require(
             newDeadline <= BLOCKS_PER_SLOT,
             "HermezAuctionProtocol::setSlotDeadline: GREATER_THAN_BLOCKS_PER_SLOT"
@@ -220,7 +238,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @notice Getter of the current `_openAuctionSlots`
      * @return The `_openAuctionSlots` value
      */
-    function getOpenAuctionSlots() external view returns (uint16) {
+    function getOpenAuctionSlots() external override view returns (uint16) {
         return _openAuctionSlots;
     }
 
@@ -234,12 +252,9 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      */
     function setOpenAuctionSlots(uint16 newOpenAuctionSlots)
         external
+        override
         onlyGovernance
     {
-        require(
-            newOpenAuctionSlots >= _closedAuctionSlots,
-            "HermezAuctionProtocol::setOpenAuctionSlots: SMALLER_THAN_CLOSED_AUCTION_SLOTS"
-        );
         _openAuctionSlots = newOpenAuctionSlots;
         emit NewOpenAuctionSlots(_openAuctionSlots);
     }
@@ -248,7 +263,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @notice Getter of the current `_closedAuctionSlots`
      * @return The `_closedAuctionSlots` value
      */
-    function getClosedAuctionSlots() external view returns (uint16) {
+    function getClosedAuctionSlots() external override view returns (uint16) {
         return _closedAuctionSlots;
     }
 
@@ -262,12 +277,9 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      */
     function setClosedAuctionSlots(uint16 newClosedAuctionSlots)
         external
+        override
         onlyGovernance
     {
-        require(
-            newClosedAuctionSlots <= _openAuctionSlots,
-            "HermezAuctionProtocol::setClosedAuctionSlots: GREATER_THAN_CLOSED_AUCTION_SLOTS"
-        );
         _closedAuctionSlots = newClosedAuctionSlots;
         emit NewClosedAuctionSlots(_closedAuctionSlots);
     }
@@ -276,17 +288,25 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @notice Getter of the current `_outbidding`
      * @return The `_outbidding` value
      */
-    function getOutbidding() external view returns (uint16) {
+    function getOutbidding() external override view returns (uint16) {
         return _outbidding;
     }
 
     /**
      * @notice Allows to change the `_outbidding` if it's called by the owner
-     * @dev newOutbidding between 0.00% and 655.36%
+     * @dev newOutbidding between 0.01% and 100.00%
      * @param newOutbidding new `_outbidding`
      * Events: `NewOutbidding`
      */
-    function setOutbidding(uint16 newOutbidding) external onlyGovernance {
+    function setOutbidding(uint16 newOutbidding)
+        external
+        override
+        onlyGovernance
+    {
+        require(
+            newOutbidding > 1 && newOutbidding < 10000,
+            "HermezAuctionProtocol::setOutbidding: OUTBIDDING_NOT_VALID"
+        );
         _outbidding = newOutbidding;
         emit NewOutbidding(_outbidding);
     }
@@ -295,7 +315,12 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @notice Getter of the current `_allocationRatio`
      * @return The `_allocationRatio` array
      */
-    function getAllocationRatio() external view returns (uint16[3] memory) {
+    function getAllocationRatio()
+        external
+        override
+        view
+        returns (uint16[3] memory)
+    {
         return _allocationRatio;
     }
 
@@ -306,12 +331,17 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      */
     function setAllocationRatio(uint16[3] memory newAllocationRatio)
         external
+        override
         onlyGovernance
     {
         require(
-            (newAllocationRatio[0] +
-                newAllocationRatio[1] +
-                newAllocationRatio[2]) == 10000,
+            newAllocationRatio[0] <= 10000 &&
+                newAllocationRatio[1] <= 10000 &&
+                newAllocationRatio[2] <= 10000 &&
+                newAllocationRatio[0] +
+                    newAllocationRatio[1] +
+                    newAllocationRatio[2] ==
+                10000,
             "HermezAuctionProtocol::setAllocationRatio: ALLOCATION_RATIO_NOT_VALID"
         );
         _allocationRatio = newAllocationRatio;
@@ -322,7 +352,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @notice Getter of the current `_donationAddress`
      * @return The `_donationAddress`
      */
-    function getDonationAddress() external view returns (address) {
+    function getDonationAddress() external override view returns (address) {
         return _donationAddress;
     }
 
@@ -333,6 +363,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      */
     function setDonationAddress(address newDonationAddress)
         external
+        override
         onlyGovernance
     {
         require(
@@ -347,7 +378,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @notice Getter of the current `_bootCoordinator`
      * @return The `_bootCoordinator`
      */
-    function getBootCoordinator() external view returns (address) {
+    function getBootCoordinator() external override view returns (address) {
         return _bootCoordinator;
     }
 
@@ -359,7 +390,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
     function setBootCoordinator(
         address newBootCoordinator,
         string memory newBootCoordinatorURL
-    ) external onlyGovernance {
+    ) external override onlyGovernance {
         _bootCoordinator = newBootCoordinator;
         bootCoordinatorURL = newBootCoordinatorURL;
         emit NewBootCoordinator(_bootCoordinator, newBootCoordinatorURL);
@@ -383,6 +414,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      */
     function changeDefaultSlotSetBid(uint128 slotSet, uint128 newInitialMinBid)
         external
+        override
         onlyGovernance
     {
         require(
@@ -415,6 +447,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      */
     function setCoordinator(address forger, string memory coordinatorURL)
         external
+        override
     {
         require(
             keccak256(abi.encodePacked(coordinatorURL)) !=
@@ -494,14 +527,14 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
         uint128 slot,
         uint128 bidAmount,
         bytes calldata permit
-    ) external {
+    ) external override {
         // To avoid possible mistakes we don't allow anyone to bid without setting a forger
         require(
             coordinators[msg.sender].forger != address(0),
             "HermezAuctionProtocol::processBid: COORDINATOR_NOT_REGISTERED"
         );
         require(
-            slot >= (getCurrentSlotNumber() + _closedAuctionSlots),
+            slot > (getCurrentSlotNumber() + _closedAuctionSlots),
             "HermezAuctionProtocol::processBid: AUCTION_CLOSED"
         );
         require(
@@ -510,7 +543,7 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
         );
 
         require(
-            slot <
+            slot <=
                 (getCurrentSlotNumber() +
                     _closedAuctionSlots +
                     _openAuctionSlots),
@@ -553,13 +586,13 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
         uint128 maxBid,
         uint128 minBid,
         bytes calldata permit
-    ) external {
+    ) external override {
         require(
-            startingSlot >= (getCurrentSlotNumber() + _closedAuctionSlots),
+            startingSlot > (getCurrentSlotNumber() + _closedAuctionSlots),
             "HermezAuctionProtocol::processMultiBid AUCTION_CLOSED"
         );
         require(
-            endingSlot <
+            endingSlot <=
                 (getCurrentSlotNumber() +
                     _closedAuctionSlots +
                     _openAuctionSlots),
@@ -681,6 +714,10 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
     ) private {
         address prevBidder = slots[slot].bidder;
         uint128 prevBidValue = slots[slot].bidAmount;
+        require(
+            bidAmount > prevBidValue,
+            "HermezAuctionProtocol::_doBid: BID_MUST_BE_HIGHER"
+        );
 
         pendingBalances[bidder] = pendingBalances[bidder].sub(bidAmount);
 
@@ -703,7 +740,22 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @return a bool true in case it can forge, false otherwise
      */
     function canForge(address forger, uint256 blockNumber)
-        public
+        external
+        override
+        view
+        returns (bool)
+    {
+        return _canForge(forger, blockNumber);
+    }
+
+    /**
+     * @notice function to know if a certain address can forge into a certain block
+     * @param forger the address of the coodirnator's forger
+     * @param blockNumber block number to check
+     * @return a bool true in case it can forge, false otherwise
+     */
+    function _canForge(address forger, uint256 blockNumber)
+        internal
         view
         returns (bool)
     {
@@ -728,7 +780,10 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
             : slots[slotToForge].closedMinBid;
 
         // if the relative block has exceeded the slotDeadline and no batch has been forged, anyone can forge
-        if (!slots[slotToForge].fulfilled && (relativeBlock >= _slotDeadline)) {
+        if (
+            !slots[slotToForge].forgerCommitment &&
+            (relativeBlock >= _slotDeadline)
+        ) {
             return true;
             //if forger bidAmount has exceeded the minBid it can forge
         } else if (
@@ -754,80 +809,114 @@ contract HermezAuctionProtocolV2 is Initializable, ReentrancyGuardUpgradeable {
      * @param forger the address of the coodirnator's forger
      * Events: `NewForgeAllocated` and `NewForge`
      */
-    function forge(address forger) external {
+    function forge(address forger) external override {
         require(
             msg.sender == hermezRollup,
             "HermezAuctionProtocol::forge: ONLY_HERMEZ_ROLLUP"
         );
         require(
-            canForge(forger, block.number),
+            _canForge(forger, block.number),
             "HermezAuctionProtocol::forge: CANNOT_FORGE"
         );
         uint128 slotToForge = getCurrentSlotNumber();
 
-        bool prevFulfilled = slots[slotToForge].fulfilled;
-
-        // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
-        // otherwise the one that has been saved will be used
-        uint128 minBid = (slots[slotToForge].closedMinBid == 0)
-            ? _defaultSlotSetBid[getSlotSet(slotToForge)]
-            : slots[slotToForge].closedMinBid;
+        if (!slots[slotToForge].forgerCommitment) {
+            // Get the relativeBlock to check if the slotDeadline has been exceeded
+            uint128 relativeBlock = uint128(block.number).sub(
+                (slotToForge.mul(BLOCKS_PER_SLOT)).add(genesisBlock)
+            );
+            if (relativeBlock < _slotDeadline) {
+                slots[slotToForge].forgerCommitment = true;
+            }
+        }
 
         // Default values:** Burn: 40% - Donation: 40% - HGT: 20%
         // Allocated is used to know if we have already distributed the HEZ tokens
-        if (!prevFulfilled) {
+        if (!slots[slotToForge].fulfilled) {
             slots[slotToForge].fulfilled = true;
 
-            // If the bootcoordinator is forging and there has been a previous bid that is lower than the slot min bid,
-            // we must return the tokens to the bidder and the tokens have not been distributed
-            if (
-                (_bootCoordinator == forger) &&
-                (slots[slotToForge].bidAmount != 0) &&
-                (slots[slotToForge].bidAmount < minBid)
-            ) {
-                // We save the minBid that this block has had
-                slots[slotToForge].closedMinBid = minBid;
-                pendingBalances[slots[slotToForge]
-                    .bidder] = pendingBalances[slots[slotToForge].bidder].add(
-                    slots[slotToForge].bidAmount
-                );
-                // In case the winner is forging we have to allocate the tokens according to the desired distribution
-            } else if (_bootCoordinator != forger) {
-                // We save the minBid that this block has had
-                slots[slotToForge].closedMinBid = slots[slotToForge].bidAmount;
-                // calculation of token distribution
-                uint128 burnAmount = slots[slotToForge]
-                    .bidAmount
-                    .mul(_allocationRatio[0])
-                    .div(uint128(10000)); // Two decimal precision
-                uint128 donationAmount = slots[slotToForge]
-                    .bidAmount
-                    .mul(_allocationRatio[1])
-                    .div(uint128(10000)); // Two decimal precision
-                uint128 governanceAmount = slots[slotToForge]
-                    .bidAmount
-                    .mul(_allocationRatio[2])
-                    .div(uint128(10000)); // Two decimal precision
-                // Tokens to burn
-                tokenHEZ.burn(burnAmount);
-                // Tokens to donate
-                pendingBalances[_donationAddress] = pendingBalances[_donationAddress]
-                    .add(donationAmount);
-                // Tokens for the governace address
-                pendingBalances[governanceAddress] = pendingBalances[governanceAddress]
-                    .add(governanceAmount);
+            if (slots[slotToForge].bidAmount != 0) {
+                // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
+                // otherwise the one that has been saved will be used
+                uint128 minBid = (slots[slotToForge].closedMinBid == 0)
+                    ? _defaultSlotSetBid[getSlotSet(slotToForge)]
+                    : slots[slotToForge].closedMinBid;
 
-                emit NewForgeAllocated(
-                    slots[slotToForge].bidder,
-                    forger,
-                    slotToForge,
-                    burnAmount,
-                    donationAmount,
-                    governanceAmount
-                );
+                // If the bootcoordinator is forging and there has been a previous bid that is lower than the slot min bid,
+                // we must return the tokens to the bidder and the tokens have not been distributed
+                if (slots[slotToForge].bidAmount < minBid) {
+                    // We save the minBid that this block has had
+                    pendingBalances[slots[slotToForge]
+                        .bidder] = pendingBalances[slots[slotToForge].bidder]
+                        .add(slots[slotToForge].bidAmount);
+                    // In case the winner is forging we have to allocate the tokens according to the desired distribution
+                } else {
+                    uint128 bidAmount = slots[slotToForge].bidAmount;
+                    // calculation of token distribution
+
+                    uint128 amountToBurn = bidAmount
+                        .mul(_allocationRatio[0])
+                        .div(uint128(10000)); // Two decimal precision
+                    uint128 donationAmount = bidAmount
+                        .mul(_allocationRatio[1])
+                        .div(uint128(10000)); // Two decimal precision
+                    uint128 governanceAmount = bidAmount
+                        .mul(_allocationRatio[2])
+                        .div(uint128(10000)); // Two decimal precision
+
+                    // Tokens to burn
+                    require(
+                        tokenHEZ.burn(amountToBurn),
+                        "HermezAuctionProtocol::forge: TOKEN_BURN_FAILED"
+                    );
+
+                    // Tokens to donate
+                    pendingBalances[_donationAddress] = pendingBalances[_donationAddress]
+                        .add(donationAmount);
+                    // Tokens for the governace address
+                    pendingBalances[governanceAddress] = pendingBalances[governanceAddress]
+                        .add(governanceAmount);
+
+                    emit NewForgeAllocated(
+                        slots[slotToForge].bidder,
+                        forger,
+                        slotToForge,
+                        amountToBurn,
+                        donationAmount,
+                        governanceAmount
+                    );
+                }
             }
         }
         emit NewForge(forger, slotToForge);
+    }
+
+    function claimPendingHEZ(uint128 slot) public {
+        require(
+            slot < getCurrentSlotNumber(),
+            "HermezAuctionProtocol::claimPendingHEZ: ONLY_IF_PREVIOUS_SLOT"
+        );
+        require(
+            !slots[slot].fulfilled,
+            "HermezAuctionProtocol::claimPendingHEZ: ONLY_IF_NOT_FULFILLED"
+        );
+        // If the closedMinBid is 0 it means that we have to take as minBid the one that is set for this slot set,
+        // otherwise the one that has been saved will be used
+        uint128 minBid = (slots[slot].closedMinBid == 0)
+            ? _defaultSlotSetBid[getSlotSet(slot)]
+            : slots[slot].closedMinBid;
+
+        require(
+            slots[slot].bidAmount < minBid,
+            "HermezAuctionProtocol::claimPendingHEZ: ONLY_IF_NOT_FULFILLED"
+        );
+
+        slots[slot].closedMinBid = minBid;
+        slots[slot].fulfilled = true;
+
+        pendingBalances[slots[slot].bidder] = pendingBalances[slots[slot]
+            .bidder]
+            .add(slots[slot].bidAmount);
     }
 
     /**

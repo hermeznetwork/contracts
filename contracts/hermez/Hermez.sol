@@ -662,6 +662,14 @@ contract Hermez is InstantWithdrawManager {
         return tokenList.length;
     }
 
+    /**
+     * @dev Retrieve the number of rollup verifiers
+     * @return Number of verifiers
+     */
+    function rollupVerifiersLength() public view returns (uint256) {
+        return rollupVerifiers.length;
+    }
+
     //////////////
     // Internal/private methods
     /////////////
