@@ -6,7 +6,7 @@ const Scalar = require("ffjavascript").Scalar;
 const { smt } = require("circomlib");
 const babyJub = require("circomlib").babyJub;
 const utilsScalar = require("ffjavascript").utils;
-
+const axios = require("axios");
 const { HermezAccount, stateUtils, txUtils } = require("@hermeznetwork/commonjs");
 
 describe("Hermez Helpers", function () {
@@ -21,7 +21,7 @@ describe("Hermez Helpers", function () {
   });
 
   describe("utility helpers", function () {
-    it("verify proof", async function () {
+    it("verify proof precalculated", async function () {
       const proofA = ["12823142741947462018376637068611061184530582773186663424558261242088932958650",
         "15510239331731659263324114188636716065802904878544094401484954593592807049671"
       ];
@@ -39,6 +39,39 @@ describe("Hermez Helpers", function () {
         "20614173163416102479367448539231727763415631163149570165039228652167811930586"
       ];
       const input = ["13125286639093380931878518383173032474507961807467565131003538765912150608017"];
+
+      expect(
+        await buidlerProverContract.verifyProof(
+          proofA,
+          proofB,
+          proofC,
+          input,
+        )
+      ).to.equal(true);
+    });
+
+    it("verify proof server proof", async function () {
+
+
+      const response = await axios.get("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/status");
+
+      const proofA = [JSON.parse(response.data.proof).pi_a[0],
+        JSON.parse(response.data.proof).pi_a[1]
+      ];
+      const proofB = [
+        [
+          JSON.parse(response.data.proof).pi_b[0][1],
+          JSON.parse(response.data.proof).pi_b[0][0]
+        ],
+        [
+          JSON.parse(response.data.proof).pi_b[1][1],
+          JSON.parse(response.data.proof).pi_b[1][0]
+        ]
+      ];
+      const proofC =  [JSON.parse(response.data.proof).pi_c[0],
+        JSON.parse(response.data.proof).pi_c[1]
+      ];
+      const input = JSON.parse(response.data.pubData);
 
       expect(
         await buidlerProverContract.verifyProof(
