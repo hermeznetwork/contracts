@@ -37,7 +37,11 @@ getblock() {
         printf "%d" "${block_hex}"
 }
 
-minerstop
+if [ "$1" = "nostop" ]; then
+    echo "mining for every tx"
+else
+    minerstop
+fi
 
 while [ true ]; do
         block=`getblock`
