@@ -7,7 +7,13 @@ const { smt } = require("circomlib");
 const babyJub = require("circomlib").babyJub;
 const utilsScalar = require("ffjavascript").utils;
 const axios = require("axios");
-const { HermezAccount, stateUtils, txUtils } = require("@hermeznetwork/commonjs");
+const { RollupDB } = require("@hermeznetwork/commonjs");
+const SMTMemDB = require("circomlib").SMTMemDB;
+const { stringifyBigInts, unstringifyBigInts } = require("ffjavascript").utils;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 describe("Hermez Helpers", function () {
   this.timeout(0);
@@ -51,9 +57,30 @@ describe("Hermez Helpers", function () {
     });
 
     it("verify proof server proof", async function () {
+      const maxTx = 376;
+      const nLevels = 32;
+      const maxL1Tx = 256;
+      const nFeeTx = 64;
+      const chainID = 15;
+
+      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
+      const bb = await rollupDB.buildBatch(
+        maxTx,
+        nLevels,
+        maxL1Tx,
+        nFeeTx
+      );
+      await bb.build();
 
 
-      const response = await axios.get("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/status");
+      const inputJson = stringifyBigInts(bb.getInput());
+      await axios.post("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/input", inputJson);
+
+      let response;
+      do {
+        response = await axios.get("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/status");
+        await sleep(1000);
+      } while (response.data.status == "busy");
 
       const proofA = [JSON.parse(response.data.proof).pi_a[0],
         JSON.parse(response.data.proof).pi_a[1]
