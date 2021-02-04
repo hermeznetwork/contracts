@@ -173,7 +173,7 @@ contract HermezAuctionProtocol is
         ];
 
         require(
-            genesis >= block.number + (BLOCKS_PER_SLOT * _closedAuctionSlots),
+            genesis >= block.number,
             "HermezAuctionProtocol::hermezAuctionProtocolInitializer GENESIS_BELOW_MINIMAL"
         );
 
@@ -408,7 +408,7 @@ contract HermezAuctionProtocol is
         onlyGovernance
     {
         require(
-            slotSet <= _defaultSlotSetBid.length,
+            slotSet < _defaultSlotSetBid.length,
             "HermezAuctionProtocol::changeDefaultSlotSetBid: NOT_VALID_SLOT_SET"
         );
         require(
@@ -486,7 +486,7 @@ contract HermezAuctionProtocol is
      */
     function getMinBidBySlot(uint128 slot) public view returns (uint128) {
         require(
-            slot >= (getCurrentSlotNumber() + _closedAuctionSlots),
+            slot > (getCurrentSlotNumber() + _closedAuctionSlots),
             "HermezAuctionProtocol::getMinBidBySlot: AUCTION_CLOSED"
         );
         uint128 slotSet = getSlotSet(slot);
