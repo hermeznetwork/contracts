@@ -59,6 +59,6 @@
     "web3": "^1.2.11"
   },
   "dependencies": {
-    "@hermeznetwork/commonjs": "0.0.8"
+    "@hermeznetwork/commonjs": "0.1.0"
   }
 }
