@@ -50,8 +50,8 @@ contract HermezV2 is InstantWithdrawManager {
     uint256 constant _L1_COORDINATOR_TOTALBYTES = 101;
 
     // [20 bytes] fromEthAddr + [32 bytes] fromBjj-compressed + [6 bytes] fromIdx +
-    // [2 bytes] loadAmountFloat16 + [2 bytes] amountFloat16 + [4 bytes] tokenId + [6 bytes] toIdx
-    uint256 constant _L1_USER_TOTALBYTES = 72;
+    // [5 bytes] loadAmountFloat40 + [5 bytes] amountFloat40 + [4 bytes] tokenId + [6 bytes] toIdx
+    uint256 constant _L1_USER_TOTALBYTES = 78;
 
     // User TXs are the TX made by the user with a L1 TX
     // Coordinator TXs are the L2 account creation made by the coordinator whose signature
@@ -72,7 +72,7 @@ contract HermezV2 is InstantWithdrawManager {
     // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData + totall1L2TxsDataLength + feeIdxCoordinatorLength + [2 bytes] chainID + [4 bytes] batchNum =
     // 18546 bytes + totall1L2TxsDataLength + feeIdxCoordinatorLength
 
-    uint256 constant _INPUT_SHA_CONSTANT_BYTES = 18546;
+    uint256 constant _INPUT_SHA_CONSTANT_BYTES = 20082;
 
     uint8 public constant ABSOLUTE_MAX_L1L2BATCHTIMEOUT = 240;
 
@@ -361,8 +361,8 @@ contract HermezV2 is InstantWithdrawManager {
     function addL1Transaction(
         uint256 babyPubKey,
         uint48 fromIdx,
-        uint16 loadAmountF,
-        uint16 amountF,
+        uint40 loadAmountF,
+        uint40 amountF,
         uint32 tokenID,
         uint48 toIdx,
         bytes calldata permit
@@ -441,8 +441,8 @@ contract HermezV2 is InstantWithdrawManager {
         address ethAddress,
         uint256 babyPubKey,
         uint48 fromIdx,
-        uint16 loadAmountF,
-        uint16 amountF,
+        uint40 loadAmountF,
+        uint40 amountF,
         uint32 tokenID,
         uint48 toIdx
     ) internal {
@@ -728,7 +728,7 @@ contract HermezV2 is InstantWithdrawManager {
     /**
      * @dev Add L1-user-tx, add it to the correspoding queue
      * l1Tx L1-user-tx encoded in bytes as follows: [20 bytes] fromEthAddr || [32 bytes] fromBjj-compressed || [4 bytes] fromIdx ||
-     * [2 bytes] loadAmountFloat16 || [2 bytes] amountFloat16 || [4 bytes] tokenId || [4 bytes] toIdx
+     * [5 bytes] loadAmountFloat40 || [5 bytes] amountFloat40 || [4 bytes] tokenId || [4 bytes] toIdx
      * @param ethAddress Ethereum address of the rollup account
      * @param babyPubKey Public key babyjubjub represented as point: sign + (Ay)
      * @param fromIdx Index account of the sender account
@@ -742,8 +742,8 @@ contract HermezV2 is InstantWithdrawManager {
         address ethAddress,
         uint256 babyPubKey,
         uint48 fromIdx,
-        uint16 loadAmountF,
-        uint16 amountF,
+        uint40 loadAmountF,
+        uint40 amountF,
         uint32 tokenID,
         uint48 toIdx
     ) internal {
@@ -860,9 +860,9 @@ contract HermezV2 is InstantWithdrawManager {
 
                 mstore(ptr, 0) // write zeros
                 // [6 Bytes] fromIdx ,
-                // [2 bytes] loadAmountFloat16 .
-                // [2 bytes] amountFloat16
-                ptr := add(ptr, 10)
+                // [5 bytes] loadAmountFloat40 .
+                // [5 bytes] amountFloat40
+                ptr := add(ptr, 16)
 
                 mstore(ptr, shl(224, tokenID)) // 256 - 32 = 224 write tokenID: bytes[62:65]
                 ptr := add(ptr, 4)
@@ -900,12 +900,12 @@ contract HermezV2 is InstantWithdrawManager {
         uint256 dLen; // Length of the calldata parameter
 
         // l1L2TxsData = l2Bytes * maxTx =
-        // ([(nLevels / 8) bytes] fromIdx + [(nLevels / 8) bytes] toIdx + [2 bytes] amountFloat16 + [1 bytes] fee) * maxTx =
+        // ([(nLevels / 8) bytes] fromIdx + [(nLevels / 8) bytes] toIdx + [5 bytes] amountFloat40 + [1 bytes] fee) * maxTx =
         // ((nLevels / 4) bytes + 3 bytes) * maxTx
         uint256 l1L2TxsDataLength = ((rollupVerifiers[verifierIdx].nLevels /
             8) *
             2 +
-            3) * rollupVerifiers[verifierIdx].maxTx;
+            6) * rollupVerifiers[verifierIdx].maxTx;
 
         // [(nLevels / 8) bytes]
         uint256 feeIdxCoordinatorLength = (rollupVerifiers[verifierIdx]

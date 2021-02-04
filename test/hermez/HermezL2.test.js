@@ -20,7 +20,7 @@ const {
   calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
-  float16,
+  float40,
   HermezAccount,
   txUtils,
   stateUtils,
@@ -217,7 +217,7 @@ describe("Hermez ERC 20", function () {
         feeAddToken
       );
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
 
       const l1TxUserArray = [];
       l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
@@ -285,7 +285,7 @@ describe("Hermez ERC 20", function () {
         feeAddToken
       );
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(10000));
+      const loadAmount = float40.round(10000);
 
       const l1TxUserArray = [];
       l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
@@ -356,7 +356,7 @@ describe("Hermez ERC 20", function () {
         feeAddToken
       );
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(10000));
+      const loadAmount = float40.round(10000);
 
       const l1TxUserArray = [];
       l1TxUserArray.push(await l1UserTxCreateAccountDeposit(

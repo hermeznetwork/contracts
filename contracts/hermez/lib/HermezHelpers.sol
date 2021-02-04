@@ -191,7 +191,7 @@ contract HermezHelpers is Initializable {
      * @return Decoded floating half precision
      */
     function _float2Fix(uint40 float) internal pure returns (uint256) {
-        uint256 m = float & 0x3FFFFFFFF;
+        uint256 m = float & 0x7FFFFFFFF;
         uint256 e = float >> 35;
 
         // never overflow, max "e" value is 32
