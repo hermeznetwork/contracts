@@ -2,6 +2,8 @@ const { expect } = require("chai");
 const { ethers } = require("../../../node_modules/@nomiclabs/buidler");
 const Scalar = require("ffjavascript").Scalar;
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 const { float16, txUtils, utils } = require("@hermeznetwork/commonjs");
 const { BigNumber } = require("ethers");
@@ -30,6 +32,8 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const pathInput = path.join(__dirname, "./inputPeta.json");
+
 class ForgerTest {
   constructor(maxTx, maxL1Tx, nLevels, buidlerHermez, rollupDB, realVerifier) {
     this.rollupDB = rollupDB;
@@ -42,7 +46,7 @@ class ForgerTest {
     this.L1TxB = 544;
   }
 
-  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray) {
+  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray, log) {
     const bb = await this.rollupDB.buildBatch(
       this.maxTx,
       this.nLevels,
@@ -75,8 +79,13 @@ class ForgerTest {
       }
     }
 
+    // if(log) {
+    //   bb.addToken(1);
+    //   bb.addFeeIdx(259);
+    // }
+    
     await bb.build();
-
+    
     let stringL1CoordinatorTx = "";
     for (let tx of l1TxCoordiatorArray) {
       stringL1CoordinatorTx =
@@ -89,6 +98,9 @@ class ForgerTest {
     if (this.realVerifier == true) {
       // real verifier
       const inputJson = stringifyBigInts(bb.getInput());
+      if(log) {
+        fs.writeFileSync(pathInput, JSON.stringify(inputJson, null, 1));
+      }
       await axios.post("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/input", inputJson);
       let response;
       do {
@@ -115,7 +127,6 @@ class ForgerTest {
 
       const input = JSON.parse(response.data.pubData);
       expect(input[0]).to.equal(bb.getHashInputs().toString());
-
     } else {
       // mock verifier
       proofA = ["0", "0"];
