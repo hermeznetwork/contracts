@@ -2,14 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("../../../node_modules/@nomiclabs/buidler");
 const Scalar = require("ffjavascript").Scalar;
 
-const { float16, txUtils, utils } = require("@hermeznetwork/commonjs");
+const { float40, txUtils, utils } = require("@hermeznetwork/commonjs");
 const { BigNumber } = require("ethers");
 const nLevels = 32;
 const {
   createPermitDigest
 } = require("./erc2612");
 
-const L1_USER_BYTES = 72; // 20 ehtaddr, 32 babyjub, 4 token, 2 amountF, 2 loadAmountf, 6 fromIDx, 6 toidx
+const L1_USER_BYTES = 78; // 20 ehtaddr, 32 babyjub, 4 token, 2 amountF, 2 loadAmountf, 6 fromIDx, 6 toidx
 
 const babyjub0 = 0;
 const fromIdx0 = 0;
@@ -136,7 +136,7 @@ async function l1UserTxCreateAccountDeposit(
   buidlerTokenHermez,
   isERC20Permit
 ) {
-  const loadAmountF = float16.fix2Float(loadAmount);
+  const loadAmountF = float40.fix2Float(loadAmount);
 
   // equivalent L1 transaction:
   const l1TxcreateAccountDeposit = {
@@ -167,7 +167,7 @@ async function l1UserTxCreateAccountDeposit(
       ).to.emit(buidlerTokenHermez, "Approval");
 
       // const gasCost = await buidlerHermez.estimateGas[
-      //   "addL1Transaction(uint256,uint48,uint16,uint16,uint32,uint48)"
+      //   "addL1Transaction(uint256,uint48,uint40,uint40,uint32,uint48)"
       // ](babyjub, fromIdx0, loadAmountF, amountF0, tokenID, toIdx0);
       // console.log(gasCost.toNumber());
 
@@ -283,7 +283,7 @@ async function l1UserTxDeposit(
   buidlerTokenHermez,
   isERC20Permit
 ) {
-  const loadAmountF = float16.fix2Float(loadAmount);
+  const loadAmountF = float40.fix2Float(loadAmount);
 
   // equivalent L1 transaction:
   const l1TxDeposit = {
@@ -429,7 +429,7 @@ async function l1UserTxDepositTransfer(
   buidlerTokenHermez,
   isERC20Permit
 ) {
-  const loadAmountF = float16.fix2Float(loadAmount);
+  const loadAmountF = float40.fix2Float(loadAmount);
 
   // equivalent L1 transaction:
   const l1TxDepositTransfer = {
@@ -575,7 +575,7 @@ async function l1UserTxCreateAccountDepositTransfer(
   buidlerTokenHermez,
   isERC20Permit
 ) {
-  const loadAmountF = float16.fix2Float(loadAmount);
+  const loadAmountF = float40.fix2Float(loadAmount);
 
   // equivalent L1 transaction:
   const l1TxCreateAccountDepositTransfer = {

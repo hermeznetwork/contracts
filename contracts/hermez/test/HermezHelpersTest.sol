@@ -100,7 +100,7 @@ contract HermezHelpersTest is HermezHelpers {
         return _hash4Elements(arrayState);
     }
 
-    function float2FixTest(uint16 float) public pure returns (uint256) {
+    function float2FixTest(uint40 float) public pure returns (uint256) {
         return _float2Fix(float);
     }
 

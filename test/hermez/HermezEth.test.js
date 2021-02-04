@@ -20,7 +20,7 @@ const {
   calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
-  float16,
+  float40,
   HermezAccount,
   txUtils,
   stateUtils,
@@ -203,12 +203,12 @@ describe("Hermez ETH test", function () {
         ownerWallet,
         feeAddToken
       );
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
 
       // revert msg.value less than loadAmount
-      const loadAmountF = float16.fix2Float(loadAmount);
+      const loadAmountF = float40.fix2Float(loadAmount);
       await expect(
         buidlerHermez.addL1Transaction(
           babyjub,
@@ -246,12 +246,12 @@ describe("Hermez ETH test", function () {
       // invalid operation in Hermez.sol, test purposes
       buidlerHermez.changeCurrentIdx(257);
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const tokenID = 0;
       const fromIdx = 256;
 
       // revert msg.value less than loadAmount
-      const loadAmountF = float16.fix2Float(loadAmount);
+      const loadAmountF = float40.fix2Float(loadAmount);
       await expect(
         buidlerHermez.addL1Transaction(
           babyjub0,
@@ -288,14 +288,14 @@ describe("Hermez ETH test", function () {
       // invalid operation in Hermez.sol, test purposes
       buidlerHermez.changeCurrentIdx(257);
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const tokenID = 0;
       const fromIdx = 256;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
 
       // revert msg.value less than loadAmount
-      const loadAmountF = float16.fix2Float(loadAmount);
+      const loadAmountF = float40.fix2Float(loadAmount);
       await expect(
         buidlerHermez.addL1Transaction(
           babyjub0,
@@ -334,14 +334,14 @@ describe("Hermez ETH test", function () {
       // invalid operation in Hermez.sol, test purposes
       buidlerHermez.changeCurrentIdx(257);
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const tokenID = 0;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
       const babyjub = `0x${accounts[0].bjjCompressed}`;
 
       // revert msg.value less than loadAmount
-      const loadAmountF = float16.fix2Float(loadAmount);
+      const loadAmountF = float40.fix2Float(loadAmount);
       await expect(
         buidlerHermez.addL1Transaction(
           babyjub,
@@ -375,10 +375,10 @@ describe("Hermez ETH test", function () {
     it("forge L1 user & Coordiator Tx batch", async function () {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
 
       const l1TxUserArray = [];
 
@@ -492,10 +492,10 @@ describe("Hermez ETH test", function () {
     it("test instant withdraw circuit", async function () {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 
@@ -579,10 +579,10 @@ describe("Hermez ETH test", function () {
     it("test delayed withdraw circuit with ether", async function () {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 
@@ -665,10 +665,10 @@ describe("Hermez ETH test", function () {
     it("test instant withdraw merkle proof with ether", async function () {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 
@@ -738,10 +738,10 @@ describe("Hermez ETH test", function () {
     it("test delayed withdraw merkle proof with ether", async function () {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 

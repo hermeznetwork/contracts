@@ -10,7 +10,7 @@ const {
   calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
-  float16,
+  float40,
   HermezAccount,
   txUtils,
   stateUtils,
@@ -174,7 +174,7 @@ describe("Hermez Queue", function () {
       this.timeout(0);
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const l1TxUserArray = [];
       const rollupDB = await RollupDB(new SMTMemDB(), chainID);
       const forgerTest = new ForgerTest(
@@ -247,7 +247,7 @@ describe("Hermez Queue", function () {
       this.timeout(0);
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const l1TxUserArray = [];
       const rollupDB = await RollupDB(new SMTMemDB(), chainID);
       const forgerTest = new ForgerTest(

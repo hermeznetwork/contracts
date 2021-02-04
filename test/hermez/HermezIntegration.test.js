@@ -20,7 +20,7 @@ const {
   createPermitSignature
 } = require("./helpers/helpers");
 const {
-  float16,
+  float40,
   HermezAccount,
   txUtils,
   stateUtils,
@@ -307,10 +307,10 @@ describe("Hermez integration", function () {
       // hermez operations
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
       const l1TxUserArray = [];
       const rollupDB = await RollupDB(new SMTMemDB(), chainID);
       const forgerTest = new ForgerTest(
@@ -474,10 +474,10 @@ describe("Hermez integration", function () {
 
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 
