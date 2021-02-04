@@ -108,7 +108,7 @@ describe("Auction Protocol", function() {
     await expect(
       buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
         buidlerHEZToken.address,
-        latest + (MIN_BLOCKS - 10),
+        latest - 1,
         hermezRollupAddress,
         governanceAddress,
         donationAddress,

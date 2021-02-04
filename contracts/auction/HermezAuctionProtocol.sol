@@ -173,7 +173,7 @@ contract HermezAuctionProtocol is
         ];
 
         require(
-            genesis >= block.number + (BLOCKS_PER_SLOT * _closedAuctionSlots),
+            genesis >= block.number,
             "HermezAuctionProtocol::hermezAuctionProtocolInitializer GENESIS_BELOW_MINIMAL"
         );
 
