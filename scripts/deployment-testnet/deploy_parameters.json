@@ -20,10 +20,13 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      376, 512
+      512, 376, 376
     ],
     "nLevelsVerifer": [
-      32, 32
+      32, 32, 32
+    ],
+    "verifierType": [ 
+      "mock", "mock", "real"
     ],
     "tokens": [
       "0x95b58a6bff3d14b7db2f5cb5f0ad413dc2940658"
@@ -50,10 +53,13 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      376, 512
+      512, 376, 376
     ],
     "nLevelsVerifer": [
-      32, 32
+      32, 32, 32
+    ],
+    "verifierType": [ 
+      "mock", "mock", "real"
     ],
     "tokens": [
       "0xad6d458402f60fd3bd25163575031acdce07538d"
