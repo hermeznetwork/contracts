@@ -1,6 +1,5 @@
 require("dotenv").config();
-const path = require("path");
-const bre = require("@nomiclabs/buidler");
+const bre = require("hardhat");
 const openzeppelinUpgrade = require("./.openzeppelin/rinkeby.json");
 const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
 const deployParameters = require(pathDeployParameters);

@@ -3,12 +3,12 @@ const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
 const deployParameters = require(pathDeployParameters);
 const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 
-process.env.BUIDLER_NETWORK = deployParameters.buidlerNetwork;
-const bre = require("@nomiclabs/buidler");
-const { ethers, upgrades } = require("@nomiclabs/buidler");
+process.env.HARDHAT_NETWORK = deployParameters.hardhatNetwork;
+const bre = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 require("@openzeppelin/test-helpers/configure")({
-  provider: ethers.provider._buidlerProvider._url || "http://localhost:8545",
+  provider: ethers.provider._hardhatProvider._url || "http://localhost:8545",
 });
 const { time } = require("@openzeppelin/test-helpers");
 const fs = require("fs");
@@ -132,7 +132,7 @@ async function main() {
 
   // Deploy smart contacts:
 
-  // deploy smart contracts with proxy https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-buidler/test/initializers.js
+  // deploy smart contracts with proxy https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-hardhat/test/initializers.js
   // or intializer undefined and call initialize later
 
   // Deploy auction with proxy
@@ -171,21 +171,21 @@ async function main() {
   console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
   // deploy HEZ (erc20Permit) token
-  const buidlerHEZToken = await HEZToken.deploy(
+  const hardhatHEZToken = await HEZToken.deploy(
     "tokenname",
     "TKN",
     await deployer.getAddress(),
     tokenInitialAmount
   );
-  await buidlerHEZToken.deployed();
-  console.log("HEZToken deployed at: ", buidlerHEZToken.address);
+  await hardhatHEZToken.deployed();
+  console.log("HEZToken deployed at: ", hardhatHEZToken.address);
 
   // fund accounts with HEZ tokens
   if (numAccountsFund > 0) {
     // fund all accounts with tokens
     const accountToFund = await ethers.getSigners();
     for (let i = 0; i < numAccountsFund; i++) {
-      await buidlerHEZToken.transfer(
+      await hardhatHEZToken.transfer(
         await accountToFund[i].getAddress(),
         ethers.utils.parseEther("10000")
       );
@@ -196,22 +196,22 @@ async function main() {
   // poseidon libs
   let libposeidonsAddress = deployParameters[chainId].libposeidonsAddress;
   if (!libposeidonsAddress || libposeidonsAddress.length != 3) {
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
-    await buidlerPoseidon2Elements.deployed();
-    await buidlerPoseidon3Elements.deployed();
-    await buidlerPoseidon4Elements.deployed();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
+    await hardhatPoseidon2Elements.deployed();
+    await hardhatPoseidon3Elements.deployed();
+    await hardhatPoseidon4Elements.deployed();
 
     libposeidonsAddress = [
-      buidlerPoseidon2Elements.address,
-      buidlerPoseidon3Elements.address,
-      buidlerPoseidon4Elements.address,
+      hardhatPoseidon2Elements.address,
+      hardhatPoseidon3Elements.address,
+      hardhatPoseidon4Elements.address,
     ];
     console.log("deployed poseidon libs");
-    console.log("poseidon 2 elements at: ", buidlerPoseidon2Elements.address);
-    console.log("poseidon 3 elements at: ", buidlerPoseidon3Elements.address);
-    console.log("poseidon 4 elements at: ", buidlerPoseidon4Elements.address);
+    console.log("poseidon 2 elements at: ", hardhatPoseidon2Elements.address);
+    console.log("poseidon 3 elements at: ", hardhatPoseidon3Elements.address);
+    console.log("poseidon 4 elements at: ", hardhatPoseidon4Elements.address);
   } else {
     console.log("posidon libs already depoloyed");
   }
@@ -253,9 +253,9 @@ async function main() {
   let libverifiersWithdrawAddress =
     deployParameters[chainId].libVerifiersWithdrawAddress;
   if (!libverifiersWithdrawAddress) {
-    let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
-    await buidlerVerifierWithdrawHelper.deployed();
-    libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    await hardhatVerifierWithdrawHelper.deployed();
+    libverifiersWithdrawAddress = hardhatVerifierWithdrawHelper.address;
   }
 
   // initialize upgradable smart contracts
@@ -269,7 +269,7 @@ async function main() {
   }
 
   await hermezAuctionProtocol.hermezAuctionProtocolInitializer(
-    buidlerHEZToken.address,
+    hardhatHEZToken.address,
     genesisBlock,
     hermez.address,
     hermezGovernanceAddress,
@@ -287,7 +287,7 @@ async function main() {
     calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
     libverifiersWithdrawAddress,
     hermezAuctionProtocol.address,
-    buidlerHEZToken.address,
+    hardhatHEZToken.address,
     deployParameters[chainId].forgeL1L2BatchTimeout,
     deployParameters[chainId].feeAddToken,
     libposeidonsAddress[0],
@@ -305,7 +305,7 @@ async function main() {
     hermezAuctionProtocolAddress: hermezAuctionProtocol.address,
     hermezAddress: hermez.address,
     withdrawalDelayeAddress: withdrawalDelayer.address,
-    HEZTokenAddress: buidlerHEZToken.address,
+    HEZTokenAddress: hardhatHEZToken.address,
     hermezGovernanceIndex: deployParameters[chainId]
       .hermezGovernanceAddress
       ? null
@@ -324,7 +324,7 @@ async function main() {
       : bootCoordinatorIndex,
     bootCoordinatorAddress,
     accountsFunded: numAccountsFund,
-    buidlerNetwork: deployParameters.buidlerNetwork,
+    hardhatNetwork: deployParameters.hardhatNetwork,
     mnemonic: deployParameters.mnemonic,
     test: deployParameters.test
   };

@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("../../node_modules/@nomiclabs/buidler");
+const { ethers } = require("hardhat");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const { time } = require("@openzeppelin/test-helpers");
@@ -46,10 +46,10 @@ const INITIAL_DELAY = 0;
 
 
 describe("Hermez integration", function () {
-  let buidlerTokenHermez;
-  let buidlerHermez;
-  let buidlerWithdrawalDelayer;
-  let buidlerHermezAuctionProtocol;
+  let hardhatTokenHermez;
+  let hardhatHermez;
+  let hardhatWithdrawalDelayer;
+  let hardhatHermezAuctionProtocol;
 
   let owner;
   let id1;
@@ -100,7 +100,7 @@ describe("Hermez integration", function () {
       ownerWallet.privateKey = ownerWalletTest.privateKey;
     }
     else {
-      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+      ownerWallet = new ethers.Wallet("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", ethers.provider);
     }
 
     // factory
@@ -136,29 +136,29 @@ describe("Hermez integration", function () {
     );
 
     // deploy poseidon libs
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
 
-    const poseidonAddr2 = buidlerPoseidon2Elements.address;
-    const poseidonAddr3 = buidlerPoseidon3Elements.address;
-    const poseidonAddr4 = buidlerPoseidon4Elements.address;
+    const poseidonAddr2 = hardhatPoseidon2Elements.address;
+    const poseidonAddr3 = hardhatPoseidon3Elements.address;
+    const poseidonAddr4 = hardhatPoseidon4Elements.address;
 
-    buidlerTokenHermez = await TokenERC20PermitMock.deploy(
+    hardhatTokenHermez = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
       await owner.getAddress(),
       tokenInitialAmount
     );
 
-    await buidlerTokenHermez.deployed();
-    let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
-    let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    await hardhatTokenHermez.deployed();
+    let hardhatVerifierRollupHelper = await VerifierRollupHelper.deploy();
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
 
     //deploy auction protocol
-    buidlerHermezAuctionProtocol = await HermezAuctionProtocol.deploy();
+    hardhatHermezAuctionProtocol = await HermezAuctionProtocol.deploy();
 
-    await buidlerHermezAuctionProtocol.deployed();
+    await hardhatHermezAuctionProtocol.deployed();
 
     // deploy hermez and withdrawal delayer
     let currentCount = await owner.getTransactionCount();
@@ -181,8 +181,8 @@ describe("Hermez integration", function () {
     const openAuctionSlots = 4320;
     const allocationRatio = [4000, 4000, 2000];
     await expect(
-      buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
-        buidlerTokenHermez.address,
+      hardhatHermezAuctionProtocol.hermezAuctionProtocolInitializer(
+        hardhatTokenHermez.address,
         latest + 1 + MIN_BLOCKS,
         HermezAddress,
         hermezGovernanceAddress,
@@ -191,7 +191,7 @@ describe("Hermez integration", function () {
         bootCoordinatorURL
       )
     )
-      .to.emit(buidlerHermezAuctionProtocol, "InitializeHermezAuctionProtocolEvent")
+      .to.emit(hardhatHermezAuctionProtocol, "InitializeHermezAuctionProtocolEvent")
       .withArgs(
         await donation.getAddress(), // donation address
         ownerAddress, // bootCoordinatorAddress
@@ -203,30 +203,30 @@ describe("Hermez integration", function () {
         allocationRatio
       );
 
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+    hardhatWithdrawalDelayer = await WithdrawalDelayer.deploy(
       INITIAL_DELAY,
       HermezAddress,
       hermezGovernanceAddress,
       await whiteHackGroupAddress.getAddress()
     );  
 
-    const filterInitialize = buidlerWithdrawalDelayer.filters.InitializeWithdrawalDelayerEvent(null, null, null);
-    const eventsInitialize = await buidlerWithdrawalDelayer.queryFilter(filterInitialize, 0, "latest");
+    const filterInitialize = hardhatWithdrawalDelayer.filters.InitializeWithdrawalDelayerEvent(null, null, null);
+    const eventsInitialize = await hardhatWithdrawalDelayer.queryFilter(filterInitialize, 0, "latest");
     expect(eventsInitialize[0].args.initialWithdrawalDelay).to.be.equal(INITIAL_DELAY);
     expect(eventsInitialize[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
     expect(eventsInitialize[0].args.initialEmergencyCouncil).to.be.equal( await whiteHackGroupAddress.getAddress());
 
     // deploy hermez
-    buidlerHermez = await Hermez.deploy();
-    await buidlerHermez.deployed();
+    hardhatHermez = await Hermez.deploy();
+    await hardhatHermez.deployed();
 
     await expect(
-      buidlerHermez.initializeHermez(
-        [buidlerVerifierRollupHelper.address],
+      hardhatHermez.initializeHermez(
+        [hardhatVerifierRollupHelper.address],
         calculateInputMaxTxLevels([maxTx], [nLevels]),
-        buidlerVerifierWithdrawHelper.address,
-        buidlerHermezAuctionProtocol.address,
-        buidlerTokenHermez.address,
+        hardhatVerifierWithdrawHelper.address,
+        hardhatHermezAuctionProtocol.address,
+        hardhatTokenHermez.address,
         forgeL1L2BatchTimeout,
         feeAddToken,
         poseidonAddr2,
@@ -236,17 +236,17 @@ describe("Hermez integration", function () {
         withdrawalDelay,
         WithdrawalDelayerAddress
       ))
-      .to.emit(buidlerHermez, "InitializeHermezEvent")
+      .to.emit(hardhatHermez, "InitializeHermezEvent")
       .withArgs(
         forgeL1L2BatchTimeout,
         feeAddToken,
         withdrawalDelay,
       );
 
-    expect(buidlerWithdrawalDelayer.address).to.equal(WithdrawalDelayerAddress);
-    expect(buidlerHermez.address).to.equal(HermezAddress);
+    expect(hardhatWithdrawalDelayer.address).to.equal(WithdrawalDelayerAddress);
+    expect(hardhatHermez.address).to.equal(HermezAddress);
 
-    const chainSC = await buidlerHermez.getChainID();
+    const chainSC = await hardhatHermez.getChainID();
     chainID = chainSC.toNumber();
     chainIDHex = chainSC.toHexString();
   });
@@ -255,22 +255,22 @@ describe("Hermez integration", function () {
     it("forge L1 user & Coordiator Tx batch using consensus mechanism", async function () {
       // consensus operations
       let startingBlock = (
-        await buidlerHermezAuctionProtocol.genesisBlock()
+        await hardhatHermezAuctionProtocol.genesisBlock()
       ).toNumber();
 
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(owner)
         .setCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
 
 
       const value = ethers.utils.parseEther("100");
       const deadline = ethers.constants.MaxUint256;
-      const nonce = await buidlerTokenHermez.nonces(await owner.getAddress());
+      const nonce = await hardhatTokenHermez.nonces(await owner.getAddress());
 
       const { v, r, s } = await createPermitSignature(
-        buidlerTokenHermez,
+        hardhatTokenHermez,
         ownerWallet,
-        buidlerHermezAuctionProtocol.address,
+        hardhatHermezAuctionProtocol.address,
         value,
         nonce,
         deadline
@@ -278,7 +278,7 @@ describe("Hermez integration", function () {
 
       const dataPermit = iface.encodeFunctionData("permit", [
         await owner.getAddress(),
-        buidlerHermezAuctionProtocol.address,
+        hardhatHermezAuctionProtocol.address,
         value,
         deadline,
         v,
@@ -286,7 +286,7 @@ describe("Hermez integration", function () {
         s
       ]);
 
-      await buidlerHermezAuctionProtocol.processMultiBid(
+      await hardhatHermezAuctionProtocol.processMultiBid(
         value,
         3,
         8,
@@ -313,13 +313,13 @@ describe("Hermez integration", function () {
         maxTx,
         maxL1Tx,
         nLevels,
-        buidlerHermez,
+        hardhatHermez,
         rollupDB
       );
       await AddToken(
-        buidlerHermez,
-        buidlerTokenHermez,
-        buidlerTokenHermez,
+        hardhatHermez,
+        hardhatTokenHermez,
+        hardhatTokenHermez,
         ownerWallet,
         feeAddToken
       );
@@ -332,8 +332,8 @@ describe("Hermez integration", function () {
         tokenID,
         babyjub,
         ownerWallet,
-        buidlerHermez,
-        buidlerTokenHermez,
+        hardhatHermez,
+        hardhatTokenHermez,
         numAccounts,
         true
       );
@@ -345,8 +345,8 @@ describe("Hermez integration", function () {
           tokenID,
           babyjub,
           ownerWallet,
-          buidlerHermez,
-          buidlerTokenHermez,
+          hardhatHermez,
+          hardhatTokenHermez,
           true
         )
       );
@@ -357,8 +357,8 @@ describe("Hermez integration", function () {
           tokenID,
           fromIdx,
           ownerWallet,
-          buidlerHermez,
-          buidlerTokenHermez,
+          hardhatHermez,
+          hardhatTokenHermez,
           true
         )
       );
@@ -370,8 +370,8 @@ describe("Hermez integration", function () {
           toIdx,
           amountF,
           ownerWallet,
-          buidlerHermez,
-          buidlerTokenHermez,
+          hardhatHermez,
+          hardhatTokenHermez,
           true
         )
       );
@@ -383,8 +383,8 @@ describe("Hermez integration", function () {
           amountF,
           babyjub,
           ownerWallet,
-          buidlerHermez,
-          buidlerTokenHermez,
+          hardhatHermez,
+          hardhatTokenHermez,
           true
         )
       );
@@ -395,11 +395,11 @@ describe("Hermez integration", function () {
           toIdx,
           amountF,
           ownerWallet,
-          buidlerHermez
+          hardhatHermez
         )
       );
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, hardhatHermez)
       );
 
       // forge empty batch
@@ -409,11 +409,11 @@ describe("Hermez integration", function () {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, buidlerHermez, chainIDHex)
+        await l1CoordinatorTxEth(tokenID, babyjub, ownerWallet, hardhatHermez, chainIDHex)
       );
 
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez)
+        await l1CoordinatorTxBjj(tokenID, babyjub, hardhatHermez)
       );
 
       // forge batch with all the L1 tx
@@ -422,21 +422,21 @@ describe("Hermez integration", function () {
     it("test delayed withdraw with consensus mechanism and withdrawal delayer", async function () {
       // consensus operations
       let startingBlock = (
-        await buidlerHermezAuctionProtocol.genesisBlock()
+        await hardhatHermezAuctionProtocol.genesisBlock()
       ).toNumber();
 
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(owner)
         .setCoordinator(await owner.getAddress(), COORDINATOR_1_URL);
 
       const value = ethers.utils.parseEther("100");
       const deadline = ethers.constants.MaxUint256;
-      const nonce = await buidlerTokenHermez.nonces(await owner.getAddress());
+      const nonce = await hardhatTokenHermez.nonces(await owner.getAddress());
 
       const { v, r, s } = await createPermitSignature(
-        buidlerTokenHermez,
+        hardhatTokenHermez,
         ownerWallet,
-        buidlerHermezAuctionProtocol.address,
+        hardhatHermezAuctionProtocol.address,
         value,
         nonce,
         deadline
@@ -444,7 +444,7 @@ describe("Hermez integration", function () {
 
       const dataPermit = iface.encodeFunctionData("permit", [
         await owner.getAddress(),
-        buidlerHermezAuctionProtocol.address,
+        hardhatHermezAuctionProtocol.address,
         value,
         deadline,
         v,
@@ -452,7 +452,7 @@ describe("Hermez integration", function () {
         s
       ]);
 
-      await buidlerHermezAuctionProtocol.processMultiBid(
+      await hardhatHermezAuctionProtocol.processMultiBid(
         value,
         3,
         8,
@@ -482,14 +482,14 @@ describe("Hermez integration", function () {
         maxTx,
         maxL1Tx,
         nLevels,
-        buidlerHermez,
+        hardhatHermez,
         rollupDB
       );
 
       await AddToken(
-        buidlerHermez,
-        buidlerTokenHermez,
-        buidlerTokenHermez,
+        hardhatHermez,
+        hardhatTokenHermez,
+        hardhatTokenHermez,
         ownerWallet,
         feeAddToken
       );
@@ -502,18 +502,18 @@ describe("Hermez integration", function () {
         tokenID,
         babyjub,
         ownerWallet,
-        buidlerHermez,
-        buidlerTokenHermez,
+        hardhatHermez,
+        hardhatTokenHermez,
         numAccounts,
         true
       );
 
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, ownerWallet, hardhatHermez)
       );
 
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
-        buidlerWithdrawalDelayer.address
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
+        hardhatWithdrawalDelayer.address
       );
 
       // forge empty batch
@@ -524,11 +524,11 @@ describe("Hermez integration", function () {
 
       // perform withdraw
       const instantWithdraw = false;
-      const numExitRoot = await buidlerHermez.lastForgedBatch();
+      const numExitRoot = await hardhatHermez.lastForgedBatch();
       const state = await rollupDB.getStateByIdx(256);
       const exitInfo = await rollupDB.getExitTreeInfo(256, numExitRoot);
       await expect(
-        buidlerHermez.withdrawMerkleProof(
+        hardhatHermez.withdrawMerkleProof(
           tokenID,
           amount,
           babyjub,
@@ -538,10 +538,10 @@ describe("Hermez integration", function () {
           instantWithdraw
         )
       )
-        .to.emit(buidlerHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
-        buidlerWithdrawalDelayer.address
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
+        hardhatWithdrawalDelayer.address
       );
       expect(parseInt(finalOwnerBalance)).to.equal(
         parseInt(initialOwnerBalance) + 10

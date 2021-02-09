@@ -8,9 +8,9 @@ package-lock.json
 coverage
 .coverage_*
 .openzeppelin
-artifacts/*.json
-!artifacts/Hermez.json
-!artifacts/HermezHelpers.json
-!artifacts/WithdrawalDelayer.json
-!artifacts/HermezAuctionProtocol.json
-!artifacts/InstantWithdrawManager.json
+artifacts/
+!Hermez.json
+!HermezHelpers.json
+!WithdrawalDelayer.json
+!HermezAuctionProtocol.json
+!InstantWithdrawManager.json

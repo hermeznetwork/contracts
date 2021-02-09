@@ -1,6 +1,6 @@
 const {
   ethers
-} = require("@nomiclabs/buidler");
+} = require("hardhat");
 const {
   expect
 } = require("chai");
@@ -30,8 +30,8 @@ let iface = new ethers.utils.Interface(ABIbid);
 describe("Auction Protocol", function() {
   this.timeout(40000);
 
-  let buidlerHEZToken;
-  let buidlerHermezAuctionProtocol;
+  let hardhatHEZToken;
+  let hardhatHermezAuctionProtocol;
   let owner,
     coordinator1,
     forger1,
@@ -71,18 +71,18 @@ describe("Auction Protocol", function() {
     donationAddress = await donation.getAddress();
     coordinator1Address = await coordinator1.getAddress();
 
-    buidlerHEZToken = await HEZToken.deploy(await owner.getAddress());
+    hardhatHEZToken = await HEZToken.deploy(await owner.getAddress());
 
-    await buidlerHEZToken.deployed();
+    await hardhatHEZToken.deployed();
     // Send tokens to coordinators addresses
-    await buidlerHEZToken
+    await hardhatHEZToken
       .connect(owner)
       .transfer(
         await coordinator1.getAddress(),
         ethers.utils.parseEther("10000000")
       );
 
-    await buidlerHEZToken
+    await hardhatHEZToken
       .connect(owner)
       .transfer(
         await coordinator2.getAddress(),
@@ -98,8 +98,8 @@ describe("Auction Protocol", function() {
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
     // mined.
-    buidlerHermezAuctionProtocol = await HermezAuctionProtocol.deploy();
-    await buidlerHermezAuctionProtocol.deployed();
+    hardhatHermezAuctionProtocol = await HermezAuctionProtocol.deploy();
+    await hardhatHermezAuctionProtocol.deployed();
 
     let current = await time.latestBlock();
     time.advanceBlock();
@@ -109,8 +109,8 @@ describe("Auction Protocol", function() {
       latest = (await time.latestBlock()).toNumber();
     }
 
-    await buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
-      buidlerHEZToken.address,
+    await hardhatHermezAuctionProtocol.hermezAuctionProtocolInitializer(
+      hardhatHEZToken.address,
       latest + MIN_BLOCKS,
       hermezRollupAddress,
       governanceAddress,
@@ -123,17 +123,17 @@ describe("Auction Protocol", function() {
   describe("Forge process", function() {
     beforeEach(async function() {
       // Register Coordinator
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .setCoordinator(await forger1.getAddress(), COORDINATOR_1_URL);
-      await buidlerHEZToken.connect(coordinator1).approve(buidlerHermezAuctionProtocol.address, ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+      await hardhatHEZToken.connect(coordinator1).approve(hardhatHermezAuctionProtocol.address, ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
 
     });
 
     it("shouldn't be able to forge before the auction starts", async function() {
-      let genesis = await buidlerHermezAuctionProtocol.genesisBlock();
+      let genesis = await hardhatHermezAuctionProtocol.genesisBlock();
       await expect(
-        buidlerHermezAuctionProtocol.canForge(
+        hardhatHermezAuctionProtocol.canForge(
           bootCoordinatorAddress,
           genesis.sub(1)
         )
@@ -142,7 +142,7 @@ describe("Auction Protocol", function() {
 
     it("shouldn't be able to forge a block higher than 2^128", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.canForge(
+        hardhatHermezAuctionProtocol.canForge(
           bootCoordinatorAddress,
           ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
         )
@@ -150,9 +150,9 @@ describe("Auction Protocol", function() {
     });
 
     it("bootCoordinator should be able to forge (no biddings)", async function() {
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           bootCoordinatorAddress,
           startingBlock
         )
@@ -160,9 +160,9 @@ describe("Auction Protocol", function() {
     });
 
     it("Anyone should be able to forge if slotDeadline exceeded", async function() {
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           governanceAddress,
           startingBlock.toNumber() + 20
         )
@@ -170,7 +170,7 @@ describe("Auction Protocol", function() {
     });
 
     it("The winner should be able to forge", async function() {
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
       let slotMin = 3;
@@ -179,20 +179,20 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-      buidlerHermezAuctionProtocol
+      hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       let block = startingBlock.add(3 * BLOCKS_PER_SLOT);
       // Check forger address
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           await forger1.getAddress(),
           block
         )
       ).to.be.equal(true);
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           bootCoordinatorAddress,
           block
         )
@@ -200,7 +200,7 @@ describe("Auction Protocol", function() {
     });
 
     it("bootCoordinator should be able to forge if bidAmount less than minBid", async function() {
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
       let slotMin = 3;
@@ -209,26 +209,26 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-      buidlerHermezAuctionProtocol
+      hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (i = 0; i < 6; i++) {
         // Change epochs minBid
-        await buidlerHermezAuctionProtocol
+        await hardhatHermezAuctionProtocol
           .connect(governance)
           .changeDefaultSlotSetBid(i, ethers.utils.parseEther("123456789"));
       }
 
       // Check forger address
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           governanceAddress,
           startingBlock.add(3 * BLOCKS_PER_SLOT)
         )
       ).to.be.equal(false);
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           bootCoordinatorAddress,
           startingBlock.add(3 * BLOCKS_PER_SLOT)
         )
@@ -242,15 +242,15 @@ describe("Auction Protocol", function() {
       }
 
       let forgerAddress = await coordinator1.getAddress();
-      let prevBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+      let prevBalance = await hardhatHermezAuctionProtocol.getClaimableHEZ(
         forgerAddress
       );
       // BootCoordinator forge
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(bootCoordinatorAddress);
 
-      let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+      let postBalance = await hardhatHermezAuctionProtocol.getClaimableHEZ(
         forgerAddress
       );
       // Check forgerAddress balances
@@ -264,7 +264,7 @@ describe("Auction Protocol", function() {
 
     it("shouldn't be able to forge unless it's called by Hermez rollup", async function() {
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(bootCoordinator)
           .forge(bootCoordinatorAddress)
       ).to.be.revertedWith("HermezAuctionProtocol::forge: ONLY_HERMEZ_ROLLUP");
@@ -272,7 +272,7 @@ describe("Auction Protocol", function() {
 
     it("shouldn't be able to forge unless it's the bootcoordinator or the winner", async function() {
       // Advance Blocks
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
       let blockNumber = startingBlock.add(3 * BLOCKS_PER_SLOT).toNumber();
       time.advanceBlockTo(blockNumber);
       while (blockNumber > (await time.latestBlock()).toNumber()) {
@@ -280,20 +280,20 @@ describe("Auction Protocol", function() {
       }
       // Check that governance HermezAuctionProtocol::forge: CANNOT_FORGE
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(hermezRollup)
           .forge(governanceAddress)
       ).to.be.revertedWith("HermezAuctionProtocol::forge: CANNOT_FORGE");
     });
 
     it("should be able to forge (bootCoordinator)", async function() {
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
       // Event NewForge
       let eventNewForge = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewForge();
-        buidlerHermezAuctionProtocol.on(filter, (forger, slotToForge) => {
+        filter = hardhatHermezAuctionProtocol.filters.NewForge();
+        hardhatHermezAuctionProtocol.on(filter, (forger, slotToForge) => {
           expect(forger).to.be.equal(bootCoordinatorAddress);
-          buidlerHermezAuctionProtocol.removeAllListeners();
+          hardhatHermezAuctionProtocol.removeAllListeners();
           resolve();
         });
 
@@ -311,7 +311,7 @@ describe("Auction Protocol", function() {
         sleep(100);
       }
 
-      const SlotStateBefore = await buidlerHermezAuctionProtocol.slots(slotNum);
+      const SlotStateBefore = await hardhatHermezAuctionProtocol.slots(slotNum);
 
       expect(SlotStateBefore.fulfilled).to.be.equal(false);
       expect(SlotStateBefore.forgerCommitment).to.be.equal(false);
@@ -319,14 +319,14 @@ describe("Auction Protocol", function() {
       expect(SlotStateBefore.bidAmount).to.be.equal(0);
 
       // Forge
-      await expect(buidlerHermezAuctionProtocol
+      await expect(hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(bootCoordinatorAddress)
-      ).to.emit(buidlerHermezAuctionProtocol, "NewForge")
+      ).to.emit(hardhatHermezAuctionProtocol, "NewForge")
         .withArgs(bootCoordinatorAddress, slotNum);
       await eventNewForge;
 
-      const SlotStateAfter = await buidlerHermezAuctionProtocol.slots(slotNum);
+      const SlotStateAfter = await hardhatHermezAuctionProtocol.slots(slotNum);
 
       expect(SlotStateAfter.fulfilled).to.be.equal(true);
       expect(SlotStateAfter.forgerCommitment).to.be.equal(true);
@@ -340,8 +340,8 @@ describe("Auction Protocol", function() {
       let bidAmount = ethers.utils.parseEther("11");
       // Event NewForgeAllocated
       let eventNewForgeAllocated = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewForgeAllocated();
-        buidlerHermezAuctionProtocol.on(
+        filter = hardhatHermezAuctionProtocol.filters.NewForgeAllocated();
+        hardhatHermezAuctionProtocol.on(
           filter,
           (
             bidder,
@@ -355,7 +355,7 @@ describe("Auction Protocol", function() {
             expect(burnAmount).to.be.equal(bidAmount.mul(40).div(100));
             expect(donationAmount).to.be.equal(bidAmount.mul(40).div(100));
             expect(governanceAmount).to.be.equal(bidAmount.mul(20).div(100));
-            buidlerHermezAuctionProtocol.removeAllListeners();
+            hardhatHermezAuctionProtocol.removeAllListeners();
             resolve();
           }
         );
@@ -366,7 +366,7 @@ describe("Auction Protocol", function() {
         }, TIMEOUT);
       });
 
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
 
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
@@ -376,7 +376,7 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-      buidlerHermezAuctionProtocol
+      hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
@@ -388,26 +388,26 @@ describe("Auction Protocol", function() {
         sleep(100);
       }
 
-      const SlotStateBefore = await buidlerHermezAuctionProtocol.slots(slotNum);
+      const SlotStateBefore = await hardhatHermezAuctionProtocol.slots(slotNum);
       expect(SlotStateBefore.fulfilled).to.be.equal(false);
       expect(SlotStateBefore.forgerCommitment).to.be.equal(false);
       expect(SlotStateBefore.bidder).to.be.equal(await coordinator1.getAddress());
       expect(SlotStateBefore.bidAmount).to.be.equal(bidAmount);
 
       // Winner forge
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(producer1Address);
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(producer1Address);
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(producer1Address);
       await eventNewForgeAllocated;
 
 
-      const SlotStateAfter = await buidlerHermezAuctionProtocol.slots(slotNum);
+      const SlotStateAfter = await hardhatHermezAuctionProtocol.slots(slotNum);
 
       expect(SlotStateAfter.fulfilled).to.be.equal(true);
       expect(SlotStateAfter.forgerCommitment).to.be.equal(true);
@@ -418,7 +418,7 @@ describe("Auction Protocol", function() {
       let bidAmount = ethers.utils.parseEther("11");
       // Event NewForgeAllocated
 
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
 
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
@@ -428,7 +428,7 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-      buidlerHermezAuctionProtocol
+      hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
@@ -440,27 +440,27 @@ describe("Auction Protocol", function() {
         sleep(100);
       }
 
-      const SlotStateBefore = await buidlerHermezAuctionProtocol.slots(slotNum);
+      const SlotStateBefore = await hardhatHermezAuctionProtocol.slots(slotNum);
       expect(SlotStateBefore.fulfilled).to.be.equal(false);
       expect(SlotStateBefore.forgerCommitment).to.be.equal(false);
       expect(SlotStateBefore.bidder).to.be.equal(await coordinator1.getAddress());
       expect(SlotStateBefore.bidAmount).to.be.equal(bidAmount);
 
       // Winner forge
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(producer1Address);
 
-      const SlotStateAfter = await buidlerHermezAuctionProtocol.slots(slotNum);
+      const SlotStateAfter = await hardhatHermezAuctionProtocol.slots(slotNum);
 
       expect(SlotStateAfter.fulfilled).to.be.equal(true);
       expect(SlotStateAfter.forgerCommitment).to.be.equal(false);
 
       // the commitment is not accomplished so anyone can forge!
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(await deadlineCoordinator.getAddress());
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(await deadlineCoordinator.getAddress());
     });
@@ -468,7 +468,7 @@ describe("Auction Protocol", function() {
 
     it("shouldn't be able to claim HEZ if NOT_ENOUGH_BALANCE", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.connect(donation).claimHEZ()
+        hardhatHermezAuctionProtocol.connect(donation).claimHEZ()
       ).to.be.revertedWith("HermezAuctionProtocol::claimHEZ: NOT_ENOUGH_BALANCE");
     });
 
@@ -477,14 +477,14 @@ describe("Auction Protocol", function() {
       let bidAmount = ethers.utils.parseEther("11");
       // Event HEZClaimed
       let eventHEZClaimed = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.HEZClaimed();
-        buidlerHermezAuctionProtocol.on(filter, (owner, amount) => {
+        filter = hardhatHermezAuctionProtocol.filters.HEZClaimed();
+        hardhatHermezAuctionProtocol.on(filter, (owner, amount) => {
           if (owner == governanceAddress) {
             expect(amount).to.be.equal(bidAmount.mul(3).mul(20).div(100));
           } else {
             expect(amount).to.be.equal(bidAmount.mul(3).mul(40).div(100));
           }
-          buidlerHermezAuctionProtocol.removeAllListeners();
+          hardhatHermezAuctionProtocol.removeAllListeners();
           resolve();
         });
 
@@ -494,7 +494,7 @@ describe("Auction Protocol", function() {
         }, TIMEOUT);
       });
 
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
 
 
       let amount = ethers.utils.parseEther("100");
@@ -505,7 +505,7 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-      buidlerHermezAuctionProtocol
+      hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
@@ -517,32 +517,32 @@ describe("Auction Protocol", function() {
           sleep(100);
         }
         // Forge
-        await buidlerHermezAuctionProtocol
+        await hardhatHermezAuctionProtocol
           .connect(hermezRollup)
           .forge(producer1Address);
       }
       // Check balances
-      expect(await buidlerHEZToken.balanceOf(governanceAddress)).to.be.equal(0);
+      expect(await hardhatHEZToken.balanceOf(governanceAddress)).to.be.equal(0);
       expect(
-        await buidlerHermezAuctionProtocol.getClaimableHEZ(governanceAddress)
+        await hardhatHermezAuctionProtocol.getClaimableHEZ(governanceAddress)
       ).to.be.equal(bidAmount.mul(3).mul(20).div(100));
-      await buidlerHermezAuctionProtocol.connect(governance).claimHEZ();
+      await hardhatHermezAuctionProtocol.connect(governance).claimHEZ();
       expect(
-        await buidlerHermezAuctionProtocol.getClaimableHEZ(governanceAddress)
+        await hardhatHermezAuctionProtocol.getClaimableHEZ(governanceAddress)
       ).to.be.equal(0);
-      expect(await buidlerHEZToken.balanceOf(governanceAddress)).to.be.equal(
+      expect(await hardhatHEZToken.balanceOf(governanceAddress)).to.be.equal(
         bidAmount.mul(3).mul(20).div(100)
       );
 
-      expect(await buidlerHEZToken.balanceOf(donationAddress)).to.be.equal(0);
+      expect(await hardhatHEZToken.balanceOf(donationAddress)).to.be.equal(0);
       expect(
-        await buidlerHermezAuctionProtocol.getClaimableHEZ(donationAddress)
+        await hardhatHermezAuctionProtocol.getClaimableHEZ(donationAddress)
       ).to.be.equal(bidAmount.mul(3).mul(40).div(100));
-      await buidlerHermezAuctionProtocol.connect(donation).claimHEZ();
+      await hardhatHermezAuctionProtocol.connect(donation).claimHEZ();
       expect(
-        await buidlerHermezAuctionProtocol.getClaimableHEZ(donationAddress)
+        await hardhatHermezAuctionProtocol.getClaimableHEZ(donationAddress)
       ).to.be.equal(0);
-      expect(await buidlerHEZToken.balanceOf(donationAddress)).to.be.equal(
+      expect(await hardhatHEZToken.balanceOf(donationAddress)).to.be.equal(
         bidAmount.mul(3).mul(40).div(100)
       );
 
@@ -550,7 +550,7 @@ describe("Auction Protocol", function() {
     });
 
     it("edge case: bid was `outbidded` by the DefaultSlotSetBid, boot coordinator don't forge", async function() {
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
       let slotMin = 3;
@@ -559,26 +559,26 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-      buidlerHermezAuctionProtocol
+      hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (i = 0; i < 6; i++) {
         // Change epochs minBid
-        await buidlerHermezAuctionProtocol
+        await hardhatHermezAuctionProtocol
           .connect(governance)
           .changeDefaultSlotSetBid(i, ethers.utils.parseEther("123456789"));
       }
 
       // Check forger address
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           governanceAddress,
           startingBlock.add(3 * BLOCKS_PER_SLOT)
         )
       ).to.be.equal(false);
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           bootCoordinatorAddress,
           startingBlock.add(3 * BLOCKS_PER_SLOT)
         )
@@ -592,29 +592,29 @@ describe("Auction Protocol", function() {
       }
 
       let forgerAddress = await coordinator1.getAddress();
-      let prevBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+      let prevBalance = await hardhatHermezAuctionProtocol.getClaimableHEZ(
         forgerAddress
       );
 
       // anyone can forge now
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(await deadlineCoordinator.getAddress());
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(await deadlineCoordinator.getAddress());
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(hermezRollup)
         .forge(await deadlineCoordinator.getAddress());
 
       // funds should return to the coordinator anyway
-      let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+      let postBalance = await hardhatHermezAuctionProtocol.getClaimableHEZ(
         forgerAddress
       );
 
       // the slot is fullfilled but the forgeCommitment is false, because 
       // is forged after the deadline
-      const SlotStateBefore = await buidlerHermezAuctionProtocol.slots(3);
+      const SlotStateBefore = await hardhatHermezAuctionProtocol.slots(3);
       expect(SlotStateBefore.fulfilled).to.be.equal(true);
       expect(SlotStateBefore.forgerCommitment).to.be.equal(false);
 
@@ -628,7 +628,7 @@ describe("Auction Protocol", function() {
     });
 
     it("edge case: bid was `outbidded` by the DefaultSlotSetBid, no one forge in that slot", async function() {
-      let startingBlock = await buidlerHermezAuctionProtocol.genesisBlock();
+      let startingBlock = await hardhatHermezAuctionProtocol.genesisBlock();
       let amount = ethers.utils.parseEther("100");
       let bid = ethers.utils.parseEther("11");
       let slotMin = 3;
@@ -637,26 +637,26 @@ describe("Auction Protocol", function() {
       let slotSet = [true, true, true, true, true, true];
 
       await
-      buidlerHermezAuctionProtocol
+      hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .processMultiBid(amount, slotMin, slotMax, slotSet, bid, bid, permit);
 
       for (i = 0; i < 6; i++) {
         // Change epochs minBid
-        await buidlerHermezAuctionProtocol
+        await hardhatHermezAuctionProtocol
           .connect(governance)
           .changeDefaultSlotSetBid(i, ethers.utils.parseEther("123456789"));
       }
 
       // Check forger address
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           governanceAddress,
           startingBlock.add(3 * BLOCKS_PER_SLOT)
         )
       ).to.be.equal(false);
       expect(
-        await buidlerHermezAuctionProtocol.canForge(
+        await hardhatHermezAuctionProtocol.canForge(
           bootCoordinatorAddress,
           startingBlock.add(3 * BLOCKS_PER_SLOT)
         )
@@ -670,16 +670,16 @@ describe("Auction Protocol", function() {
       }
 
       let forgerAddress = await coordinator1.getAddress();
-      let prevBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+      let prevBalance = await hardhatHermezAuctionProtocol.getClaimableHEZ(
         forgerAddress
       );
 
       // anyone can claim the tokens in the slot 3
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(deadlineCoordinator)
         .claimPendingHEZ(3);
 
-      let postBalance = await buidlerHermezAuctionProtocol.getClaimableHEZ(
+      let postBalance = await hardhatHermezAuctionProtocol.getClaimableHEZ(
         forgerAddress
       );
 

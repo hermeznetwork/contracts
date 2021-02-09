@@ -1,6 +1,6 @@
 const {
   ethers
-} = require("@nomiclabs/buidler");
+} = require("hardhat");
 const {
   expect
 } = require("chai");
@@ -24,7 +24,7 @@ describe("Hermez Governance", function() {
   let communityCouncil, bootstrapCouncil, emergencyCouncil, hermezKeeper, donation, bootCoordinator, deployer;
   let communityCouncilAddress, bootstrapCouncilAddress, emergencyCouncilAddress, hermezKeeperAddress, donationAddress, bootCoordinatorAddress;
   let hermezGovernance;
-  let buidlerHEZToken;
+  let hardhatHEZToken;
   let hermezAuctionProtocol, hermez;
   before(async function() {
     const accessControlFactory = await ethers.getContractFactory("HermezGovernance");
@@ -106,37 +106,37 @@ describe("Hermez Governance", function() {
     await withdrawalDelayer.deployed();
 
     // deploy HEZ (erc20Permit) token
-    buidlerHEZToken = await HEZToken.deploy(
+    hardhatHEZToken = await HEZToken.deploy(
       await deployer.getAddress(),
     );
-    await buidlerHEZToken.deployed();
+    await hardhatHEZToken.deployed();
 
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
-    await buidlerPoseidon2Elements.deployed();
-    await buidlerPoseidon3Elements.deployed();
-    await buidlerPoseidon4Elements.deployed();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
+    await hardhatPoseidon2Elements.deployed();
+    await hardhatPoseidon3Elements.deployed();
+    await hardhatPoseidon4Elements.deployed();
 
     libposeidonsAddress = [
-      buidlerPoseidon2Elements.address,
-      buidlerPoseidon3Elements.address,
-      buidlerPoseidon4Elements.address,
+      hardhatPoseidon2Elements.address,
+      hardhatPoseidon3Elements.address,
+      hardhatPoseidon4Elements.address,
     ];
 
-    let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
-    await buidlerVerifierRollupHelper.deployed();
-    libVerifiersAddress = [buidlerVerifierRollupHelper.address];
+    let hardhatVerifierRollupHelper = await VerifierRollupHelper.deploy();
+    await hardhatVerifierRollupHelper.deployed();
+    libVerifiersAddress = [hardhatVerifierRollupHelper.address];
 
-    let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
-    await buidlerVerifierWithdrawHelper.deployed();
-    libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    await hardhatVerifierWithdrawHelper.deployed();
+    libverifiersWithdrawAddress = hardhatVerifierWithdrawHelper.address;
 
     let genesisBlock =
             (await time.latestBlock()).toNumber() + 100;
 
     await hermezAuctionProtocol.hermezAuctionProtocolInitializer(
-      buidlerHEZToken.address,
+      hardhatHEZToken.address,
       genesisBlock,
       hermez.address,
       hermezGovernance.address,
@@ -157,7 +157,7 @@ describe("Hermez Governance", function() {
       calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
       libverifiersWithdrawAddress,
       hermezAuctionProtocol.address,
-      buidlerHEZToken.address,
+      hardhatHEZToken.address,
       10,
       10,
       libposeidonsAddress[0],
@@ -493,7 +493,7 @@ describe("Hermez Governance", function() {
       }
     });
     it("should be able to change updateTokenExchange", async function() {
-      const addressArray = [buidlerHEZToken.address];
+      const addressArray = [hardhatHEZToken.address];
       const tokenPrice = 10; //USD
       const valueArray = [tokenPrice * 1e14];
 
@@ -511,7 +511,7 @@ describe("Hermez Governance", function() {
           .execute(hermez.address, 0, data))
         .to.emit(hermezGovernance, "ExecOk");
       expect(
-        await hermez.tokenExchange(buidlerHEZToken.address)
+        await hermez.tokenExchange(hardhatHEZToken.address)
       ).to.equal(valueArray[0]);
     });
     it("should be able to change updateWithdrawalDelay", async function() {

@@ -1,6 +1,6 @@
 const {
   ethers
-} = require("@nomiclabs/buidler");
+} = require("hardhat");
 const {
   expect
 } = require("chai");
@@ -27,8 +27,8 @@ let iface = new ethers.utils.Interface(ABIbid);
 describe("Auction Protocol", function() {
   this.timeout(TIMEOUT);
 
-  let buidlerHEZToken;
-  let buidlerHermezAuctionProtocol;
+  let hardhatHEZToken;
+  let hardhatHermezAuctionProtocol;
   let owner,
     coordinator1,
     forger1,
@@ -67,20 +67,20 @@ describe("Auction Protocol", function() {
     donationAddress = await donation.getAddress();
     coordinator1Address = await coordinator1.getAddress();
 
-    buidlerHEZToken = await HEZToken.deploy(await owner.getAddress());
-    await buidlerHEZToken.deployed();
+    hardhatHEZToken = await HEZToken.deploy(await owner.getAddress());
+    await hardhatHEZToken.deployed();
     // Send tokens to coordinators addresses
-    await buidlerHEZToken
+    await hardhatHEZToken
       .connect(owner);
 
-    await buidlerHEZToken
+    await hardhatHEZToken
       .connect(owner)
       .transfer(
         await coordinator1.getAddress(),
         ethers.utils.parseEther("10000")
       );
 
-    await buidlerHEZToken
+    await hardhatHEZToken
       .connect(owner)
       .transfer(
         await coordinator2.getAddress(),
@@ -93,8 +93,8 @@ describe("Auction Protocol", function() {
       "HermezAuctionProtocol"
     );
 
-    buidlerHermezAuctionProtocol = await HermezAuctionProtocol.deploy();
-    await buidlerHermezAuctionProtocol.deployed();
+    hardhatHermezAuctionProtocol = await HermezAuctionProtocol.deploy();
+    await hardhatHermezAuctionProtocol.deployed();
 
     // Wait for pending blocks
     let current = await time.latestBlock();
@@ -106,8 +106,8 @@ describe("Auction Protocol", function() {
     }
 
     await expect(
-      buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
-        buidlerHEZToken.address,
+      hardhatHermezAuctionProtocol.hermezAuctionProtocolInitializer(
+        hardhatHEZToken.address,
         latest - 1,
         hermezRollupAddress,
         governanceAddress,
@@ -117,8 +117,8 @@ describe("Auction Protocol", function() {
       )
     ).to.be.revertedWith("HermezAuctionProtocol::hermezAuctionProtocolInitializer GENESIS_BELOW_MINIMAL");
 
-    await buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
-      buidlerHEZToken.address,
+    await hardhatHermezAuctionProtocol.hermezAuctionProtocolInitializer(
+      hardhatHEZToken.address,
       latest + 1 + MIN_BLOCKS,
       hermezRollupAddress,
       governanceAddress,
@@ -130,8 +130,8 @@ describe("Auction Protocol", function() {
 
   it("shouldn't be able to initialize twice", async function() {
     await expect(
-      buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
-        buidlerHEZToken.address,
+      hardhatHermezAuctionProtocol.hermezAuctionProtocolInitializer(
+        hardhatHEZToken.address,
         MIN_BLOCKS,
         hermezRollupAddress,
         governanceAddress,
@@ -145,13 +145,13 @@ describe("Auction Protocol", function() {
   describe("Coordinator registration", function() {
     beforeEach(async function() {
       // Register Coordinator
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .setCoordinator(await forger1.getAddress(), COORDINATOR_1_URL);
     });
     it("should register a producer/coordinator", async function() {
       // Get registered coordinator
-      let coordinator = await buidlerHermezAuctionProtocol.coordinators(
+      let coordinator = await hardhatHermezAuctionProtocol.coordinators(
         await coordinator1.getAddress()
       );
       // Check coordinator withdrawal address
@@ -164,18 +164,18 @@ describe("Auction Protocol", function() {
     it("should be able to change a register a forger", async function() {
 
       await expect (
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(coordinator1)
           .setCoordinator(await forger2.getAddress(), ""))
         .to.be.revertedWith("HermezAuctionProtocol::setCoordinator: NOT_VALID_URL");
 
       // Register Coordinator
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .setCoordinator(await forger2.getAddress(), COORDINATOR_1_URL_2);
 
       // Get registered coordinator
-      let coordinator = await buidlerHermezAuctionProtocol.coordinators(
+      let coordinator = await hardhatHermezAuctionProtocol.coordinators(
         await coordinator1.getAddress()
       );
       // Check coordinator withdrawal address
@@ -190,10 +190,10 @@ describe("Auction Protocol", function() {
   describe("Send HEZ", function() {
     // Register Coordinator
     beforeEach(async function() {
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(coordinator1)
         .setCoordinator(await forger1.getAddress(), COORDINATOR_1_URL);
-      await buidlerHEZToken.connect(coordinator1).approve(buidlerHermezAuctionProtocol.address,ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+      await hardhatHEZToken.connect(coordinator1).approve(hardhatHermezAuctionProtocol.address,ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
     });
 
     it("should send 10 HEZ to the contract", async function() {
@@ -203,10 +203,10 @@ describe("Auction Protocol", function() {
 
       // Call processBid
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(coordinator1)
           .processBid(amount,slot,amount,permit)
-      ).to.emit(buidlerHermezAuctionProtocol,"NewBid").withArgs(slot,amount,coordinator1Address);
+      ).to.emit(hardhatHermezAuctionProtocol,"NewBid").withArgs(slot,amount,coordinator1Address);
     });
   });
 
@@ -214,30 +214,30 @@ describe("Auction Protocol", function() {
     it("should return slot 0 before starting", async function() {
       // Get current slot number
       expect(
-        await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
+        await hardhatHermezAuctionProtocol.getCurrentSlotNumber()
       ).to.be.equal(0);
 
       let genesis = (
-        await buidlerHermezAuctionProtocol.genesisBlock()
+        await hardhatHermezAuctionProtocol.genesisBlock()
       ).toNumber();
       // Advance to block genesis - 40
       await time.advanceBlockTo(genesis - 40);
       // Check that the current slot is still 0 (Delay Genesis)
       expect(
-        await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
+        await hardhatHermezAuctionProtocol.getCurrentSlotNumber()
       ).to.be.equal(0);
     });
     it("should return the correct slot at #1150=>0, #1205=>1, #1245=>2, #1365=>5, #1565=>10 starting at block #1150", async function() {
       let relative_block = 15;
       // Get starting Block
       let startingBlock = (
-        await buidlerHermezAuctionProtocol.genesisBlock()
+        await hardhatHermezAuctionProtocol.genesisBlock()
       ).toNumber();
       // Advance blocks
       await time.advanceBlockTo(startingBlock + relative_block);
       // Check current slot
       expect(
-        await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
+        await hardhatHermezAuctionProtocol.getCurrentSlotNumber()
       ).to.be.equal(
         Math.floor(
           ((await time.latestBlock()) - startingBlock) / BLOCKS_PER_SLOT
@@ -250,7 +250,7 @@ describe("Auction Protocol", function() {
         (await time.latestBlock()).toNumber() + slot_step * BLOCKS_PER_SLOT
       );
       expect(
-        await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
+        await hardhatHermezAuctionProtocol.getCurrentSlotNumber()
       ).to.be.equal(
         Math.floor(
           ((await time.latestBlock()) - startingBlock) / BLOCKS_PER_SLOT
@@ -263,7 +263,7 @@ describe("Auction Protocol", function() {
         (await time.latestBlock()).toNumber() + slot_step * BLOCKS_PER_SLOT
       );
       expect(
-        await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
+        await hardhatHermezAuctionProtocol.getCurrentSlotNumber()
       ).to.be.equal(
         Math.floor(
           ((await time.latestBlock()) - startingBlock) / BLOCKS_PER_SLOT
@@ -276,7 +276,7 @@ describe("Auction Protocol", function() {
         (await time.latestBlock()).toNumber() + slot_step * BLOCKS_PER_SLOT
       );
       expect(
-        await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
+        await hardhatHermezAuctionProtocol.getCurrentSlotNumber()
       ).to.be.equal(
         Math.floor(
           ((await time.latestBlock()) - startingBlock) / BLOCKS_PER_SLOT
@@ -289,7 +289,7 @@ describe("Auction Protocol", function() {
         (await time.latestBlock()).toNumber() + slot_step * BLOCKS_PER_SLOT
       );
       expect(
-        await buidlerHermezAuctionProtocol.getCurrentSlotNumber()
+        await hardhatHermezAuctionProtocol.getCurrentSlotNumber()
       ).to.be.equal(
         Math.floor(
           ((await time.latestBlock()) - startingBlock) / BLOCKS_PER_SLOT

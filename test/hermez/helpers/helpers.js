@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("../../../node_modules/@nomiclabs/buidler");
+const { ethers } = require("hardhat");
 const Scalar = require("ffjavascript").Scalar;
 const axios = require("axios");
 const fs = require("fs");
@@ -35,12 +35,12 @@ function sleep(ms) {
 const pathInput = path.join(__dirname, "./inputPeta.json");
 
 class ForgerTest {
-  constructor(maxTx, maxL1Tx, nLevels, buidlerHermez, rollupDB, realVerifier) {
+  constructor(maxTx, maxL1Tx, nLevels, hardhatHermez, rollupDB, realVerifier) {
     this.rollupDB = rollupDB;
     this.maxTx = maxTx;
     this.maxL1Tx = maxL1Tx;
     this.nLevels = nLevels;
-    this.buidlerHermez = buidlerHermez;
+    this.hardhatHermez = hardhatHermez;
     this.realVerifier = realVerifier;
 
     this.L1TxB = 544;
@@ -60,8 +60,8 @@ class ForgerTest {
     }
 
     // check L1 user tx are the same in batchbuilder and contract
-    const currentQueue = await this.buidlerHermez.nextL1ToForgeQueue();
-    const SCL1TxData = await this.buidlerHermez.mapL1TxQueue(currentQueue);
+    const currentQueue = await this.hardhatHermez.nextL1ToForgeQueue();
+    const SCL1TxData = await this.hardhatHermez.mapL1TxQueue(currentQueue);
 
     expect(SCL1TxData).to.equal(`0x${jsL1TxData}`);
 
@@ -146,7 +146,7 @@ class ForgerTest {
     const verifierIdx = 0;
 
     await expect(
-      this.buidlerHermez.calculateInputTest(
+      this.hardhatHermez.calculateInputTest(
         newLastIdx,
         newStateRoot,
         newExitRoot,
@@ -157,11 +157,11 @@ class ForgerTest {
         verifierIdx
       )
     )
-      .to.emit(this.buidlerHermez, "ReturnUint256")
+      .to.emit(this.hardhatHermez, "ReturnUint256")
       .withArgs(bb.getHashInputs());
 
     await expect(
-      this.buidlerHermez.forgeBatch(
+      this.hardhatHermez.forgeBatch(
         newLastIdx,
         newStateRoot,
         newExitRoot,
@@ -174,7 +174,7 @@ class ForgerTest {
         proofB,
         proofC
       )
-    ).to.emit(this.buidlerHermez, "ForgeBatch")
+    ).to.emit(this.hardhatHermez, "ForgeBatch")
       .withArgs(bb.batchNumber, l1TxUserArray.length);
 
     await this.rollupDB.consolidate(bb);
@@ -186,8 +186,8 @@ async function l1UserTxCreateAccountDeposit(
   tokenID,
   babyjub,
   wallet,
-  buidlerHermez,
-  buidlerTokenHermez,
+  hardhatHermez,
+  hardhatTokenHermez,
   isERC20Permit
 ) {
   const loadAmountF = float40.fix2Float(loadAmount);
@@ -204,29 +204,29 @@ async function l1UserTxCreateAccountDeposit(
   };
   const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxcreateAccountDeposit)}`;
 
-  const lastQueue = await buidlerHermez.nextL1FillingQueue();
+  const lastQueue = await hardhatHermez.nextL1FillingQueue();
 
-  const lastQueueBytes = await buidlerHermez.mapL1TxQueue(lastQueue);
+  const lastQueueBytes = await hardhatHermez.mapL1TxQueue(lastQueue);
 
   const currentIndex = (lastQueueBytes.length - 2) / 2 / L1_USER_BYTES; // -2 --> 0x, /2 --> 2 hex digits = 1 byte
 
   if (tokenID != 0) {
     if (!isERC20Permit) {
       // tokens ERC20
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
       await expect(
-        buidlerTokenHermez.connect(wallet).approve(buidlerHermez.address, loadAmount)
-      ).to.emit(buidlerTokenHermez, "Approval");
+        hardhatTokenHermez.connect(wallet).approve(hardhatHermez.address, loadAmount)
+      ).to.emit(hardhatTokenHermez, "Approval");
 
-      // const gasCost = await buidlerHermez.estimateGas[
+      // const gasCost = await hardhatHermez.estimateGas[
       //   "addL1Transaction(uint256,uint48,uint40,uint40,uint32,uint48)"
       // ](babyjub, fromIdx0, loadAmountF, amountF0, tokenID, toIdx0);
       // console.log(gasCost.toNumber());
 
       await expect(
-        buidlerHermez.connect(wallet).addL1Transaction(
+        hardhatHermez.connect(wallet).addL1Transaction(
           babyjub,
           fromIdx0,
           loadAmountF,
@@ -236,10 +236,10 @@ async function l1UserTxCreateAccountDeposit(
           emptyPermit
         )
       )
-        .to.emit(buidlerHermez, "L1UserTxEvent")
+        .to.emit(hardhatHermez, "L1UserTxEvent")
         .withArgs(lastQueue, currentIndex, l1Txbytes);
 
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
@@ -248,17 +248,17 @@ async function l1UserTxCreateAccountDeposit(
       );
     } else {
       // tokens ERC20Permit
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
       const deadline = ethers.constants.MaxUint256;
       const value = loadAmount;
-      const nonce = await buidlerTokenHermez.nonces(await wallet.getAddress());
+      const nonce = await hardhatTokenHermez.nonces(await wallet.getAddress());
       const { v, r, s } = await createPermitSignature(
-        buidlerTokenHermez,
+        hardhatTokenHermez,
         wallet,
-        buidlerHermez.address,
+        hardhatHermez.address,
         value,
         nonce,
         deadline
@@ -266,7 +266,7 @@ async function l1UserTxCreateAccountDeposit(
 
       const data = iface.encodeFunctionData("permit", [
         await wallet.getAddress(),
-        buidlerHermez.address,
+        hardhatHermez.address,
         value,
         deadline,
         v,
@@ -276,7 +276,7 @@ async function l1UserTxCreateAccountDeposit(
 
       // send l1tx wth permit signature
       await expect(
-        buidlerHermez.connect(wallet).addL1Transaction(
+        hardhatHermez.connect(wallet).addL1Transaction(
           babyjub,
           fromIdx0,
           loadAmountF,
@@ -286,10 +286,10 @@ async function l1UserTxCreateAccountDeposit(
           data
         )
       )
-        .to.emit(buidlerHermez, "L1UserTxEvent")
+        .to.emit(hardhatHermez, "L1UserTxEvent")
         .withArgs(lastQueue, currentIndex, l1Txbytes);
 
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
@@ -301,7 +301,7 @@ async function l1UserTxCreateAccountDeposit(
     // ether
     const initialOwnerBalance = await wallet.getBalance();
     await expect(
-      buidlerHermez.connect(wallet).addL1Transaction(
+      hardhatHermez.connect(wallet).addL1Transaction(
         babyjub,
         fromIdx0,
         loadAmountF,
@@ -315,7 +315,7 @@ async function l1UserTxCreateAccountDeposit(
         }
       )
     )
-      .to.emit(buidlerHermez, "L1UserTxEvent")
+      .to.emit(hardhatHermez, "L1UserTxEvent")
       .withArgs(lastQueue, currentIndex, l1Txbytes);
 
     const finalOwnerBalance = await wallet.getBalance();
@@ -333,8 +333,8 @@ async function l1UserTxDeposit(
   tokenID,
   fromIdx,
   wallet,
-  buidlerHermez,
-  buidlerTokenHermez,
+  hardhatHermez,
+  hardhatTokenHermez,
   isERC20Permit
 ) {
   const loadAmountF = float40.fix2Float(loadAmount);
@@ -352,24 +352,24 @@ async function l1UserTxDeposit(
 
   const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxDeposit)}`;
 
-  const lastQueue = await buidlerHermez.nextL1FillingQueue();
+  const lastQueue = await hardhatHermez.nextL1FillingQueue();
 
-  const lastQueueBytes = await buidlerHermez.mapL1TxQueue(lastQueue);
+  const lastQueueBytes = await hardhatHermez.mapL1TxQueue(lastQueue);
 
   const currentIndex = (lastQueueBytes.length - 2) / 2 / L1_USER_BYTES; // -2 --> 0x, /2 --> 2 hex digits = 1 byte
 
   if (tokenID != 0) {
     if (!isERC20Permit) {
       // tokens ERC20
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
       await expect(
-        buidlerTokenHermez.connect(wallet).approve(buidlerHermez.address, loadAmount)
-      ).to.emit(buidlerTokenHermez, "Approval");
+        hardhatTokenHermez.connect(wallet).approve(hardhatHermez.address, loadAmount)
+      ).to.emit(hardhatTokenHermez, "Approval");
 
       await expect(
-        buidlerHermez.connect(wallet).addL1Transaction(
+        hardhatHermez.connect(wallet).addL1Transaction(
           babyjub0,
           fromIdx,
           loadAmountF,
@@ -379,10 +379,10 @@ async function l1UserTxDeposit(
           emptyPermit
         )
       )
-        .to.emit(buidlerHermez, "L1UserTxEvent")
+        .to.emit(hardhatHermez, "L1UserTxEvent")
         .withArgs(lastQueue, currentIndex, l1Txbytes);
 
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
@@ -391,17 +391,17 @@ async function l1UserTxDeposit(
       );
     } else {
       // tokens ERC20Permit
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
       const deadline = ethers.constants.MaxUint256;
       const value = loadAmount;
-      const nonce = await buidlerTokenHermez.nonces(await wallet.getAddress());
+      const nonce = await hardhatTokenHermez.nonces(await wallet.getAddress());
       const { v, r, s } = await createPermitSignature(
-        buidlerTokenHermez,
+        hardhatTokenHermez,
         wallet,
-        buidlerHermez.address,
+        hardhatHermez.address,
         value,
         nonce,
         deadline
@@ -409,7 +409,7 @@ async function l1UserTxDeposit(
 
       const data = iface.encodeFunctionData("permit", [
         await wallet.getAddress(),
-        buidlerHermez.address,
+        hardhatHermez.address,
         value,
         deadline,
         v,
@@ -419,7 +419,7 @@ async function l1UserTxDeposit(
 
       // send l1tx wth permit signature
       await expect(
-        buidlerHermez.connect(wallet).addL1Transaction(
+        hardhatHermez.connect(wallet).addL1Transaction(
           babyjub0,
           fromIdx,
           loadAmountF,
@@ -429,10 +429,10 @@ async function l1UserTxDeposit(
           data
         )
       )
-        .to.emit(buidlerHermez, "L1UserTxEvent")
+        .to.emit(hardhatHermez, "L1UserTxEvent")
         .withArgs(lastQueue, currentIndex, l1Txbytes);
 
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
@@ -445,7 +445,7 @@ async function l1UserTxDeposit(
     const initialOwnerBalance = await wallet.getBalance();
 
     await expect(
-      buidlerHermez.connect(wallet).addL1Transaction(
+      hardhatHermez.connect(wallet).addL1Transaction(
         babyjub0,
         fromIdx,
         loadAmountF,
@@ -459,7 +459,7 @@ async function l1UserTxDeposit(
         }
       )
     )
-      .to.emit(buidlerHermez, "L1UserTxEvent")
+      .to.emit(hardhatHermez, "L1UserTxEvent")
       .withArgs(lastQueue, currentIndex, l1Txbytes);
 
     const finalOwnerBalance = await wallet.getBalance();
@@ -479,8 +479,8 @@ async function l1UserTxDepositTransfer(
   toIdx,
   amountF,
   wallet,
-  buidlerHermez,
-  buidlerTokenHermez,
+  hardhatHermez,
+  hardhatTokenHermez,
   isERC20Permit
 ) {
   const loadAmountF = float40.fix2Float(loadAmount);
@@ -498,24 +498,24 @@ async function l1UserTxDepositTransfer(
 
   const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxDepositTransfer)}`;
 
-  const lastQueue = await buidlerHermez.nextL1FillingQueue();
+  const lastQueue = await hardhatHermez.nextL1FillingQueue();
 
-  const lastQueueBytes = await buidlerHermez.mapL1TxQueue(lastQueue);
+  const lastQueueBytes = await hardhatHermez.mapL1TxQueue(lastQueue);
 
   const currentIndex = (lastQueueBytes.length - 2) / 2 / L1_USER_BYTES; // -2 --> 0x, /2 --> 2 hex digits = 1 byte
 
   if (tokenID != 0) {
     if (!isERC20Permit) {
       // tokens ERC20
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
       await expect(
-        buidlerTokenHermez.connect(wallet).approve(buidlerHermez.address, loadAmount)
-      ).to.emit(buidlerTokenHermez, "Approval");
+        hardhatTokenHermez.connect(wallet).approve(hardhatHermez.address, loadAmount)
+      ).to.emit(hardhatTokenHermez, "Approval");
 
       await expect(
-        buidlerHermez.connect(wallet).addL1Transaction(
+        hardhatHermez.connect(wallet).addL1Transaction(
           babyjub0,
           fromIdx,
           loadAmountF,
@@ -525,10 +525,10 @@ async function l1UserTxDepositTransfer(
           emptyPermit
         )
       )
-        .to.emit(buidlerHermez, "L1UserTxEvent")
+        .to.emit(hardhatHermez, "L1UserTxEvent")
         .withArgs(lastQueue, currentIndex, l1Txbytes);
 
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
@@ -537,17 +537,17 @@ async function l1UserTxDepositTransfer(
       );
     } else {
       // tokens ERC20Permit
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
       const deadline = ethers.constants.MaxUint256;
       const value = loadAmount;
-      const nonce = await buidlerTokenHermez.nonces(await wallet.getAddress());
+      const nonce = await hardhatTokenHermez.nonces(await wallet.getAddress());
       const { v, r, s } = await createPermitSignature(
-        buidlerTokenHermez,
+        hardhatTokenHermez,
         wallet,
-        buidlerHermez.address,
+        hardhatHermez.address,
         value,
         nonce,
         deadline
@@ -555,7 +555,7 @@ async function l1UserTxDepositTransfer(
 
       const data = iface.encodeFunctionData("permit", [
         await wallet.getAddress(),
-        buidlerHermez.address,
+        hardhatHermez.address,
         value,
         deadline,
         v,
@@ -565,7 +565,7 @@ async function l1UserTxDepositTransfer(
 
       // send l1tx wth permit signature
       await expect(
-        buidlerHermez.connect(wallet).addL1Transaction(
+        hardhatHermez.connect(wallet).addL1Transaction(
           babyjub0,
           fromIdx,
           loadAmountF,
@@ -575,10 +575,10 @@ async function l1UserTxDepositTransfer(
           data
         )
       )
-        .to.emit(buidlerHermez, "L1UserTxEvent")
+        .to.emit(hardhatHermez, "L1UserTxEvent")
         .withArgs(lastQueue, currentIndex, l1Txbytes);
 
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
@@ -591,7 +591,7 @@ async function l1UserTxDepositTransfer(
     const initialOwnerBalance = await wallet.getBalance();
 
     await expect(
-      buidlerHermez.connect(wallet).addL1Transaction(
+      hardhatHermez.connect(wallet).addL1Transaction(
         babyjub0,
         fromIdx,
         loadAmountF,
@@ -605,7 +605,7 @@ async function l1UserTxDepositTransfer(
         }
       )
     )
-      .to.emit(buidlerHermez, "L1UserTxEvent")
+      .to.emit(hardhatHermez, "L1UserTxEvent")
       .withArgs(lastQueue, currentIndex, l1Txbytes);
 
     const finalOwnerBalance = await wallet.getBalance();
@@ -625,8 +625,8 @@ async function l1UserTxCreateAccountDepositTransfer(
   amountF,
   babyjub,
   wallet,
-  buidlerHermez,
-  buidlerTokenHermez,
+  hardhatHermez,
+  hardhatTokenHermez,
   isERC20Permit
 ) {
   const loadAmountF = float40.fix2Float(loadAmount);
@@ -644,24 +644,24 @@ async function l1UserTxCreateAccountDepositTransfer(
 
   const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxCreateAccountDepositTransfer)}`;
 
-  const lastQueue = await buidlerHermez.nextL1FillingQueue();
+  const lastQueue = await hardhatHermez.nextL1FillingQueue();
 
-  const lastQueueBytes = await buidlerHermez.mapL1TxQueue(lastQueue);
+  const lastQueueBytes = await hardhatHermez.mapL1TxQueue(lastQueue);
 
   const currentIndex = (lastQueueBytes.length - 2) / 2 / L1_USER_BYTES; // -2 --> 0x, /2 --> 2 hex digits = 1 byte
 
   if (tokenID != 0) {
     if (!isERC20Permit) {
       // tokens ERC20
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
       await expect(
-        buidlerTokenHermez.connect(wallet).approve(buidlerHermez.address, loadAmount)
-      ).to.emit(buidlerTokenHermez, "Approval");
+        hardhatTokenHermez.connect(wallet).approve(hardhatHermez.address, loadAmount)
+      ).to.emit(hardhatTokenHermez, "Approval");
 
       await expect(
-        buidlerHermez.connect(wallet).addL1Transaction(
+        hardhatHermez.connect(wallet).addL1Transaction(
           babyjub,
           fromIdx0,
           loadAmountF,
@@ -671,10 +671,10 @@ async function l1UserTxCreateAccountDepositTransfer(
           emptyPermit
         )
       )
-        .to.emit(buidlerHermez, "L1UserTxEvent")
+        .to.emit(hardhatHermez, "L1UserTxEvent")
         .withArgs(lastQueue, currentIndex, l1Txbytes);
 
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
@@ -683,17 +683,17 @@ async function l1UserTxCreateAccountDepositTransfer(
       );
     } else {
       // tokens ERC20Permit
-      const initialOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const initialOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
       const deadline = ethers.constants.MaxUint256;
       const value = loadAmount;
-      const nonce = await buidlerTokenHermez.nonces(await wallet.getAddress());
+      const nonce = await hardhatTokenHermez.nonces(await wallet.getAddress());
       const { v, r, s } = await createPermitSignature(
-        buidlerTokenHermez,
+        hardhatTokenHermez,
         wallet,
-        buidlerHermez.address,
+        hardhatHermez.address,
         value,
         nonce,
         deadline
@@ -701,7 +701,7 @@ async function l1UserTxCreateAccountDepositTransfer(
 
       const data = iface.encodeFunctionData("permit", [
         await wallet.getAddress(),
-        buidlerHermez.address,
+        hardhatHermez.address,
         value,
         deadline,
         v,
@@ -711,7 +711,7 @@ async function l1UserTxCreateAccountDepositTransfer(
 
       // send l1tx wth permit signature
       await expect(
-        buidlerHermez.connect(wallet).addL1Transaction(
+        hardhatHermez.connect(wallet).addL1Transaction(
           babyjub,
           fromIdx0,
           loadAmountF,
@@ -721,10 +721,10 @@ async function l1UserTxCreateAccountDepositTransfer(
           data
         )
       )
-        .to.emit(buidlerHermez, "L1UserTxEvent")
+        .to.emit(hardhatHermez, "L1UserTxEvent")
         .withArgs(lastQueue, currentIndex, l1Txbytes);
 
-      const finalOwnerBalance = await buidlerTokenHermez.balanceOf(
+      const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
         await wallet.getAddress()
       );
 
@@ -737,7 +737,7 @@ async function l1UserTxCreateAccountDepositTransfer(
     const initialOwnerBalance = await wallet.getBalance();
 
     await expect(
-      buidlerHermez.connect(wallet).addL1Transaction(
+      hardhatHermez.connect(wallet).addL1Transaction(
         babyjub,
         fromIdx0,
         loadAmountF,
@@ -751,7 +751,7 @@ async function l1UserTxCreateAccountDepositTransfer(
         }
       )
     )
-      .to.emit(buidlerHermez, "L1UserTxEvent")
+      .to.emit(hardhatHermez, "L1UserTxEvent")
       .withArgs(lastQueue, currentIndex, l1Txbytes);
 
     const finalOwnerBalance = await wallet.getBalance();
@@ -769,7 +769,7 @@ async function l1UserTxForceTransfer(
   toIdx,
   amountF,
   wallet,
-  buidlerHermez
+  hardhatHermez
 ) {
   // equivalent L1 transaction:
   const l1TxForceTransfer = {
@@ -784,14 +784,14 @@ async function l1UserTxForceTransfer(
 
   const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxForceTransfer)}`;
 
-  const lastQueue = await buidlerHermez.nextL1FillingQueue();
+  const lastQueue = await hardhatHermez.nextL1FillingQueue();
 
-  const lastQueueBytes = await buidlerHermez.mapL1TxQueue(lastQueue);
+  const lastQueueBytes = await hardhatHermez.mapL1TxQueue(lastQueue);
 
   const currentIndex = (lastQueueBytes.length - 2) / 2 / L1_USER_BYTES; // -2 --> 0x, /2 --> 2 hex digits = 1 byte
 
   await expect(
-    buidlerHermez.connect(wallet).addL1Transaction(
+    hardhatHermez.connect(wallet).addL1Transaction(
       babyjub0,
       fromIdx,
       loadAmountF0,
@@ -801,7 +801,7 @@ async function l1UserTxForceTransfer(
       emptyPermit,
     )
   )
-    .to.emit(buidlerHermez, "L1UserTxEvent")
+    .to.emit(hardhatHermez, "L1UserTxEvent")
     .withArgs(lastQueue, currentIndex, l1Txbytes);
 
   return l1Txbytes;
@@ -812,7 +812,7 @@ async function l1UserTxForceExit(
   fromIdx,
   amountF,
   wallet,
-  buidlerHermez
+  hardhatHermez
 ) {
   const exitIdx = 1;
   // equivalent L1 transaction:
@@ -827,14 +827,14 @@ async function l1UserTxForceExit(
   };
   const l1Txbytes = `0x${txUtils.encodeL1TxFull(l1TxForceExit)}`;
 
-  const lastQueue = await buidlerHermez.nextL1FillingQueue();
+  const lastQueue = await hardhatHermez.nextL1FillingQueue();
 
-  const lastQueueBytes = await buidlerHermez.mapL1TxQueue(lastQueue);
+  const lastQueueBytes = await hardhatHermez.mapL1TxQueue(lastQueue);
 
   const currentIndex = (lastQueueBytes.length - 2) / 2 / L1_USER_BYTES; // -2 --> 0x, /2 --> 2 hex digits = 1 byte
 
   await expect(
-    buidlerHermez.connect(wallet).addL1Transaction(
+    hardhatHermez.connect(wallet).addL1Transaction(
       babyjub0,
       fromIdx,
       loadAmountF0,
@@ -844,16 +844,16 @@ async function l1UserTxForceExit(
       emptyPermit,
     )
   )
-    .to.emit(buidlerHermez, "L1UserTxEvent")
+    .to.emit(hardhatHermez, "L1UserTxEvent")
     .withArgs(lastQueue, currentIndex, l1Txbytes);
 
   return l1Txbytes;
 }
 
-async function l1CoordinatorTxEth(tokenID, babyjub, wallet, buidlerHermez, chainIdHex) {
+async function l1CoordinatorTxEth(tokenID, babyjub, wallet, hardhatHermez, chainIdHex) {
   // equivalent L1 transaction:
 
-  const flatSig = await txUtils.signBjjAuth(wallet, babyjub.slice(2), chainIdHex, buidlerHermez.address);
+  const flatSig = await txUtils.signBjjAuth(wallet, babyjub.slice(2), chainIdHex, hardhatHermez.address);
 
   let sig = ethers.utils.splitSignature(flatSig);
 
@@ -874,7 +874,7 @@ async function l1CoordinatorTxEth(tokenID, babyjub, wallet, buidlerHermez, chain
   return { l1TxBytes, l1TxCoordinatorbytes };
 }
 
-async function l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez) {
+async function l1CoordinatorTxBjj(tokenID, babyjub, hardhatHermez) {
   const l1TxCoordinatorCreateBjj = {
     tokenID: tokenID,
     fromBjjCompressed: babyjub,
@@ -896,9 +896,9 @@ async function l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez) {
 }
 
 async function AddToken(
-  buidlerHermez,
-  buidlerToken,
-  buidlerHEZ,
+  hardhatHermez,
+  hardhatToken,
+  hardhatHEZ,
   wallet,
   feeAddToken
 ) {
@@ -907,11 +907,11 @@ async function AddToken(
 
   const deadline = ethers.constants.MaxUint256;
   const value = feeAddToken;
-  const nonce = await buidlerHEZ.nonces(addressOwner);
+  const nonce = await hardhatHEZ.nonces(addressOwner);
   const { v, r, s } = await createPermitSignature(
-    buidlerHEZ,
+    hardhatHEZ,
     wallet,
-    buidlerHermez.address,
+    hardhatHermez.address,
     value,
     nonce,
     deadline
@@ -919,7 +919,7 @@ async function AddToken(
 
   const data = iface.encodeFunctionData("permit", [
     await wallet.getAddress(),
-    buidlerHermez.address,
+    hardhatHermez.address,
     value,
     deadline,
     v,
@@ -927,16 +927,16 @@ async function AddToken(
     s
   ]);
 
-  const initialOwnerBalance = await buidlerHEZ.balanceOf(addressOwner);
+  const initialOwnerBalance = await hardhatHEZ.balanceOf(addressOwner);
 
-  const tokensAdded = await buidlerHermez.registerTokensCount();
+  const tokensAdded = await hardhatHermez.registerTokensCount();
 
   // Send data and amount
-  await expect(buidlerHermez.connect(wallet).addToken(buidlerToken.address, data))
-    .to.emit(buidlerHermez, "AddToken")
-    .withArgs(buidlerToken.address, tokensAdded);
+  await expect(hardhatHermez.connect(wallet).addToken(hardhatToken.address, data))
+    .to.emit(hardhatHermez, "AddToken")
+    .withArgs(hardhatToken.address, tokensAdded);
 
-  const finalOwnerBalance = await buidlerHEZ.balanceOf(addressOwner);
+  const finalOwnerBalance = await hardhatHEZ.balanceOf(addressOwner);
   expect(finalOwnerBalance).to.equal(
     BigNumber.from(initialOwnerBalance).sub(feeAddToken)
   );
@@ -950,8 +950,8 @@ async function createAccounts(
   tokenID,
   babyjub,
   wallet,
-  buidlerHermez,
-  buidlerToken,
+  hardhatHermez,
+  hardhatToken,
   numAccounts,
   isERC20Permit
 ) {
@@ -964,8 +964,8 @@ async function createAccounts(
         tokenID,
         babyjub,
         wallet,
-        buidlerHermez,
-        buidlerToken,
+        hardhatHermez,
+        hardhatToken,
         isERC20Permit
       )
     );
@@ -986,9 +986,9 @@ function calculateInputMaxTxLevels(maxTxArray, nLevelsArray) {
   return returnArray;
 }
 
-async function createPermitSignature(buidlerToken, wallet, spenderAddress, value, nonce, deadline) {
+async function createPermitSignature(hardhatToken, wallet, spenderAddress, value, nonce, deadline) {
   const digest = await createPermitDigest(
-    buidlerToken,
+    hardhatToken,
     await wallet.getAddress(),
     spenderAddress,
     value,

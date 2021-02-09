@@ -1,11 +1,11 @@
 const {expect} = require("chai");
 require("dotenv").config();
 const path = require("path");
-const bre = require("@nomiclabs/buidler");
-const { ethers, upgrades } = require("@nomiclabs/buidler");
+const bre = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 require("@openzeppelin/test-helpers/configure")({
-  provider: ethers.provider._buidlerProvider._url || "http://localhost:8545",
+  provider: ethers.provider._hardhatProvider._url || "http://localhost:8545",
 });
 const { time } = require("@openzeppelin/test-helpers");
 
@@ -123,7 +123,7 @@ async function main() {
 
   // Deploy smart contacts:
 
-  // deploy smart contracts with proxy https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-buidler/test/initializers.js
+  // deploy smart contracts with proxy https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-hardhat/test/initializers.js
   // or intializer undefined and call initialize later
 
 
@@ -208,22 +208,22 @@ async function main() {
   // poseidon libs
   let libposeidonsAddress = deployParameters[chainId].libposeidonsAddress;
   if (!libposeidonsAddress || libposeidonsAddress.length != 3) {
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
-    await buidlerPoseidon2Elements.deployed();
-    await buidlerPoseidon3Elements.deployed();
-    await buidlerPoseidon4Elements.deployed();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
+    await hardhatPoseidon2Elements.deployed();
+    await hardhatPoseidon3Elements.deployed();
+    await hardhatPoseidon4Elements.deployed();
 
     libposeidonsAddress = [
-      buidlerPoseidon2Elements.address,
-      buidlerPoseidon3Elements.address,
-      buidlerPoseidon4Elements.address,
+      hardhatPoseidon2Elements.address,
+      hardhatPoseidon3Elements.address,
+      hardhatPoseidon4Elements.address,
     ];
     console.log("deployed poseidon libs");
-    console.log("poseidon 2 elements at: ", buidlerPoseidon2Elements.address);
-    console.log("poseidon 3 elements at: ", buidlerPoseidon3Elements.address);
-    console.log("poseidon 4 elements at: ", buidlerPoseidon4Elements.address);
+    console.log("poseidon 2 elements at: ", hardhatPoseidon2Elements.address);
+    console.log("poseidon 3 elements at: ", hardhatPoseidon3Elements.address);
+    console.log("poseidon 4 elements at: ", hardhatPoseidon4Elements.address);
   } else {
     console.log("posidon libs already depoloyed");
   }
@@ -276,9 +276,9 @@ async function main() {
   let libverifiersWithdrawAddress =
     deployParameters[chainId].libVerifiersWithdrawAddress;
   if (!libverifiersWithdrawAddress) {
-    let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
-    await buidlerVerifierWithdrawHelper.deployed();
-    libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    await hardhatVerifierWithdrawHelper.deployed();
+    libverifiersWithdrawAddress = hardhatVerifierWithdrawHelper.address;
     console.log("deployed withdraw verifiers libs");
     console.log("withdraw verifiers deployed at: ", libverifiersWithdrawAddress);
   } else {

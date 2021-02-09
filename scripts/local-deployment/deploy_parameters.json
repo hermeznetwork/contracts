@@ -1,5 +1,5 @@
 {
-  "buidlerNetwork": "localhostMnemonic",
+  "hardhatNetwork": "localhostMnemonic",
   "test": true,
   "mnemonic": "explain tackle mirror kit van hammer degree position ginger unfair soup bonus",
   "1337": {

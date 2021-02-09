@@ -1,7 +1,7 @@
 require("dotenv").config();
-const bre = require("@nomiclabs/buidler");
+const bre = require("hardhat");
 const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const {ethers} = require("hardhat");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const {
   float16,
@@ -33,16 +33,16 @@ async function main() {
 
   const Hermez = await ethers.getContractFactory("HermezTest");
 
-  buidlerHermez = Hermez.attach(process.env.HERMEZ_ADDRESS);
+  hardhatHermez = Hermez.attach(process.env.HERMEZ_ADDRESS);
 
   // sync previous l1 tx
-  const currentQueue = await buidlerHermez.nextL1ToForgeQueue();
+  const currentQueue = await hardhatHermez.nextL1ToForgeQueue();
   for (let i = 0; i < currentQueue; i++) {
     const bb = await rollupDB.buildBatch(maxTx, nLevels, maxL1Tx);
 
     // filter L1UserTxEvent for queueIndex
-    const filter = buidlerHermez.filters.L1UserTxEvent(i, null, null);
-    let events = await buidlerHermez.queryFilter(filter, 0, "latest");
+    const filter = hardhatHermez.filters.L1UserTxEvent(i, null, null);
+    let events = await hardhatHermez.queryFilter(filter, 0, "latest");
     events.forEach((e) => {
       bb.addTx(txUtils.decodeL1TxFull(e.args.l1UserTx));
     });
@@ -53,8 +53,8 @@ async function main() {
   // build current batch with current L1Tx queue
   const bbCurrent = await rollupDB.buildBatch(maxTx, nLevels, maxL1Tx);
   const l1TxForged = [];
-  //await buidlerHermez.createAccountDeposit(0, 0, 0);
-  let SCL1TxData = await buidlerHermez.mapL1TxQueue(currentQueue);
+  //await hardhatHermez.createAccountDeposit(0, 0, 0);
+  let SCL1TxData = await hardhatHermez.mapL1TxQueue(currentQueue);
   SCL1TxData = SCL1TxData.slice(2);
   // 1 byte, 2 characters in hex String
   const l1TxLen = SCL1TxData.length / (l1TxBytes * 2);
@@ -84,7 +84,7 @@ async function main() {
   const verifierIdx = 0;
   const l1Batch = true;
   await expect(
-    buidlerHermez.calculateInputTest(
+    hardhatHermez.calculateInputTest(
       newLastIdx,
       newStateRoot,
       newExitRoot,
@@ -95,10 +95,10 @@ async function main() {
       verifierIdx
     )
   )
-    .to.emit(buidlerHermez, "ReturnUint256")
+    .to.emit(hardhatHermez, "ReturnUint256")
     .withArgs(bbCurrent.getHashInputs());
 
-  const tx = await buidlerHermez.forgeBatch(
+  const tx = await hardhatHermez.forgeBatch(
     newLastIdx,
     newStateRoot,
     newExitRoot,

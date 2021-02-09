@@ -1,5 +1,5 @@
 require("dotenv").config();
-const bre = require("@nomiclabs/buidler");
+const bre = require("hardhat");
 const {time} = require("@openzeppelin/test-helpers");
 
 
