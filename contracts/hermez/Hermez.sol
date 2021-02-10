@@ -195,7 +195,7 @@ contract Hermez is InstantWithdrawManager {
         require(
             _hermezAuctionContract != address(0) &&
                 _withdrawDelayerContract != address(0),
-            "WithdrawalDelayer::withdrawalDelayerInitializer ADDRESS_0_NOT_VALID"
+            "Hermez::initializeHermez ADDRESS_0_NOT_VALID"
         );
 
         // set state variables

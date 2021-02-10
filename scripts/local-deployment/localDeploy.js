@@ -157,9 +157,14 @@ async function main() {
   console.log("hermez deployed at: ", hermez.address);
 
   // Deploy withdrawalDelayer
-  const withdrawalDelayer = await WithdrawalDelayer.deploy();
+  const withdrawalDelayer = await WithdrawalDelayer.deploy(
+    deployParameters[chainId].initialWithdrawalDelay || defaultWithdrawalDelay,
+    hermez.address,
+    hermezGovernanceAddress,
+    emergencyCouncilAddress
+  );
   await withdrawalDelayer.deployed();
-
+    
   console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
   // deploy HEZ (erc20Permit) token
@@ -243,16 +248,6 @@ async function main() {
   }
 
   // initialize upgradable smart contracts
-
-  // initialize withdrawal delayer
-  await withdrawalDelayer.withdrawalDelayerInitializer(
-    deployParameters[chainId].initialWithdrawalDelay || defaultWithdrawalDelay,
-    hermez.address,
-    hermezGovernanceAddress,
-    emergencyCouncilAddress
-  );
-
-  console.log("withdrawalDelayer initialized");
 
   // initialize auction hermez
   let genesisBlock = deployParameters[chainId].genesisBlock;

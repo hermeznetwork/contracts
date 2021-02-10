@@ -117,7 +117,12 @@ describe("upgradability test", function() {
     console.log("hermez deployed at: ", hermez.address);
 
     // Deploy withdrawalDelayer
-    withdrawalDelayer = await WithdrawalDelayer.deploy();
+    withdrawalDelayer = await WithdrawalDelayer.deploy(
+      INITIAL_WITHDRAWAL_DELAY,
+      hermez.address,
+      hermezGovernanceAddress,
+      whiteHackGroupAddress
+    );
     await withdrawalDelayer.deployed();
 
     console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
@@ -155,14 +160,6 @@ describe("upgradability test", function() {
     await buidlerVerifierWithdrawHelper.deployed();
     let libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
     console.log("libverifiersWithdrawAddress at: ", buidlerVerifierWithdrawHelper.address);
-
-    // initialize withdrawal delayer
-    await withdrawalDelayer.withdrawalDelayerInitializer(
-      INITIAL_WITHDRAWAL_DELAY,
-      hermez.address,
-      hermezGovernanceAddress,
-      whiteHackGroupAddress
-    );
 
     let genesisBlock =
             (await time.latestBlock()).toNumber() + 100;

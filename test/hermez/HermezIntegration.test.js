@@ -168,7 +168,7 @@ describe("Hermez integration", function () {
       from: ownerAddress,
     });
     const HermezAddress = ethers.utils.getContractAddress({
-      nonce: currentCount + 3,
+      nonce: currentCount + 2,
       from: ownerAddress,
     });
 
@@ -203,22 +203,18 @@ describe("Hermez integration", function () {
         allocationRatio
       );
 
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+      INITIAL_DELAY,
+      HermezAddress,
+      hermezGovernanceAddress,
+      await whiteHackGroupAddress.getAddress()
+    );  
 
-    await expect(
-      buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
-        INITIAL_DELAY,
-        HermezAddress,
-        hermezGovernanceAddress,
-        await whiteHackGroupAddress.getAddress()
-      )
-    )
-      .to.emit(buidlerWithdrawalDelayer, "InitializeWithdrawalDelayerEvent")
-      .withArgs(
-        INITIAL_DELAY,
-        hermezGovernanceAddress,
-        await whiteHackGroupAddress.getAddress()
-      );
+    const filterInitialize = buidlerWithdrawalDelayer.filters.InitializeWithdrawalDelayerEvent(null, null, null);
+    const eventsInitialize = await buidlerWithdrawalDelayer.queryFilter(filterInitialize, 0, "latest");
+    expect(eventsInitialize[0].args.initialWithdrawalDelay).to.be.equal(INITIAL_DELAY);
+    expect(eventsInitialize[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
+    expect(eventsInitialize[0].args.initialEmergencyCouncil).to.be.equal( await whiteHackGroupAddress.getAddress());
 
     // deploy hermez
     buidlerHermez = await Hermez.deploy();
