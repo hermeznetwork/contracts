@@ -95,28 +95,17 @@ describe("WithdrawalDelayer Tests", function() {
     const withdrawalDelayer = await ethers.getContractFactory(
       "WithdrawalDelayer"
     );
-    buidlerWithdrawalDelayer = await withdrawalDelayer.deploy();
-    await buidlerWithdrawalDelayer.deployed();
-    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+    buidlerWithdrawalDelayer = await withdrawalDelayer.deploy( 
       INITIAL_DELAY,
       hermezRollupAddress,
       hermezGovernanceAddress,
       whiteHackGroupAddress
     );
+    await buidlerWithdrawalDelayer.deployed();
   });
 
   describe("Common behavior tests", function() {
     describe("Deposits", function() {
-      it("shouldn't be possible to initialize it twice", async function() {
-        await expect(
-          buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
-            INITIAL_DELAY,
-            hermezRollupAddress,
-            hermezGovernanceAddress,
-            whiteHackGroupAddress
-          )
-        ).to.be.revertedWith("Initializable: contract is already initialized");
-      });
       it("should be able to make a ERC20 deposit", async function() {
         // Event Deposit
         let eventDeposit = new Promise((resolve, reject) => {

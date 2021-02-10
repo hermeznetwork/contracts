@@ -144,15 +144,20 @@ async function main() {
   console.log("hermez deployed at: ", hermez.address);
 
   // Deploy withdrawalDelayer
-  const withdrawalDelayer = await upgrades.deployProxy(
-    WithdrawalDelayer,
-    [],
-    {
-      unsafeAllowCustomTypes: true,
-      initializer: undefined,
-    }
+  const withdrawalDelayer = await WithdrawalDelayer.deploy(
+    deployParameters[chainId].initialWithdrawalDelay,
+    hermez.address,
+    hermezGovernanceAddress,
+    emergencyCouncilAddress
   );
   await withdrawalDelayer.deployed();
+
+  const filterInitialize = withdrawalDelayer.filters.InitializeWithdrawalDelayerEvent(null, null, null);
+  const eventsInitialize = await withdrawalDelayer.queryFilter(filterInitialize, 0, "latest");
+  expect(eventsInitialize[0].args.initialWithdrawalDelay).to.be.equal(deployParameters[chainId].initialWithdrawalDelay);
+  expect(eventsInitialize[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
+  expect(eventsInitialize[0].args.initialEmergencyCouncil).to.be.equal(emergencyCouncilAddress);
+
   console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
   // deploy HEZ (erc20Permit) token
@@ -232,19 +237,6 @@ async function main() {
   }
 
   // initialize upgradable smart contracts
-
-  // initialize withdrawal delayer
-
-  const withdrawalDelayerTx = await  withdrawalDelayer.withdrawalDelayerInitializer(
-    deployParameters[chainId].initialWithdrawalDelay,
-    hermez.address,
-    hermezGovernanceAddress,
-    emergencyCouncilAddress
-  );
-  const receiptWithdrawal = await withdrawalDelayerTx.wait();
-  expect(receiptWithdrawal.events[0].args.initialWithdrawalDelay).to.be.equal(deployParameters[chainId].initialWithdrawalDelay);
-  expect(receiptWithdrawal.events[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
-  expect(receiptWithdrawal.events[0].args.initialEmergencyCouncil).to.be.equal(emergencyCouncilAddress);
 
   // initialize auction hermez
   let genesisBlock = deployParameters[chainId].genesisBlock;
