@@ -20,7 +20,7 @@ const {
   calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
-  float16,
+  float40,
   HermezAccount,
   txUtils,
   stateUtils,
@@ -259,7 +259,7 @@ describe("Hermez ERC 20", function () {
         feeAddToken
       );
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       await l1UserTxCreateAccountDeposit(
@@ -284,7 +284,7 @@ describe("Hermez ERC 20", function () {
       // invalid operation in Hermez.sol, test purposes
       buidlerHermez.changeCurrentIdx(257);
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const tokenID = 1;
       const fromIdx = 256;
       await l1UserTxDeposit(
@@ -308,11 +308,11 @@ describe("Hermez ERC 20", function () {
       // invalid operation in Hermez.sol, test purposes
       buidlerHermez.changeCurrentIdx(257);
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const tokenID = 1;
       const fromIdx = 256;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
       await l1UserTxDepositTransfer(
         loadAmount,
         tokenID,
@@ -336,10 +336,10 @@ describe("Hermez ERC 20", function () {
       // invalid operation in Hermez.sol, test purposes
       buidlerHermez.changeCurrentIdx(257);
 
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const tokenID = 1;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       await l1UserTxCreateAccountDepositTransfer(
         loadAmount,
@@ -367,7 +367,7 @@ describe("Hermez ERC 20", function () {
       const tokenID = 1;
       const fromIdx = 256;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
       await l1UserTxForceTransfer(
         tokenID,
         fromIdx,
@@ -391,7 +391,7 @@ describe("Hermez ERC 20", function () {
 
       const tokenID = 1;
       const fromIdx = 256;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
       await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez);
     });
   });
@@ -527,7 +527,7 @@ describe("Hermez ERC 20", function () {
         const input = receipt.events[0].args[0];
 
         // check that the padding of the SC works as expected!
-        await expect( 
+        await expect(
           buidlerHermez.calculateInputTest(
             newLastIdx,
             newStateRoot,
@@ -589,12 +589,12 @@ describe("Hermez ERC 20", function () {
       // simulate l1-tx batchbuilder:
       const fromEthAddrB = 160;
       const fromBjjCompressedB = 256;
-      const f16B = 16;
+      const f40B = 40;
       const tokenIDB = 32;
       const maxIdxB = 48;
 
       const L1TxB =
-        fromEthAddrB + fromBjjCompressedB + 2 * maxIdxB + tokenIDB + 2 * f16B;
+        fromEthAddrB + fromBjjCompressedB + 2 * maxIdxB + tokenIDB + 2 * f40B;
 
       let jsL1TxData = "";
       for (let tx of l1TxCoordiatorArray) {
@@ -670,10 +670,10 @@ describe("Hermez ERC 20", function () {
     it("expect L1-Tx Queue same as batchbuilder ", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
 
       const l1TxCoordiatorArray = [];
       const l1TxUserArray = [];
@@ -791,12 +791,12 @@ describe("Hermez ERC 20", function () {
 
       const fromEthAddrB = 160;
       const fromBjjCompressedB = 256;
-      const f16B = 16;
+      const f40B = 40;
       const tokenIDB = 32;
       const maxIdxB = 48;
 
       const L1TxB =
-        fromEthAddrB + fromBjjCompressedB + 2 * maxIdxB + tokenIDB + 2 * f16B;
+        fromEthAddrB + fromBjjCompressedB + 2 * maxIdxB + tokenIDB + 2 * f40B;
       // simulate l1-tx batchbuilder:
       let jsL1TxData = "";
       for (let tx of l1TxUserArray) {
@@ -847,10 +847,10 @@ describe("Hermez ERC 20", function () {
     it("forge L1 user & Coordiator Tx batch", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const toIdx = 257;
-      const amountF = float16.fix2Float(10);
+      const amountF = float40.fix2Float(10);
 
       const l1TxUserArray = [];
 
@@ -964,10 +964,10 @@ describe("Hermez ERC 20", function () {
     it("test instant withdraw circuit", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 
@@ -1052,10 +1052,10 @@ describe("Hermez ERC 20", function () {
     it("test delayed withdraw circuit", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 
@@ -1141,10 +1141,10 @@ describe("Hermez ERC 20", function () {
     it("test instant withdraw merkle proof", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 
@@ -1220,10 +1220,10 @@ describe("Hermez ERC 20", function () {
     it("test delayed withdraw merkle proof", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 
@@ -1301,10 +1301,10 @@ describe("Hermez ERC 20", function () {
     it("test instant withdraw merkle proof with more leafs", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
-      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
+      const loadAmount = float40.round(1000);
       const fromIdx = 256;
       const amount = 10;
-      const amountF = float16.fix2Float(amount);
+      const amountF = float40.fix2Float(amount);
 
       const l1TxUserArray = [];
 

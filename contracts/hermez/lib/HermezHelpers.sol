@@ -186,14 +186,13 @@ contract HermezHelpers is Initializable {
 
     /**
      * @dev Decode half floating precision.
-     * Max value encoded with this codification: 0x1F89FDCA17AF0E4E3F46CC0000000 (aprox 116 bits)
+     * Max value encoded with this codification: 0x1f8def8800cca870c773f6eb4d980000000 (aprox 137 bits)
      * @param float Float half precision encode number
      * @return Decoded floating half precision
      */
-    function _float2Fix(uint16 float) internal pure returns (uint256) {
-        uint256 m = float & 0x3FF;
-        uint256 e = float >> 11;
-        uint256 e5 = (float >> 10) & 1;
+    function _float2Fix(uint40 float) internal pure returns (uint256) {
+        uint256 m = float & 0x7FFFFFFFF;
+        uint256 e = float >> 35;
 
         // never overflow, max "e" value is 32
         uint256 exp = 10**e;
@@ -201,9 +200,6 @@ contract HermezHelpers is Initializable {
         // never overflow, max "fix" value is 1023 * 10^32
         uint256 fix = m * exp;
 
-        if ((e5 == 1) && (e != 0)) {
-            fix = fix + (exp / 2);
-        }
         return fix;
     }
 
