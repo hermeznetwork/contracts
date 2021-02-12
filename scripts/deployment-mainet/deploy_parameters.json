@@ -1,0 +1,24 @@
+{
+  "libVerifiersAddress": [],
+  "libposeidonsAddress": [],
+  "hermezGovernanceAddress": "",
+  "libVerifiersWithdrawAddress": "",
+  "communitCouncilAddress": "0x9CEC5F3d5d9747DCCB36d8e22c03aF8221445c0D",
+  "emergencyCouncilAddress": "0x82AA0Fcb77B6CF3E8baC5994043De98687B95E8E",
+  "donationAddress": "0x929297764aB2cb291C5DbcC1A8D2a0867CafdBDe",
+  "bootCoordinatorAddress": "0x601f4005b90Db8f6Bbf06555f0b20Cf60798EBD8",
+  "HEZTokenAddress":"",
+  "genesisBlock": "",
+  "genesisBlockOffsetCurrent": 81,
+  "feeAddToken": 10,
+  "forgeL1L2BatchTimeout": 10,
+  "withdrawalDelayHermez": 1209600,
+  "initialWithdrawalDelay": 3600,
+  "bootCoordinatorURL": "http://localhost:8086",
+  "maxTxVerifier": [
+    352, 1960
+  ],
+  "nLevelsVerifer": [
+    32, 32
+  ]
+}

@@ -19,9 +19,9 @@ const {
 } = require("../../test/hermez/helpers/helpers");
 
 
-const maxTxVerifierDefault = [512, 376, 376];
+const maxTxVerifierDefault = [512, 352, 1960];
 const nLevelsVeriferDefault = [32, 32, 32];
-const verifierTypeDefault = ["mock","mock", "real"];
+const verifierTypeDefault = ["mock","real", "real"];
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
@@ -106,9 +106,6 @@ async function main() {
   
   const VerifierRollupMock = await ethers.getContractFactory(
     "VerifierRollupHelper"
-  );
-  const VerifierRollupReal = await ethers.getContractFactory(
-    "Verifier"
   );
 
   const VerifierWithdrawHelper = await ethers.getContractFactory(
@@ -226,11 +223,15 @@ async function main() {
 
   // verifiers rollup libs
   let libVerifiersAddress = deployParameters[chainId].libVerifiersAddress;
+  
   if (!libVerifiersAddress || libVerifiersAddress.length == 0) {
     libVerifiersAddress = [];
     console.log("deployed verifiers libs");
     for (let i = 0; i < maxTxVerifier.length; i++) {
       if (verifierType[i] == "real") {
+        const VerifierRollupReal = await ethers.getContractFactory(
+          `Verifier${maxTxVerifier[i]}`
+        );
         const buidlerVerifierRollupReal = await VerifierRollupReal.deploy();
         await buidlerVerifierRollupReal.deployed();
         libVerifiersAddress.push(buidlerVerifierRollupReal.address);

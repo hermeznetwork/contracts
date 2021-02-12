@@ -12,7 +12,7 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512, 376, 376
+      512, 352, 1960
     ],
     "nLevelsVerifer": [
       32, 32, 32

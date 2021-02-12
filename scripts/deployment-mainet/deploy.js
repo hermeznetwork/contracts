@@ -16,9 +16,6 @@ const {
   calculateInputMaxTxLevels,
 } = require("../../test/hermez/helpers/helpers");
 
-const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
-const deployParameters = require(pathDeployParameters);
-const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 
 const maxTxVerifierDefault = [512, 376, 376];
 const nLevelsVeriferDefault = [32, 32, 32];
@@ -26,6 +23,12 @@ const verifierTypeDefault = ["mock","mock", "real"];
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
+
+const inputDeployFile = process.argv[2];
+const pathDeployParameters = path.join(__dirname, inputDeployFile || "./deploy_parameters.json");
+const deployParameters = require(pathDeployParameters);
+
+const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 
 async function main() {
 
@@ -38,34 +41,21 @@ async function main() {
   // index 0 would use as the deployer address
   const [deployer] = signersArray;
 
-  // Default index to load ethereum addresses if not specified on deploy parameters
-  const communitCouncilIndex = 1;
-  const emergencyCouncilIndex = 2;
-  const donationIndex = 3;
-  const bootCoordinatorIndex = 4;
-
-  const communitCouncilEthers = signersArray[communitCouncilIndex];
-  const emergencyCouncilEthers = signersArray[emergencyCouncilIndex];
-  const donationEthers = signersArray[donationIndex];
-  const bootCoordinatorEthers = signersArray[bootCoordinatorIndex];
-
-  // get chain ID
-  const chainId = (await ethers.provider.getNetwork()).chainId;
-
   // get address
   const emergencyCouncilAddress =
-    deployParameters[chainId].emergencyCouncilAddress ||
-    (await emergencyCouncilEthers.getAddress());
+    deployParameters.emergencyCouncilAddress ||
+    (await deployer.getAddress());
   const communitCouncilAddress =
-    deployParameters[chainId].communitCouncilAddress ||
-    (await communitCouncilEthers.getAddress());
+    deployParameters.communitCouncilAddress ||
+    (await deployer.getAddress());
   const donationAddress =
-    deployParameters[chainId].donationAddress ||
-    (await donationEthers.getAddress());
+    deployParameters.donationAddress ||
+    (await deployer.getAddress());
   const bootCoordinatorAddress =
-    deployParameters[chainId].bootCoordinatorAddress ||
-    (await bootCoordinatorEthers.getAddress());
+    deployParameters.bootCoordinatorAddress ||
+    (await deployer.getAddress());
 
+  console.log("if not address specified deployer address will be used!");
   console.log("emergencyCouncilAddress: " + emergencyCouncilAddress);
   console.log("communitCouncilAddress: " + communitCouncilAddress);
   console.log("donationAddress: " + donationAddress);
@@ -90,10 +80,6 @@ async function main() {
   const HEZToken = await ethers.getContractFactory("ERC20PermitMock");
 
   // hermez libs
-  const VerifierRollupMock = await ethers.getContractFactory(
-    "VerifierRollupHelper"
-  );
-  
   const VerifierWithdrawHelper = await ethers.getContractFactory(
     "VerifierWithdraw"
   );
@@ -122,15 +108,10 @@ async function main() {
   );
 
   // Deploy smart contacts:
-
-  // deploy smart contracts with proxy https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-buidler/test/initializers.js
-  // or intializer undefined and call initialize later
-
-
   // Deploy Governance
 
   let hermezGovernanceAddress =
-    deployParameters[chainId].hermezGovernanceAddress;
+    deployParameters.hermezGovernanceAddress;
   if (!hermezGovernanceAddress) {
     // deploy Hermez Governance
     const buidlerHermezGovernance = await HermezGovernance.deploy(communitCouncilAddress);
@@ -169,7 +150,7 @@ async function main() {
 
   // Deploy withdrawalDelayer
   const withdrawalDelayer = await WithdrawalDelayer.deploy(
-    deployParameters[chainId].initialWithdrawalDelay,
+    deployParameters.initialWithdrawalDelay,
     hermez.address,
     hermezGovernanceAddress,
     emergencyCouncilAddress
@@ -178,7 +159,7 @@ async function main() {
 
   const filterInitialize = withdrawalDelayer.filters.InitializeWithdrawalDelayerEvent(null, null, null);
   const eventsInitialize = await withdrawalDelayer.queryFilter(filterInitialize, 0, "latest");
-  expect(eventsInitialize[0].args.initialWithdrawalDelay).to.be.equal(deployParameters[chainId].initialWithdrawalDelay);
+  expect(eventsInitialize[0].args.initialWithdrawalDelay).to.be.equal(deployParameters.initialWithdrawalDelay);
   expect(eventsInitialize[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
   expect(eventsInitialize[0].args.initialEmergencyCouncil).to.be.equal(emergencyCouncilAddress);
 
@@ -186,7 +167,7 @@ async function main() {
 
   let buidlerHEZToken;
   let HEZTokenAddress =
-    deployParameters[chainId].HEZTokenAddress;
+    deployParameters.HEZTokenAddress;
   if (!HEZTokenAddress) {
     // deploy HEZ (erc20Permit) token
     buidlerHEZToken = await HEZToken.deploy(
@@ -206,7 +187,7 @@ async function main() {
   // load or deploy libs
 
   // poseidon libs
-  let libposeidonsAddress = deployParameters[chainId].libposeidonsAddress;
+  let libposeidonsAddress = deployParameters.libposeidonsAddress;
   if (!libposeidonsAddress || libposeidonsAddress.length != 3) {
     const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
     const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
@@ -230,42 +211,29 @@ async function main() {
 
 
   // maxTx and nLevelsVerifer must have the same number of elements as verifiers
-  let maxTxVerifier = deployParameters[chainId].maxTxVerifier || maxTxVerifierDefault;
-  let nLevelsVerifer = deployParameters[chainId].nLevelsVerifer || nLevelsVeriferDefault;
-  let verifierType = deployParameters[chainId].verifierType || verifierTypeDefault;
-
+  let maxTxVerifier = deployParameters.maxTxVerifier || maxTxVerifierDefault;
+  let nLevelsVerifer = deployParameters.nLevelsVerifer || nLevelsVeriferDefault;
 
   // verifiers rollup libs
-  let libVerifiersAddress = deployParameters[chainId].libVerifiersAddress;
+  let libVerifiersAddress = deployParameters.libVerifiersAddress;
 
   // assert maxTx Nlevels and libVerifiersAddress match
   expect(maxTxVerifier.length).to.be.equal(nLevelsVerifer.length);
-  if (!libVerifiersAddress || libVerifiersAddress.length == 0) { 
-    expect(verifierType.length).to.be.equal(maxTxVerifier.length);
-  }
-  else {
+  if (libVerifiersAddress && libVerifiersAddress.length != 0) { 
     expect(maxTxVerifier.length).to.be.equal(libVerifiersAddress.length);
   }
 
   if (!libVerifiersAddress || libVerifiersAddress.length == 0) {
     libVerifiersAddress = [];
     console.log("deployed verifiers libs");
-    for (let i = 0; i < verifierType.length; i++) {
-      if (verifierType[i] == "real") {
-        const VerifierRollupReal = await ethers.getContractFactory(
-          `Verifier${maxTxVerifier[i]}`
-        );
-        const buidlerVerifierRollupReal = await VerifierRollupReal.deploy();
-        await buidlerVerifierRollupReal.deployed();
-        libVerifiersAddress.push(buidlerVerifierRollupReal.address);
-        console.log("verifiers Real deployed at: ", buidlerVerifierRollupReal.address);
-      }
-      else {
-        const buidlerVerifierRollupMock = await VerifierRollupMock.deploy();
-        await buidlerVerifierRollupMock.deployed();
-        libVerifiersAddress.push(buidlerVerifierRollupMock.address);
-        console.log("verifiers Mock deployed at: ", buidlerVerifierRollupMock.address);
-      }
+    for (let i = 0; i < maxTxVerifier.length; i++) {
+      const VerifierRollupReal = await ethers.getContractFactory(
+        `Verifier${maxTxVerifier[i]}`
+      );
+      const buidlerVerifierRollupReal = await VerifierRollupReal.deploy();
+      await buidlerVerifierRollupReal.deployed();
+      libVerifiersAddress.push(buidlerVerifierRollupReal.address);
+      console.log("verifiers Real deployed at: ", buidlerVerifierRollupReal.address);
     }
   } else {
     console.log("verifier libs already depoloyed");
@@ -274,7 +242,7 @@ async function main() {
 
   // verifier withdraw lib
   let libverifiersWithdrawAddress =
-    deployParameters[chainId].libVerifiersWithdrawAddress;
+    deployParameters.libVerifiersWithdrawAddress;
   if (!libverifiersWithdrawAddress) {
     let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
     await buidlerVerifierWithdrawHelper.deployed();
@@ -288,11 +256,11 @@ async function main() {
   // initialize upgradable smart contracts
 
   // initialize auction hermez
-  let genesisBlock = deployParameters[chainId].genesisBlock;
+  let genesisBlock = deployParameters.genesisBlock;
   if (genesisBlock == "") {
     genesisBlock =
     (await time.latestBlock()).toNumber() +
-      parseInt(deployParameters[chainId].genesisBlockOffsetCurrent);
+      parseInt(deployParameters.genesisBlockOffsetCurrent);
   }
 
   const outbidding = 1000;
@@ -308,12 +276,12 @@ async function main() {
     hermezGovernanceAddress,
     donationAddress,
     bootCoordinatorAddress,
-    deployParameters[chainId].bootCoordinatorURL
+    deployParameters.bootCoordinatorURL
   );
   const receiptAuction = await hermezAuctionTx.wait();
   expect(receiptAuction.events[0].args.donationAddress).to.be.equal(donationAddress);
   expect(receiptAuction.events[0].args.bootCoordinatorAddress).to.be.equal(bootCoordinatorAddress);
-  expect(receiptAuction.events[0].args.bootCoordinatorURL).to.be.equal(deployParameters[chainId].bootCoordinatorURL);
+  expect(receiptAuction.events[0].args.bootCoordinatorURL).to.be.equal(deployParameters.bootCoordinatorURL);
   expect(receiptAuction.events[0].args.outbidding).to.be.equal(outbidding);
   expect(receiptAuction.events[0].args.slotDeadline).to.be.equal(slotDeadline);
   expect(receiptAuction.events[0].args.closedAuctionSlots).to.be.equal(closedAuctionSlots);
@@ -332,32 +300,21 @@ async function main() {
     libverifiersWithdrawAddress,
     hermezAuctionProtocol.address,
     HEZTokenAddress,
-    deployParameters[chainId].forgeL1L2BatchTimeout,
-    deployParameters[chainId].feeAddToken,
+    deployParameters.forgeL1L2BatchTimeout,
+    deployParameters.feeAddToken,
     libposeidonsAddress[0],
     libposeidonsAddress[1],
     libposeidonsAddress[2],
     hermezGovernanceAddress,
-    deployParameters[chainId].withdrawalDelayHermez,
+    deployParameters.withdrawalDelayHermez,
     withdrawalDelayer.address
   );
   const receiptHermez = await hermezTx.wait();
-  expect(receiptHermez.events[0].args.forgeL1L2BatchTimeout).to.be.equal(deployParameters[chainId].forgeL1L2BatchTimeout);
-  expect(receiptHermez.events[0].args.feeAddToken).to.be.equal(deployParameters[chainId].feeAddToken);
-  expect(receiptHermez.events[0].args.withdrawalDelay).to.be.equal(deployParameters[chainId].withdrawalDelayHermez);
+  expect(receiptHermez.events[0].args.forgeL1L2BatchTimeout).to.be.equal(deployParameters.forgeL1L2BatchTimeout);
+  expect(receiptHermez.events[0].args.feeAddToken).to.be.equal(deployParameters.feeAddToken);
+  expect(receiptHermez.events[0].args.withdrawalDelay).to.be.equal(deployParameters.withdrawalDelayHermez);
 
   console.log("hermez Initialized");
-
-
-  // TODO ADD TOKENS FROM GOVERNANCE
-  const addTokens = deployParameters[chainId].tokens;
-  if (addTokens && addTokens.length > 0) {
-    console.log("Add Tokens to the hermez");
-    await buidlerHEZToken.approve(hermez.address, deployParameters[chainId].feeAddToken*addTokens.length);
-    for (let i = 0; i < addTokens.length; i++) {
-      await hermez.addToken(addTokens[i], "0x",{gasLimit: 300000});
-    }
-  }
 
   // in case the mnemonic accounts are used, return the index, otherwise, return null
   const outputJson = {

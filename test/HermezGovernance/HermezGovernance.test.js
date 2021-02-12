@@ -45,17 +45,9 @@ describe("Hermez Governance", function() {
     donationAddress = await donation.getAddress();
     bootCoordinatorAddress = await bootCoordinator.getAddress();
 
-    hermezGovernance = await upgrades.deployProxy(
-      accessControlFactory,
-      [],
-      {
-        unsafeAllowCustomTypes: true,
-        initializer: undefined,
-      }
-    );
+    hermezGovernance = await accessControlFactory.deploy(communityCouncilAddress);
     await hermezGovernance.deployed();
 
-    await hermezGovernance.hermezGovernanceInitializer(communityCouncilAddress);
 
     const HermezAuctionProtocol = await ethers.getContractFactory(
       "HermezAuctionProtocol"
