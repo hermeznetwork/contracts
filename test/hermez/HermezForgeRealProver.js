@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("../../node_modules/@nomiclabs/buidler");
+const { ethers } = require("../../node_modules/hardhat");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const { time } = require("@openzeppelin/test-helpers");
 const Scalar = require("ffjavascript").Scalar;
@@ -33,10 +33,10 @@ const {
 } = require("@hermeznetwork/commonjs");
 
 describe("Hermez ERC 20", function () {
-  let buidlerTokenERC20Mock;
-  let buidlerHermez;
-  let buidlerWithdrawalDelayer;
-  let buidlerHEZ;
+  let hardhatTokenERC20Mock;
+  let hardhatHermez;
+  let hardhatWithdrawalDelayer;
+  let hardhatHEZ;
 
   let owner;
   let id1;
@@ -81,16 +81,16 @@ describe("Hermez ERC 20", function () {
       ownerWallet.privateKey = ownerWalletTest.privateKey;
     }
     else {
-      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+      ownerWallet = new ethers.Wallet(ethers.provider._hardhatProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
 
-    // const privateKeyBuidler =
+    // const privateKeyhardhat =
     //   "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
     // ownerWallet = new ethers.Wallet(
-    //   privateKeyBuidler,
+    //   privateKeyhardhat,
     //   ethers.provider
     // );
-    //ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+    //ownerWallet = new ethers.Wallet(ethers.provider._hardhatProvider._genesisAccounts[0].privateKey, ethers.provider);
 
     // factory helpers
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
@@ -125,13 +125,13 @@ describe("Hermez ERC 20", function () {
       poseidonUnit.createCode(4),
       owner
     );
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
 
-    const poseidonAddr2 = buidlerPoseidon2Elements.address;
-    const poseidonAddr3 = buidlerPoseidon3Elements.address;
-    const poseidonAddr4 = buidlerPoseidon4Elements.address;
+    const poseidonAddr2 = hardhatPoseidon2Elements.address;
+    const poseidonAddr3 = hardhatPoseidon3Elements.address;
+    const poseidonAddr4 = hardhatPoseidon4Elements.address;
 
 
 
@@ -139,14 +139,14 @@ describe("Hermez ERC 20", function () {
     const Hermez = await ethers.getContractFactory("HermezTest");
 
     // deploy tokens
-    buidlerTokenERC20Mock = await TokenERC20Mock.deploy(
+    hardhatTokenERC20Mock = await TokenERC20Mock.deploy(
       "tokenname",
       "TKN",
       await owner.getAddress(),
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC20PermitMock.deploy(
+    hardhatHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
       await owner.getAddress(),
@@ -154,30 +154,30 @@ describe("Hermez ERC 20", function () {
     );
 
     // deploy helpers
-    let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
-    let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    let hardhatVerifierRollupHelper = await VerifierRollupHelper.deploy();
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
 
-    let buidlerHermezAuctionTest = await HermezAuctionTest.deploy();
+    let hardhatHermezAuctionTest = await HermezAuctionTest.deploy();
 
     // deploy hermez
-    buidlerHermez = await Hermez.deploy();
-    await buidlerHermez.deployed();
+    hardhatHermez = await Hermez.deploy();
+    await hardhatHermez.deployed();
 
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
-    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+    hardhatWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await hardhatWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
-      buidlerHermez.address,
+      hardhatHermez.address,
       hermezGovernanceAddress,
       hermezGovernanceAddress
     );
 
     // deploy hermez
-    await buidlerHermez.initializeHermez(
-      [buidlerVerifierRollupHelper.address],
+    await hardhatHermez.initializeHermez(
+      [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      buidlerVerifierWithdrawHelper.address,
-      buidlerHermezAuctionTest.address,
-      buidlerHEZ.address,
+      hardhatVerifierWithdrawHelper.address,
+      hardhatHermezAuctionTest.address,
+      hardhatHEZ.address,
       forgeL1L2BatchTimeout,
       feeAddToken,
       poseidonAddr2,
@@ -185,13 +185,13 @@ describe("Hermez ERC 20", function () {
       poseidonAddr4,
       hermezGovernanceAddress,
       withdrawalDelay,
-      buidlerWithdrawalDelayer.address
+      hardhatWithdrawalDelayer.address
     );
 
     // wait until is deployed
-    await buidlerTokenERC20Mock.deployed();
+    await hardhatTokenERC20Mock.deployed();
 
-    const chainSC = await buidlerHermez.getChainID();
+    const chainSC = await hardhatHermez.getChainID();
     chainID = chainSC.toNumber();
     chainIDHex = chainSC.toHexString();
   });
@@ -209,33 +209,33 @@ describe("Hermez ERC 20", function () {
         maxTx,
         maxL1Tx,
         nLevels,
-        buidlerHermez,
+        hardhatHermez,
         rollupDB,
         true
       );
 
       await AddToken(
-        buidlerHermez,
-        buidlerTokenERC20Mock,
-        buidlerHEZ,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
         ownerWallet,
         feeAddToken
       );
 
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez, chainIDHex)
+        await l1CoordinatorTxEth(tokenID, babyjub, owner, hardhatHermez, chainIDHex)
       );
 
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez)
+        await l1CoordinatorTxBjj(tokenID, babyjub, hardhatHermez)
       );
 
       // forge Batch
       await forgerTest.forgeBatch(true, [], l1TxCoordiatorArray);
 
       // after forge, next queue is empty
-      const currentQueue = await buidlerHermez.nextL1ToForgeQueue();
-      expect("0x").to.equal(await buidlerHermez.mapL1TxQueue(currentQueue));
+      const currentQueue = await hardhatHermez.nextL1ToForgeQueue();
+      expect("0x").to.equal(await hardhatHermez.mapL1TxQueue(currentQueue));
     });
 
     it("forge L1 user & Coordiator Tx batch", async function () {
@@ -253,15 +253,15 @@ describe("Hermez ERC 20", function () {
         maxTx,
         maxL1Tx,
         nLevels,
-        buidlerHermez,
+        hardhatHermez,
         rollupDB,
         true
       );
 
       await AddToken(
-        buidlerHermez,
-        buidlerTokenERC20Mock,
-        buidlerHEZ,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
         ownerWallet,
         feeAddToken
       );
@@ -274,8 +274,8 @@ describe("Hermez ERC 20", function () {
         tokenID,
         babyjub,
         owner,
-        buidlerHermez,
-        buidlerTokenERC20Mock,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
         numAccounts
       );
 
@@ -286,8 +286,8 @@ describe("Hermez ERC 20", function () {
           tokenID,
           babyjub,
           owner,
-          buidlerHermez,
-          buidlerTokenERC20Mock
+          hardhatHermez,
+          hardhatTokenERC20Mock
         )
       );
       l1TxUserArray.push(
@@ -296,8 +296,8 @@ describe("Hermez ERC 20", function () {
           tokenID,
           fromIdx,
           owner,
-          buidlerHermez,
-          buidlerTokenERC20Mock
+          hardhatHermez,
+          hardhatTokenERC20Mock
         )
       );
       l1TxUserArray.push(
@@ -308,8 +308,8 @@ describe("Hermez ERC 20", function () {
           toIdx,
           amountF,
           owner,
-          buidlerHermez,
-          buidlerTokenERC20Mock
+          hardhatHermez,
+          hardhatTokenERC20Mock
         )
       );
       l1TxUserArray.push(
@@ -320,8 +320,8 @@ describe("Hermez ERC 20", function () {
           amountF,
           babyjub,
           owner,
-          buidlerHermez,
-          buidlerTokenERC20Mock
+          hardhatHermez,
+          hardhatTokenERC20Mock
         )
       );
       l1TxUserArray.push(
@@ -331,11 +331,11 @@ describe("Hermez ERC 20", function () {
           toIdx,
           amountF,
           owner,
-          buidlerHermez
+          hardhatHermez
         )
       );
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, hardhatHermez)
       );
 
       // forge empty batch
@@ -345,11 +345,11 @@ describe("Hermez ERC 20", function () {
 
       // add Coordiator tx
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez, chainIDHex)
+        await l1CoordinatorTxEth(tokenID, babyjub, owner, hardhatHermez, chainIDHex)
       );
 
       l1TxCoordiatorArray.push(
-        await l1CoordinatorTxBjj(tokenID, babyjub, buidlerHermez)
+        await l1CoordinatorTxBjj(tokenID, babyjub, hardhatHermez)
       );
 
       // forge batch with all the L1 tx
@@ -371,15 +371,15 @@ describe("Hermez ERC 20", function () {
         maxTx,
         maxL1Tx,
         nLevels,
-        buidlerHermez,
+        hardhatHermez,
         rollupDB,
         true
       );
 
       await AddToken(
-        buidlerHermez,
-        buidlerTokenERC20Mock,
-        buidlerHEZ,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
         ownerWallet,
         feeAddToken
       );
@@ -392,16 +392,16 @@ describe("Hermez ERC 20", function () {
         tokenID,
         babyjub,
         owner,
-        buidlerHermez,
-        buidlerTokenERC20Mock,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
         numAccounts
       );
 
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, hardhatHermez)
       );
 
-      const initialOwnerBalance = await buidlerTokenERC20Mock.balanceOf(
+      const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()
       );
 
@@ -412,12 +412,12 @@ describe("Hermez ERC 20", function () {
       await forgerTest.forgeBatch(true, l1TxUserArray, []);
 
       // perform withdraw
-      const numExitRoot = await buidlerHermez.lastForgedBatch();
+      const numExitRoot = await hardhatHermez.lastForgedBatch();
       const instantWithdraw = true;
       const state = await rollupDB.getStateByIdx(256);
       const exitInfo = await rollupDB.getExitTreeInfo(256, numExitRoot);
       await expect(
-        buidlerHermez.withdrawMerkleProof(
+        hardhatHermez.withdrawMerkleProof(
           tokenID,
           amount,
           babyjub,
@@ -427,9 +427,9 @@ describe("Hermez ERC 20", function () {
           instantWithdraw
         )
       )
-        .to.emit(buidlerHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
-      const finalOwnerBalance = await buidlerTokenERC20Mock.balanceOf(
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()
       );
       expect(parseInt(finalOwnerBalance)).to.equal(
@@ -452,15 +452,15 @@ describe("Hermez ERC 20", function () {
         maxTx,
         maxL1Tx,
         nLevels,
-        buidlerHermez,
+        hardhatHermez,
         rollupDB,
         true
       );
 
       await AddToken(
-        buidlerHermez,
-        buidlerTokenERC20Mock,
-        buidlerHEZ,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
         ownerWallet,
         feeAddToken
       );
@@ -473,13 +473,13 @@ describe("Hermez ERC 20", function () {
         tokenID,
         babyjub,
         owner,
-        buidlerHermez,
-        buidlerTokenERC20Mock,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
         numAccounts
       );
 
       l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, buidlerHermez)
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, hardhatHermez)
       );
       l1TxUserArray.push(
         await l1UserTxForceExit(
@@ -487,7 +487,7 @@ describe("Hermez ERC 20", function () {
           fromIdx + 1,
           amountF,
           owner,
-          buidlerHermez
+          hardhatHermez
         )
       );
       l1TxUserArray.push(
@@ -496,10 +496,10 @@ describe("Hermez ERC 20", function () {
           fromIdx + 2,
           amountF,
           owner,
-          buidlerHermez
+          hardhatHermez
         )
       );
-      const initialOwnerBalance = await buidlerTokenERC20Mock.balanceOf(
+      const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()
       );
 
@@ -510,12 +510,12 @@ describe("Hermez ERC 20", function () {
       await forgerTest.forgeBatch(true, l1TxUserArray, []);
 
       // perform withdraw
-      const numExitRoot = await buidlerHermez.lastForgedBatch();
+      const numExitRoot = await hardhatHermez.lastForgedBatch();
       const instantWithdraw = true;
       const state = await rollupDB.getStateByIdx(256);
       const exitInfo = await rollupDB.getExitTreeInfo(256, numExitRoot);
       await expect(
-        buidlerHermez.withdrawMerkleProof(
+        hardhatHermez.withdrawMerkleProof(
           tokenID,
           amount,
           babyjub,
@@ -525,9 +525,9 @@ describe("Hermez ERC 20", function () {
           instantWithdraw
         )
       )
-        .to.emit(buidlerHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
-      const finalOwnerBalance = await buidlerTokenERC20Mock.balanceOf(
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()
       );
       expect(parseInt(finalOwnerBalance)).to.equal(

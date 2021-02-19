@@ -1,13 +1,8 @@
 const {expect} = require("chai");
 require("dotenv").config();
 const path = require("path");
-const bre = require("@nomiclabs/buidler");
-const { ethers, upgrades } = require("@nomiclabs/buidler");
-
-require("@openzeppelin/test-helpers/configure")({
-  provider: ethers.provider._buidlerProvider._url || "http://localhost:8545",
-});
-const { time } = require("@openzeppelin/test-helpers");
+const bre = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 const fs = require("fs");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
@@ -31,7 +26,6 @@ const deployParameters = require(pathDeployParameters);
 const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 
 async function main() {
-
   // compìle contracts
   await bre.run("compile");
 
@@ -114,10 +108,10 @@ async function main() {
     deployParameters.hermezGovernanceAddress;
   if (!hermezGovernanceAddress) {
     // deploy Hermez Governance
-    const buidlerHermezGovernance = await HermezGovernance.deploy(communitCouncilAddress);
-    await buidlerHermezGovernance.deployed();
+    const hardhatHermezGovernance = await HermezGovernance.deploy(communitCouncilAddress);
+    await hardhatHermezGovernance.deployed();
 
-    hermezGovernanceAddress = buidlerHermezGovernance.address;
+    hermezGovernanceAddress = hardhatHermezGovernance.address;
     console.log("Hermez Governance Address deployed at: ", hermezGovernanceAddress);
   }
   else {
@@ -165,20 +159,20 @@ async function main() {
 
   console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
-  let buidlerHEZToken;
+  let hardhatHEZToken;
   let HEZTokenAddress =
     deployParameters.HEZTokenAddress;
   if (!HEZTokenAddress) {
     // deploy HEZ (erc20Permit) token
-    buidlerHEZToken = await HEZToken.deploy(
+    hardhatHEZToken = await HEZToken.deploy(
       "HEZ token",
       "HEZ",
       await deployer.getAddress(),
       tokenInitialAmount
     );
-    await buidlerHEZToken.deployed();
+    await hardhatHEZToken.deployed();
 
-    HEZTokenAddress = buidlerHEZToken.address;
+    HEZTokenAddress = hardhatHEZToken.address;
     console.log("HEZToken deployed at: ", HEZTokenAddress);
   }
   else {
@@ -189,22 +183,22 @@ async function main() {
   // poseidon libs
   let libposeidonsAddress = deployParameters.libposeidonsAddress;
   if (!libposeidonsAddress || libposeidonsAddress.length != 3) {
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
-    await buidlerPoseidon2Elements.deployed();
-    await buidlerPoseidon3Elements.deployed();
-    await buidlerPoseidon4Elements.deployed();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
+    await hardhatPoseidon2Elements.deployed();
+    await hardhatPoseidon3Elements.deployed();
+    await hardhatPoseidon4Elements.deployed();
 
     libposeidonsAddress = [
-      buidlerPoseidon2Elements.address,
-      buidlerPoseidon3Elements.address,
-      buidlerPoseidon4Elements.address,
+      hardhatPoseidon2Elements.address,
+      hardhatPoseidon3Elements.address,
+      hardhatPoseidon4Elements.address,
     ];
     console.log("deployed poseidon libs");
-    console.log("poseidon 2 elements at: ", buidlerPoseidon2Elements.address);
-    console.log("poseidon 3 elements at: ", buidlerPoseidon3Elements.address);
-    console.log("poseidon 4 elements at: ", buidlerPoseidon4Elements.address);
+    console.log("poseidon 2 elements at: ", hardhatPoseidon2Elements.address);
+    console.log("poseidon 3 elements at: ", hardhatPoseidon3Elements.address);
+    console.log("poseidon 4 elements at: ", hardhatPoseidon4Elements.address);
   } else {
     console.log("posidon libs already depoloyed");
   }
@@ -230,10 +224,10 @@ async function main() {
       const VerifierRollupReal = await ethers.getContractFactory(
         `Verifier${maxTxVerifier[i]}`
       );
-      const buidlerVerifierRollupReal = await VerifierRollupReal.deploy();
-      await buidlerVerifierRollupReal.deployed();
-      libVerifiersAddress.push(buidlerVerifierRollupReal.address);
-      console.log("verifiers Real deployed at: ", buidlerVerifierRollupReal.address);
+      const hardhatVerifierRollupReal = await VerifierRollupReal.deploy();
+      await hardhatVerifierRollupReal.deployed();
+      libVerifiersAddress.push(hardhatVerifierRollupReal.address);
+      console.log("verifiers Real deployed at: ", hardhatVerifierRollupReal.address);
     }
   } else {
     console.log("verifier libs already depoloyed");
@@ -244,9 +238,9 @@ async function main() {
   let libverifiersWithdrawAddress =
     deployParameters.libVerifiersWithdrawAddress;
   if (!libverifiersWithdrawAddress) {
-    let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
-    await buidlerVerifierWithdrawHelper.deployed();
-    libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    await hardhatVerifierWithdrawHelper.deployed();
+    libverifiersWithdrawAddress = hardhatVerifierWithdrawHelper.address;
     console.log("deployed withdraw verifiers libs");
     console.log("withdraw verifiers deployed at: ", libverifiersWithdrawAddress);
   } else {
@@ -259,10 +253,8 @@ async function main() {
   let genesisBlock = deployParameters.genesisBlock;
   if (genesisBlock == "") {
     genesisBlock =
-    (await time.latestBlock()).toNumber() +
-      parseInt(deployParameters.genesisBlockOffsetCurrent);
+    (await ethers.provider.getBlockNumber()) + parseInt(deployParameters.genesisBlockOffsetCurrent);
   }
-
   const outbidding = 1000;
   const slotDeadline = 20;
   const closedAuctionSlots = 2;
@@ -329,7 +321,7 @@ async function main() {
     communitCouncilAddress,
     libVerifiersAddress,
     libverifiersWithdrawAddress,
-    network: process.env.BUIDLER_NETWORK
+    network: process.env.hardhat_NETWORK
   };
 
   fs.writeFileSync(pathOutputJson, JSON.stringify(outputJson, null, 1));

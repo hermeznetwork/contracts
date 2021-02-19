@@ -6,7 +6,7 @@ In repository root:
 2. `cd scripts/deployment-testnet`
 3. `git clone https://github.com/hermeznetwork/testnet-private-configs`
 4. `cp testnet-private-configs/.env .env`
-5. `Choose your ethereum network changing the "BUIDLER_NETWORK" in the .env file and "buidlerNetwork" in deploy_paramers.json`
+5. `Choose your ethereum network changing the "HARDHAT_NETWORK" in the .env file and "hardhatNetwork" in deploy_paramers.json`
    - Available options:
      - rinkeby
      - goerli
@@ -36,7 +36,7 @@ In repository root:
 6. (optional) Verify the smart contracts in etherscan!
    For this step a `ETHERSCAN_API_KEY` must be provided in the .env file, contracts must be deployed and the `.openzeppelin` must be created.
    Be aware that once the contracts are verified in a chain, etherscan recognizes them and there's no need to verify them again. So this process should only be used once. That's why also there's no need to verify the proxy contract.
-   Due a bug of the buidler plugin, more contracts than just the source of the implementation are pushed to the verification, allowing etherescan to verify the contract and allowing users to "read" the data of the transactions, but it's messy if some user want to read the smart contract from here.
+   Due a bug of the hardhat plugin, more contracts than just the source of the implementation are pushed to the verification, allowing etherescan to verify the contract and allowing users to "read" the data of the transactions, but it's messy if some user want to read the smart contract from here.
    That's why in mainet this process will be done manually to assure the polite correctness of the verifications
 
    - Run `node verifyContracts`

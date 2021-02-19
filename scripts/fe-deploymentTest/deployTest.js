@@ -124,13 +124,13 @@ async function main() {
 
   const delay = parseInt(process.env.DELAY ? process.env.DELAY : 60);
 
-  buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+  hardhatWithdrawalDelayer = await WithdrawalDelayer.deploy(
     delay,
     hardhatHermez.address,
     hermezGovernanceAddress,
     hermezGovernanceAddress
   );
-  await buidlerWithdrawalDelayer.deployed();
+  await hardhatWithdrawalDelayer.deployed();
 
   // initialize hermez
   await hardhatHermez.initializeHermez(

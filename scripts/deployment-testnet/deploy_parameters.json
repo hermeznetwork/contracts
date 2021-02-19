@@ -52,13 +52,13 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512, 376, 376
+      512, 352, 1960
     ],
     "nLevelsVerifer": [
       32, 32, 32
     ],
     "verifierType": [ 
-      "mock", "mock", "real"
+      "mock", "real", "real"
     ],
     "tokens": [
       "0xad6d458402f60fd3bd25163575031acdce07538d"

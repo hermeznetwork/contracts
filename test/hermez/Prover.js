@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("@nomiclabs/buidler");
+const { ethers } = require("hardhat");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const poseidonHashJs = require("circomlib").poseidon;
 const Scalar = require("ffjavascript").Scalar;
@@ -21,9 +21,9 @@ describe("Hermez Helpers", function () {
     let ProverContract = await ethers.getContractFactory(
       "Verifier"
     );
-    buidlerProverContract = await ProverContract.deploy();
+    hardhatProverContract = await ProverContract.deploy();
 
-    await buidlerProverContract.deployed();
+    await hardhatProverContract.deployed();
   });
 
   describe("utility helpers", function () {
@@ -47,7 +47,7 @@ describe("Hermez Helpers", function () {
       const input = ["13125286639093380931878518383173032474507961807467565131003538765912150608017"];
 
       expect(
-        await buidlerProverContract.verifyProof(
+        await hardhatProverContract.verifyProof(
           proofA,
           proofB,
           proofC,
@@ -101,7 +101,7 @@ describe("Hermez Helpers", function () {
       const input = JSON.parse(response.data.pubData);
 
       expect(
-        await buidlerProverContract.verifyProof(
+        await hardhatProverContract.verifyProof(
           proofA,
           proofB,
           proofC,

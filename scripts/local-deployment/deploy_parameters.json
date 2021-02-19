@@ -18,7 +18,7 @@
       32, 32, 32
     ],
     "verifierType": [ 
-      "mock", "mock", "real"
+      "mock", "real", "real"
     ],
     "hermezGovernanceAddress": "",
     "emergencyCouncilAddress": "",
