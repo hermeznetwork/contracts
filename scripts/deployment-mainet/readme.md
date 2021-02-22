@@ -3,7 +3,7 @@
 In repository root:
 
 1. `yarn install`
-2. `cd scripts/deployment-testnet`
+2. `cd scripts/deployment-mainet`
 3. `git clone https://github.com/hermeznetwork/testnet-private-configs`
 4. `cp testnet-private-configs/.env .env`
 5. `Choose your ethereum network changing the "HARDHAT_NETWORK" in the .env file and "hardhatNetwork" in deploy_paramers.json`
