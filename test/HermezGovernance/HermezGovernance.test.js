@@ -45,17 +45,9 @@ describe("Hermez Governance", function() {
     donationAddress = await donation.getAddress();
     bootCoordinatorAddress = await bootCoordinator.getAddress();
 
-    hermezGovernance = await upgrades.deployProxy(
-      accessControlFactory,
-      [],
-      {
-        unsafeAllowCustomTypes: true,
-        initializer: undefined,
-      }
-    );
+    hermezGovernance = await accessControlFactory.deploy(communityCouncilAddress);
     await hermezGovernance.deployed();
 
-    await hermezGovernance.hermezGovernanceInitializer(communityCouncilAddress);
 
     const HermezAuctionProtocol = await ethers.getContractFactory(
       "HermezAuctionProtocol"
@@ -105,7 +97,12 @@ describe("Hermez Governance", function() {
     await hermez.deployed();
 
     // Deploy withdrawalDelayer
-    withdrawalDelayer = await WithdrawalDelayer.deploy();
+    withdrawalDelayer = await WithdrawalDelayer.deploy(
+      INITIAL_WITHDRAWAL_DELAY,
+      hermez.address,
+      hermezGovernance.address,
+      emergencyCouncilAddress
+    );
     await withdrawalDelayer.deployed();
 
     // deploy HEZ (erc20Permit) token
@@ -134,14 +131,6 @@ describe("Hermez Governance", function() {
     let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
     await buidlerVerifierWithdrawHelper.deployed();
     libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
-
-    // initialize withdrawal delayer
-    await withdrawalDelayer.withdrawalDelayerInitializer(
-      INITIAL_WITHDRAWAL_DELAY,
-      hermez.address,
-      hermezGovernance.address,
-      emergencyCouncilAddress
-    );
 
     let genesisBlock =
             (await time.latestBlock()).toNumber() + 100;

@@ -10,8 +10,6 @@ const pathDeployOutputParameters = path.join(__dirname, "./deploy_output.json");
 const deployOutputParameters = require(pathDeployOutputParameters);
 
 async function main() {
-  
-  const chainId = (await ethers.provider.getNetwork()).chainId;
 
   // verify Verifiers
 
@@ -29,7 +27,7 @@ async function main() {
     {
       address: deployOutputParameters.withdrawalDelayeAddress,
       constructorArguments: [
-        (deployParameters[chainId].initialWithdrawalDelay).toString(),
+        (deployParameters.initialWithdrawalDelay).toString(),
         deployOutputParameters.hermezAddress,
         deployOutputParameters.hermezGovernanceAddress,
         deployOutputParameters.emergencyCouncilAddress
@@ -46,7 +44,6 @@ async function main() {
       ]
     }
   );
-
   // verify upgradable SC (hermez and Auction)
   for (const property in openzeppelinUpgrade.impls) {
     const address = openzeppelinUpgrade.impls[property].address;

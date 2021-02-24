@@ -20,7 +20,7 @@ const {
   calculateInputMaxTxLevels
 } = require("./helpers/helpers");
 const {
-  float40,
+  float16,
   HermezAccount,
   txUtils,
   stateUtils,
@@ -49,7 +49,7 @@ describe("Hermez ERC 20", function () {
   let chainIDHex;
 
   const accounts = [];
-
+  
   // set accounts
   for (let i = 0; i < 10; i++) {
     const newHermezAccount = new HermezAccount();
@@ -60,10 +60,9 @@ describe("Hermez ERC 20", function () {
     accounts.push(newAccount);
   }
 
-
-  const tokenInitialAmount = ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+  const tokenInitialAmount = 1000000;
   const maxL1Tx = 256;
-  const maxTx = 512;
+  const maxTx = 376;
   const nLevels = 32;
   const forgeL1L2BatchTimeout = 10;
   const feeAddToken = 10;
@@ -93,6 +92,9 @@ describe("Hermez ERC 20", function () {
       ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
     }
 
+    const mnemonic = "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
+    let ownerWalletTest = ethers.Wallet.fromMnemonic(mnemonic);
+    console.log(ownerWallet.address, ownerWalletTest.address);
     // const privateKeyBuidler =
     //   "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
     // ownerWallet = new ethers.Wallet(
@@ -106,7 +108,7 @@ describe("Hermez ERC 20", function () {
     const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
     const VerifierRollupHelper = await ethers.getContractFactory(
-      "VerifierRollupHelper"
+      "Verifier"
     );
     const VerifierWithdrawHelper = await ethers.getContractFactory(
       "VerifierWithdrawHelper"
@@ -172,7 +174,8 @@ describe("Hermez ERC 20", function () {
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
 
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
+    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,
@@ -204,9 +207,9 @@ describe("Hermez ERC 20", function () {
     chainIDHex = chainSC.toHexString();
   });
 
-  describe("L2-user-Tx", function () {
-    this.timeout(0);
 
+  describe("Forge Batch", function () {
+    this.timeout(0);
     it("Create l2 Tx and forge them", async function () {
       const tokenIdERC20 = await AddToken(
         buidlerHermez,
@@ -216,7 +219,7 @@ describe("Hermez ERC 20", function () {
         feeAddToken
       );
 
-      const loadAmount = float40.round(1000);
+      const loadAmount = float16.float2Fix(float16.fix2Float(1000));
 
       const l1TxUserArray = [];
       l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
@@ -236,13 +239,23 @@ describe("Hermez ERC 20", function () {
         buidlerTokenERC20Mock
       ));
 
+      l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
+        loadAmount,
+        tokenIdERC20,
+        accounts[2].bjjCompressed,
+        owner,
+        buidlerHermez,
+        buidlerTokenERC20Mock
+      ));
+
       const rollupDB = await RollupDB(new SMTMemDB(), chainID);
       const forgerTest = new ForgerTest(
         maxTx,
         maxL1Tx,
         nLevels,
         buidlerHermez,
-        rollupDB
+        rollupDB,
+        true
       );
 
       // forge empty batch
@@ -250,202 +263,39 @@ describe("Hermez ERC 20", function () {
 
       // forge batch with all the L1 tx
       await forgerTest.forgeBatch(true, l1TxUserArray, []);
+
+      const l1TxCoordiatorArray = [];
 
       const l2TxUserArray = [];
 
       const tx = {
         fromIdx: accounts[0].idx,
-        toIdx: accounts[1].idx,
-        tokenID: tokenIdERC20,
+        toIdx: Constants.exitIdx, //Constants.exitIdx
+        tokenID: tokenIdERC20.toNumber(),
         amount: Scalar.e(40),
         nonce: 0,
-        userFee: 152, // effective fee amount / 4 = 10
+        chainID: chainID,
+        userFee: 0, // 0
       };
 
       accounts[0].hermezAccount.signTx(tx);
       l2TxUserArray.push(tx);
 
-      await forgerTest.forgeBatch(true, [], [], l2TxUserArray);
+
+      l1TxCoordiatorArray.push(
+        await l1CoordinatorTxEth(tokenIdERC20, accounts[0].bjjCompressed, owner, buidlerHermez, chainIDHex)
+      );
+
+      await forgerTest.forgeBatch(true, [], l1TxCoordiatorArray, l2TxUserArray, true);
+
 
       const s1 = await rollupDB.getStateByIdx(256);
       expect(s1.sign).to.be.equal(accounts[0].hermezAccount.sign);
       expect(s1.ay).to.be.equal(accounts[0].hermezAccount.ay);
-      expect(s1.balance.toString()).to.be.equal(Scalar.e(950).toString()); // 1000(loadAmount) - 40(amount) - 10(fee) = 950
+      //  expect(s1.balance.toString()).to.be.equal(Scalar.e(950).toString()); // 1000(loadAmount) - 40(amount) - 10(fee) = 950
       expect(s1.tokenID).to.be.equal(tokenIdERC20);
       expect(s1.nonce).to.be.equal(1);
     });
 
-    it("Create a lot of l2 Tx and forge them", async function () {
-      const tokenIdERC20 = await AddToken(
-        buidlerHermez,
-        buidlerTokenERC20Mock,
-        buidlerHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      const loadAmount = float40.round(10000);
-
-      const l1TxUserArray = [];
-      l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
-        loadAmount,
-        tokenIdERC20,
-        accounts[0].bjjCompressed,
-        owner,
-        buidlerHermez,
-        buidlerTokenERC20Mock
-      ));
-      l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
-        loadAmount,
-        tokenIdERC20,
-        accounts[1].bjjCompressed,
-        owner,
-        buidlerHermez,
-        buidlerTokenERC20Mock
-      ));
-
-      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
-      const forgerTest = new ForgerTest(
-        maxTx,
-        maxL1Tx,
-        nLevels,
-        buidlerHermez,
-        rollupDB
-      );
-
-      // forge empty batch
-      await forgerTest.forgeBatch(true, [], []);
-
-      // forge batch with all the L1 tx
-      await forgerTest.forgeBatch(true, l1TxUserArray, []);
-
-      const l2TxUserArray = [];
-
-      const amount = 40;
-
-      let nonce = 0;
-      for (let i = 0; i < 180; i++) {
-        const tx = {
-          fromIdx: accounts[0].idx,
-          toIdx: accounts[1].idx,
-          tokenID: tokenIdERC20,
-          amount: Scalar.e(amount),
-          nonce: nonce++,
-          userFee: 152, // effective fee amount / 4 = 10
-        };
-        accounts[0].hermezAccount.signTx(tx);
-        l2TxUserArray.push(tx);
-      }
-      await forgerTest.forgeBatch(true, [], [], l2TxUserArray);
-
-      const s1 = await rollupDB.getStateByIdx(256);
-      expect(s1.sign).to.be.equal(accounts[0].hermezAccount.sign);
-      expect(s1.ay).to.be.equal(accounts[0].hermezAccount.ay);
-      expect(s1.balance.toString()).to.be.equal(Scalar.e(1000).toString()); // 10000(loadAmount) - 180*(40(amount) + 10(fee)) = 1000
-      expect(s1.tokenID).to.be.equal(tokenIdERC20);
-      expect(s1.nonce).to.be.equal(nonce);
-    });
-
-    it("Create a lot of l2 Tx and L1tx and forge them", async function () {
-      const tokenIdERC20 = await AddToken(
-        buidlerHermez,
-        buidlerTokenERC20Mock,
-        buidlerHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      const loadAmount = float40.round(10000);
-
-      const l1TxUserArray = [];
-      l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
-        loadAmount,
-        tokenIdERC20,
-        accounts[0].bjjCompressed,
-        owner,
-        buidlerHermez,
-        buidlerTokenERC20Mock
-      ));
-      l1TxUserArray.push(await l1UserTxCreateAccountDeposit(
-        loadAmount,
-        tokenIdERC20,
-        accounts[1].bjjCompressed,
-        owner,
-        buidlerHermez,
-        buidlerTokenERC20Mock
-      ));
-
-      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
-      const forgerTest = new ForgerTest(
-        maxTx,
-        maxL1Tx,
-        nLevels,
-        buidlerHermez,
-        rollupDB
-      );
-
-      // forge empty batch
-      await forgerTest.forgeBatch(true, [], []);
-
-      // forge batch with all the L1 tx
-      await forgerTest.forgeBatch(true, l1TxUserArray, []);
-
-      const l2TxUserArray = [];
-
-      const amount = 40;
-
-      let nonce = 0;
-      for (let i = 0; i < 180; i++) {
-        const tx = {
-          fromIdx: accounts[0].idx,
-          toIdx: accounts[1].idx,
-          tokenID: tokenIdERC20,
-          amount: Scalar.e(amount),
-          nonce: nonce++,
-          userFee: 152, // effective fee amount / 4 = 10
-        };
-        accounts[0].hermezAccount.signTx(tx);
-        l2TxUserArray.push(tx);
-      }
-
-      const l1TxUserArray2 = [];
-
-      for (let i = 0; i < 127; i++) {
-        l1TxUserArray2.push(
-          await l1UserTxCreateAccountDeposit(
-            loadAmount,
-            tokenIdERC20,
-            accounts[0].bjjCompressed,
-            owner,
-            buidlerHermez,
-            buidlerTokenERC20Mock
-          )
-        );
-      }
-
-      const l1TCoordinatorArray = [];
-      // add L1-Tx Coordinator with eth signature
-      for (let i = 0; i < 127; i++) {
-        l1TCoordinatorArray.push(
-          await l1CoordinatorTxEth(
-            tokenIdERC20,
-            accounts[0].bjjCompressed,
-            owner,
-            buidlerHermez,
-            chainIDHex
-          ));
-      }
-      // forge empty batch
-      await forgerTest.forgeBatch(true, [], []);
-
-      await forgerTest.forgeBatch(true, l1TxUserArray2, l1TCoordinatorArray, l2TxUserArray);
-
-      const s1 = await rollupDB.getStateByIdx(256);
-      expect(s1.sign).to.be.equal(accounts[0].hermezAccount.sign);
-      expect(s1.ay).to.be.equal(accounts[0].hermezAccount.ay);
-      expect(s1.balance.toString()).to.be.equal(Scalar.e(1000).toString()); // 10000(loadAmount) - 180*(40(amount) + 10(fee)) = 1000
-      expect(s1.tokenID).to.be.equal(tokenIdERC20);
-      expect(s1.nonce).to.be.equal(nonce);
-    });
   });
 });

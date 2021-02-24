@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 const { ethers } = require("../../../node_modules/@nomiclabs/buidler");
 const Scalar = require("ffjavascript").Scalar;
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 const { float40, txUtils, utils } = require("@hermeznetwork/commonjs");
 const { BigNumber } = require("ethers");
@@ -8,6 +11,7 @@ const nLevels = 32;
 const {
   createPermitDigest
 } = require("./erc2612");
+const { stringifyBigInts, unstringifyBigInts } = require("ffjavascript").utils;
 
 const L1_USER_BYTES = 78; // 20 ehtaddr, 32 babyjub, 4 token, 2 amountF, 2 loadAmountf, 6 fromIDx, 6 toidx
 
@@ -24,18 +28,25 @@ let ABIbid = [
 
 let iface = new ethers.utils.Interface(ABIbid);
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+const pathInput = path.join(__dirname, "./inputPeta.json");
+
 class ForgerTest {
-  constructor(maxTx, maxL1Tx, nLevels, buidlerHermez, rollupDB) {
+  constructor(maxTx, maxL1Tx, nLevels, buidlerHermez, rollupDB, realVerifier) {
     this.rollupDB = rollupDB;
     this.maxTx = maxTx;
     this.maxL1Tx = maxL1Tx;
     this.nLevels = nLevels;
     this.buidlerHermez = buidlerHermez;
+    this.realVerifier = realVerifier;
 
     this.L1TxB = 544;
   }
 
-  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray) {
+  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray, log) {
     const bb = await this.rollupDB.buildBatch(
       this.maxTx,
       this.nLevels,
@@ -68,20 +79,63 @@ class ForgerTest {
       }
     }
 
+    // if(log) {
+    //   bb.addToken(1);
+    //   bb.addFeeIdx(259);
+    // }
+    
     await bb.build();
-
+    
     let stringL1CoordinatorTx = "";
     for (let tx of l1TxCoordiatorArray) {
       stringL1CoordinatorTx =
         stringL1CoordinatorTx + tx.l1TxCoordinatorbytes.slice(2); // retireve the 0x
     }
 
-    const proofA = ["0", "0"];
-    const proofB = [
-      ["0", "0"],
-      ["0", "0"],
-    ];
-    const proofC = ["0", "0"];
+
+    let proofA, proofB, proofC;
+
+    if (this.realVerifier == true) {
+      // real verifier
+      const inputJson = stringifyBigInts(bb.getInput());
+      if(log) {
+        fs.writeFileSync(pathInput, JSON.stringify(inputJson, null, 1));
+      }
+      await axios.post("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/input", inputJson);
+      let response;
+      do {
+        await sleep(1000);
+        response = await axios.get("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/status");
+      } while (response.data.status == "busy");
+
+      proofA = [JSON.parse(response.data.proof).pi_a[0],
+        JSON.parse(response.data.proof).pi_a[1]
+      ];
+      proofB = [
+        [
+          JSON.parse(response.data.proof).pi_b[0][1],
+          JSON.parse(response.data.proof).pi_b[0][0]
+        ],
+        [
+          JSON.parse(response.data.proof).pi_b[1][1],
+          JSON.parse(response.data.proof).pi_b[1][0]
+        ]
+      ];
+      proofC =  [JSON.parse(response.data.proof).pi_c[0],
+        JSON.parse(response.data.proof).pi_c[1]
+      ];    
+
+      const input = JSON.parse(response.data.pubData);
+      expect(input[0]).to.equal(bb.getHashInputs().toString());
+    } else {
+      // mock verifier
+      proofA = ["0", "0"];
+      proofB = [
+        ["0", "0"],
+        ["0", "0"],
+      ];
+      proofC = ["0", "0"];
+    }
 
     const newLastIdx = bb.getNewLastIdx();
     const newStateRoot = bb.getNewStateRoot();

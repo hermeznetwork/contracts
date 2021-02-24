@@ -122,18 +122,15 @@ async function main() {
   buidlerHermez = await Hermez.deploy();
   await buidlerHermez.deployed();
 
-  buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
-  await buidlerWithdrawalDelayer.deployed();
-
   const delay = parseInt(process.env.DELAY ? process.env.DELAY : 60);
 
-  await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+  buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
     delay,
     buidlerHermez.address,
     hermezGovernanceAddress,
     hermezGovernanceAddress
   );
-
+  await buidlerWithdrawalDelayer.deployed();
 
   // initialize hermez
   await buidlerHermez.initializeHermez(

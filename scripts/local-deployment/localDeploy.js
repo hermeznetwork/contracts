@@ -19,8 +19,9 @@ const {
 } = require("../../test/hermez/helpers/helpers");
 
 
-const maxTxVerifierConstant = 512;
-const nLevelsVeriferConstant = 32;
+const maxTxVerifierDefault = [512, 352, 1960];
+const nLevelsVeriferDefault = [32, 32, 32];
+const verifierTypeDefault = ["mock","real", "real"];
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
@@ -102,9 +103,11 @@ async function main() {
   const HEZToken = await ethers.getContractFactory("ERC20PermitMock");
 
   // hermez libs
-  const VerifierRollupHelper = await ethers.getContractFactory(
+  
+  const VerifierRollupMock = await ethers.getContractFactory(
     "VerifierRollupHelper"
   );
+
   const VerifierWithdrawHelper = await ethers.getContractFactory(
     "VerifierWithdrawHelper"
   );
@@ -157,9 +160,14 @@ async function main() {
   console.log("hermez deployed at: ", hermez.address);
 
   // Deploy withdrawalDelayer
-  const withdrawalDelayer = await WithdrawalDelayer.deploy();
+  const withdrawalDelayer = await WithdrawalDelayer.deploy(
+    deployParameters[chainId].initialWithdrawalDelay || defaultWithdrawalDelay,
+    hermez.address,
+    hermezGovernanceAddress,
+    emergencyCouncilAddress
+  );
   await withdrawalDelayer.deployed();
-
+    
   console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
   // deploy HEZ (erc20Permit) token
@@ -208,30 +216,38 @@ async function main() {
     console.log("posidon libs already depoloyed");
   }
 
+  // maxTx and nLevelsVerifer must have the same number of elements as verifiers
+  let maxTxVerifier = deployParameters[chainId].maxTxVerifier || maxTxVerifierDefault;
+  let nLevelsVerifer = deployParameters[chainId].nLevelsVerifer || nLevelsVeriferDefault;
+  let verifierType = deployParameters[chainId].verifierType || verifierTypeDefault;
+
   // verifiers rollup libs
   let libVerifiersAddress = deployParameters[chainId].libVerifiersAddress;
+  
   if (!libVerifiersAddress || libVerifiersAddress.length == 0) {
-    let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
-    await buidlerVerifierRollupHelper.deployed();
-    libVerifiersAddress = [buidlerVerifierRollupHelper.address];
+    libVerifiersAddress = [];
+    console.log("deployed verifiers libs");
+    for (let i = 0; i < maxTxVerifier.length; i++) {
+      if (verifierType[i] == "real") {
+        const VerifierRollupReal = await ethers.getContractFactory(
+          `Verifier${maxTxVerifier[i]}`
+        );
+        const buidlerVerifierRollupReal = await VerifierRollupReal.deploy();
+        await buidlerVerifierRollupReal.deployed();
+        libVerifiersAddress.push(buidlerVerifierRollupReal.address);
+        console.log("verifiers Real deployed at: ", buidlerVerifierRollupReal.address);
+      }
+      else {
+        const buidlerVerifierRollupMock = await VerifierRollupMock.deploy();
+        await buidlerVerifierRollupMock.deployed();
+        libVerifiersAddress.push(buidlerVerifierRollupMock.address);
+        console.log("verifiers Mock deployed at: ", buidlerVerifierRollupMock.address);
+      }
+    }
+  } else {
+    console.log("verifier libs already depoloyed");
   }
 
-  // maxTx and nLevelsVerifer must have the same number of elements as verifiers
-  let maxTxVerifier = deployParameters[chainId].maxTxVerifier;
-  let nLevelsVerifer = deployParameters[chainId].nLevelsVerifer;
-  if (
-    !maxTxVerifier ||
-    !nLevelsVerifer ||
-    maxTxVerifier.length != nLevelsVerifer.length ||
-    maxTxVerifier.length != libVerifiersAddress.length
-  ) {
-    maxTxVerifier = [];
-    nLevelsVerifer = [];
-    libVerifiersAddress.forEach(() => {
-      maxTxVerifier.push(maxTxVerifierConstant);
-      nLevelsVerifer.push(nLevelsVeriferConstant);
-    });
-  }
 
   // verifier withdraw lib
   let libverifiersWithdrawAddress =
@@ -243,16 +259,6 @@ async function main() {
   }
 
   // initialize upgradable smart contracts
-
-  // initialize withdrawal delayer
-  await withdrawalDelayer.withdrawalDelayerInitializer(
-    deployParameters[chainId].initialWithdrawalDelay || defaultWithdrawalDelay,
-    hermez.address,
-    hermezGovernanceAddress,
-    emergencyCouncilAddress
-  );
-
-  console.log("withdrawalDelayer initialized");
 
   // initialize auction hermez
   let genesisBlock = deployParameters[chainId].genesisBlock;

@@ -163,8 +163,7 @@ describe("Hermez ERC 20", function () {
     buidlerHermez = await Hermez.deploy();
     await buidlerHermez.deployed();
 
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy();
-    await buidlerWithdrawalDelayer.withdrawalDelayerInitializer(
+    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
       INITIAL_DELAY,
       buidlerHermez.address,
       hermezGovernanceAddress,

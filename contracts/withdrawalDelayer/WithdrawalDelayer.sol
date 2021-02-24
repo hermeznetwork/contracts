@@ -4,14 +4,9 @@ pragma solidity 0.6.12;
 
 import "../interfaces/IWithdrawalDelayer.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract WithdrawalDelayer is
-    Initializable,
-    ReentrancyGuardUpgradeable,
-    IWithdrawalDelayer
-{
+contract WithdrawalDelayer is ReentrancyGuard, IWithdrawalDelayer {
     struct DepositState {
         uint192 amount;
         uint64 depositTimestamp;
@@ -76,14 +71,12 @@ contract WithdrawalDelayer is
      * @param _initialHermezGovernanceAddress can claim the funds in an emergency mode
      * @param _initialEmergencyCouncil can claim the funds in an emergency and MAX_EMERGENCY_MODE_TIME exceeded
      */
-
-    function withdrawalDelayerInitializer(
+    constructor(
         uint64 _initialWithdrawalDelay,
         address _initialHermezRollup,
         address _initialHermezGovernanceAddress,
         address payable _initialEmergencyCouncil
-    ) public initializer {
-        __ReentrancyGuard_init_unchained();
+    ) public {
         require(
             _initialHermezRollup != address(0),
             "WithdrawalDelayer::withdrawalDelayerInitializer ADDRESS_0_NOT_VALID"
