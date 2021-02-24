@@ -1,8 +1,8 @@
 require("dotenv").config();
 
-const bre = require("@nomiclabs/buidler");
+const bre = require("hardhat");
 const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const {ethers} = require("hardhat");
 const {BigNumber} = require("ethers");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const {
@@ -19,26 +19,26 @@ async function main() {
 
   const Hermez = await ethers.getContractFactory("HermezTest");
 
-  buidlerHermez = Hermez.attach(process.env.HERMEZ_ADDRESS);
+  hardhatHermez = Hermez.attach(process.env.HERMEZ_ADDRESS);
   
-  // load default account 0 from buidlerEvm
+  // load default account 0 from hardhatEvm
   // Account #0: 0xc783df8a850f42e7f7e57013759c285caa701eb6 (10000 ETH)
   // Private Key: 0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122
-  const privateKeyBuidler =
+  const privateKeyhardhat =
     "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
   const ownerWallet = new ethers.Wallet(
-    privateKeyBuidler,
+    privateKeyhardhat,
     ethers.provider
   );
 
   // get token contract
-  let buidlerToken;
+  let hardhatToken;
   if (isERC20Permit) {
     const TokenFactory = await ethers.getContractFactory("ERC20PermitMock");
-    buidlerToken = TokenFactory.attach(process.env.ERC20PERMIT_ADDRESS);
+    hardhatToken = TokenFactory.attach(process.env.ERC20PERMIT_ADDRESS);
   } else {
     const TokenFactory = await ethers.getContractFactory("ERC20Mock");
-    buidlerToken = TokenFactory.attach(process.env.ERC20_ADDRESS);
+    hardhatToken = TokenFactory.attach(process.env.ERC20_ADDRESS);
   }
 
   const loadAmount = 100;
@@ -50,8 +50,8 @@ async function main() {
     tokenID,
     babyjub,
     ownerWallet,
-    buidlerHermez,
-    buidlerToken,
+    hardhatHermez,
+    hardhatToken,
     isERC20Permit
   );
   console.log("account created!");

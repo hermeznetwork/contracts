@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("../../node_modules/@nomiclabs/buidler");
+const { ethers } = require("hardhat");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const {
@@ -30,10 +30,10 @@ const {
 const INITIAL_DELAY = 0;
 
 describe("Hermez gas performance", function () {
-  let buidlerTokenERC20Mock;
-  let buidlerHermez;
-  let buidlerWithdrawalDelayer;
-  let buidlerHEZ;
+  let hardhatTokenERC20Mock;
+  let hardhatHermez;
+  let hardhatWithdrawalDelayer;
+  let hardhatHEZ;
   let owner;
   let id1;
   let id2;
@@ -76,7 +76,7 @@ describe("Hermez gas performance", function () {
       ownerWallet.privateKey = ownerWalletTest.privateKey;
     }
     else {
-      ownerWallet = new ethers.Wallet(ethers.provider._buidlerProvider._genesisAccounts[0].privateKey, ethers.provider);
+      ownerWallet = new ethers.Wallet("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", ethers.provider);
     }
 
     // factory helpers
@@ -111,13 +111,13 @@ describe("Hermez gas performance", function () {
       poseidonUnit.createCode(4),
       owner
     );
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
 
-    const poseidonAddr2 = buidlerPoseidon2Elements.address;
-    const poseidonAddr3 = buidlerPoseidon3Elements.address;
-    const poseidonAddr4 = buidlerPoseidon4Elements.address;
+    const poseidonAddr2 = hardhatPoseidon2Elements.address;
+    const poseidonAddr3 = hardhatPoseidon3Elements.address;
+    const poseidonAddr4 = hardhatPoseidon4Elements.address;
 
 
 
@@ -125,42 +125,42 @@ describe("Hermez gas performance", function () {
     const Hermez = await ethers.getContractFactory("HermezTest");
 
     // deploy tokens
-    buidlerTokenERC20Mock = await TokenERC20Mock.deploy(
+    hardhatTokenERC20Mock = await TokenERC20Mock.deploy(
       "tokenname",
       "TKN",
       await owner.getAddress(),
       tokenInitialAmount
     );
 
-    buidlerHEZ = await TokenERC20PermitMock.deploy(
+    hardhatHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
       await owner.getAddress(),
       tokenInitialAmount
     );
 
-    let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
-    let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
-    let buidlerHermezAuctionTest = await HermezAuctionTest.deploy();
+    let hardhatVerifierRollupHelper = await VerifierRollupHelper.deploy();
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    let hardhatHermezAuctionTest = await HermezAuctionTest.deploy();
 
     // deploy hermez
-    buidlerHermez = await Hermez.deploy();
-    await buidlerHermez.deployed();
-    buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+    hardhatHermez = await Hermez.deploy();
+    await hardhatHermez.deployed();
+    hardhatWithdrawalDelayer = await WithdrawalDelayer.deploy(
       INITIAL_DELAY,
-      buidlerHermez.address,
+      hardhatHermez.address,
       hermezGovernanceAddress,
       hermezGovernanceAddress
     );
 
     // deploy hermez
 
-    await buidlerHermez.initializeHermez(
-      [buidlerVerifierRollupHelper.address],
+    await hardhatHermez.initializeHermez(
+      [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      buidlerVerifierWithdrawHelper.address,
-      buidlerHermezAuctionTest.address,
-      buidlerHEZ.address,
+      hardhatVerifierWithdrawHelper.address,
+      hardhatHermezAuctionTest.address,
+      hardhatHEZ.address,
       forgeL1L2BatchTimeout,
       feeAddToken,
       poseidonAddr2,
@@ -168,12 +168,12 @@ describe("Hermez gas performance", function () {
       poseidonAddr4,
       hermezGovernanceAddress,
       withdrawalDelay,
-      buidlerWithdrawalDelayer.address
+      hardhatWithdrawalDelayer.address
     );
 
     // wait until is deployed
-    await buidlerTokenERC20Mock.deployed();
-    const chainSC = await buidlerHermez.getChainID();
+    await hardhatTokenERC20Mock.deployed();
+    const chainSC = await hardhatHermez.getChainID();
     chainID = chainSC.toNumber();
     chainIDHex = chainSC.toHexString();
   });
@@ -186,9 +186,9 @@ describe("Hermez gas performance", function () {
       const l1TxCoordiatorArray = [];
 
       await AddToken(
-        buidlerHermez,
-        buidlerTokenERC20Mock,
-        buidlerHEZ,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
         ownerWallet,
         feeAddToken
       );
@@ -219,7 +219,7 @@ describe("Hermez gas performance", function () {
       const SCGasArray = [];
       const wastedGasarray = [];
 
-      let tx = await buidlerHermez.forgeGasTest(
+      let tx = await hardhatHermez.forgeGasTest(
         newLastIdx,
         newStateRoot,
         newExitRoot,
@@ -244,7 +244,7 @@ describe("Hermez gas performance", function () {
       for (let i = 0; i < 124; i++) {
         if (i != 0) {
           await l1TxCoordiatorArray.push(
-            await l1CoordinatorTxEth(tokenID, babyjub, owner, buidlerHermez, chainIDHex)
+            await l1CoordinatorTxEth(tokenID, babyjub, owner, hardhatHermez, chainIDHex)
           );
         }
 
@@ -253,7 +253,7 @@ describe("Hermez gas performance", function () {
           stringL1CoordinatorTx =
             stringL1CoordinatorTx + tx.l1TxCoordinatorbytes.slice(2); // retireve the 0x
         }
-        let tx = await buidlerHermez.forgeGasTest(
+        let tx = await hardhatHermez.forgeGasTest(
           newLastIdx,
           newStateRoot,
           newExitRoot,
@@ -292,9 +292,9 @@ describe("Hermez gas performance", function () {
       const loadAmount = float40.round(1);
 
       await AddToken(
-        buidlerHermez,
-        buidlerTokenERC20Mock,
-        buidlerHEZ,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
         ownerWallet,
         feeAddToken
       );
@@ -332,12 +332,12 @@ describe("Hermez gas performance", function () {
             tokenID,
             babyjub,
             ownerWallet,
-            buidlerHermez,
-            buidlerTokenERC20Mock
+            hardhatHermez,
+            hardhatTokenERC20Mock
           );
         }
 
-        await buidlerHermez.forgeBatch(
+        await hardhatHermez.forgeBatch(
           newLastIdx,
           newStateRoot,
           newExitRoot,
@@ -353,7 +353,7 @@ describe("Hermez gas performance", function () {
         );
 
         // forge with events
-        let tx = await buidlerHermez.forgeGasTest(
+        let tx = await hardhatHermez.forgeGasTest(
           newLastIdx,
           newStateRoot,
           newExitRoot,

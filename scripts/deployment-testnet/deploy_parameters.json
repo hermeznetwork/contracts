@@ -52,17 +52,43 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512, 376, 376
+      512, 352, 1960
     ],
     "nLevelsVerifer": [
       32, 32, 32
     ],
     "verifierType": [ 
-      "mock", "mock", "real"
+      "mock", "real", "real"
     ],
     "tokens": [
       "0xad6d458402f60fd3bd25163575031acdce07538d"
     ]
+  },
+  "5": {
+    "libVerifiersAddress": [],
+    "libposeidonsAddress": [],
+    "libVerifiersWithdrawAddress": "",
+    "hermezGovernanceAddress": "0x9CEC5F3d5d9747DCCB36d8e22c03aF8221445c0D",
+    "emergencyCouncilAddress": "0x82AA0Fcb77B6CF3E8baC5994043De98687B95E8E",
+    "donationAddress": "0x929297764aB2cb291C5DbcC1A8D2a0867CafdBDe",
+    "bootCoordinatorAddress": "0x601f4005b90Db8f6Bbf06555f0b20Cf60798EBD8",
+    "genesisBlock": "",
+    "genesisBlockOffsetCurrent": 3,
+    "feeAddToken": 10,
+    "forgeL1L2BatchTimeout": 10,
+    "withdrawalDelayHermez": 1209600,
+    "initialWithdrawalDelay": 3600,
+    "bootCoordinatorURL": "http://localhost:8086",
+    "maxTxVerifier": [
+      512, 352, 1960
+    ],
+    "nLevelsVerifer": [
+      32, 32, 32
+    ],
+    "verifierType": [ 
+      "mock", "real", "real"
+    ],
+    "tokens": []
   },
   "pathOutputJson": ""
 }

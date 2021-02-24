@@ -1,6 +1,6 @@
 const {
   ethers
-} = require("@nomiclabs/buidler");
+} = require("hardhat");
 const {
   expect
 } = require("chai");
@@ -26,13 +26,13 @@ let iface = new ethers.utils.Interface(ABIbid);
 
 
 describe("WithdrawalDelayer Tests", function() {
-  let buidlerWithdrawalDelayer,
-    buidlerPayableRevert,
-    buidlerHermezGovernanceDAO,
-    buidlerWhiteHackGroup;
-  let buidlerERC20 = [];
-  let buidlerERC777 = [];
-  let buidlerERC20Fake;
+  let hardhatWithdrawalDelayer,
+    hardhatPayableRevert,
+    hardhatHermezGovernanceDAO,
+    hardhatWhiteHackGroup;
+  let hardhatERC20 = [];
+  let hardhatERC777 = [];
+  let hardhatERC20Fake;
   let hermezRollup, escapeHatch, registryFunder, ownerToken1;
   let hermezRollupAddress,
     hermezGovernanceAddress,
@@ -57,20 +57,20 @@ describe("WithdrawalDelayer Tests", function() {
     ownerToken1Address = await ownerToken1.getAddress();
 
     const PayableRevert = await ethers.getContractFactory("PayableRevert");
-    buidlerPayableRevert = await PayableRevert.deploy();
-    await buidlerPayableRevert.deployed();
+    hardhatPayableRevert = await PayableRevert.deploy();
+    await hardhatPayableRevert.deployed();
 
-    buidlerHermezGovernanceDAO = await PayableRevert.deploy();
-    await buidlerHermezGovernanceDAO.deployed();
+    hardhatHermezGovernanceDAO = await PayableRevert.deploy();
+    await hardhatHermezGovernanceDAO.deployed();
 
-    buidlerWhiteHackGroup = await PayableRevert.deploy();
-    await buidlerWhiteHackGroup.deployed();
+    hardhatWhiteHackGroup = await PayableRevert.deploy();
+    await hardhatWhiteHackGroup.deployed();
 
-    whiteHackGroupAddress = buidlerWhiteHackGroup.address;
-    hermezGovernanceAddress = buidlerHermezGovernanceDAO.address;
+    whiteHackGroupAddress = hardhatWhiteHackGroup.address;
+    hermezGovernanceAddress = hardhatHermezGovernanceDAO.address;
 
     for (let i = 0; i < ERC20_TOKENS; i++) {
-      buidlerERC20[i] = await ERC20.deploy(
+      hardhatERC20[i] = await ERC20.deploy(
         "ERC20_" + i,
         "20_" + i,
         hermezRollupAddress,
@@ -78,16 +78,16 @@ describe("WithdrawalDelayer Tests", function() {
           "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         )
       );
-      await buidlerERC20[i].deployed();
+      await hardhatERC20[i].deployed();
     }
 
-    buidlerERC20Fake = await ERC20Fake.deploy(
+    hardhatERC20Fake = await ERC20Fake.deploy(
       "ERC20Fake",
       "ERCFake",
       hermezRollupAddress,
       ethers.utils.parseEther("10000")
     );
-    await buidlerERC20Fake.deployed();
+    await hardhatERC20Fake.deployed();
   });
 
   // Deploy the WithdrawalDelayer
@@ -95,13 +95,13 @@ describe("WithdrawalDelayer Tests", function() {
     const withdrawalDelayer = await ethers.getContractFactory(
       "WithdrawalDelayer"
     );
-    buidlerWithdrawalDelayer = await withdrawalDelayer.deploy( 
+    hardhatWithdrawalDelayer = await withdrawalDelayer.deploy(
       INITIAL_DELAY,
       hermezRollupAddress,
       hermezGovernanceAddress,
       whiteHackGroupAddress
     );
-    await buidlerWithdrawalDelayer.deployed();
+    await hardhatWithdrawalDelayer.deployed();
   });
 
   describe("Common behavior tests", function() {
@@ -109,8 +109,8 @@ describe("WithdrawalDelayer Tests", function() {
       it("should be able to make a ERC20 deposit", async function() {
         // Event Deposit
         let eventDeposit = new Promise((resolve, reject) => {
-          filter = buidlerWithdrawalDelayer.filters.Deposit();
-          buidlerWithdrawalDelayer.on(
+          filter = hardhatWithdrawalDelayer.filters.Deposit();
+          hardhatWithdrawalDelayer.on(
             filter,
             async (owner, token, amount, depositTimestamp) => {
               let latest = await ethers.provider.getBlockNumber();
@@ -122,8 +122,8 @@ describe("WithdrawalDelayer Tests", function() {
 
               //Check the WithdrawalDelayer balance
               await expect(
-                await buidlerERC20[0].balanceOf(
-                  buidlerWithdrawalDelayer.address
+                await hardhatERC20[0].balanceOf(
+                  hardhatWithdrawalDelayer.address
                 )
               ).to.be.equal(DEPOSIT_AMOUNT);
 
@@ -131,11 +131,11 @@ describe("WithdrawalDelayer Tests", function() {
               let [
                 _amount,
                 _depositTimestamp,
-              ] = await buidlerWithdrawalDelayer.depositInfo(owner, token);
+              ] = await hardhatWithdrawalDelayer.depositInfo(owner, token);
 
               expect(_amount).to.be.equal(DEPOSIT_AMOUNT);
               expect(_depositTimestamp).to.be.equal(depositTimestamp);
-              buidlerWithdrawalDelayer.removeAllListeners();
+              hardhatWithdrawalDelayer.removeAllListeners();
               resolve();
             }
           );
@@ -147,22 +147,22 @@ describe("WithdrawalDelayer Tests", function() {
         });
 
         // Do the approval so that WithdrawalDelayer can transfer it
-        await buidlerERC20[0]
+        await hardhatERC20[0]
           .connect(hermezRollup)
-          .approve(buidlerWithdrawalDelayer.address, DEPOSIT_AMOUNT);
+          .approve(hardhatWithdrawalDelayer.address, DEPOSIT_AMOUNT);
 
         // Make the approval so that WithdrawalDelayer can transfer it
-        await buidlerWithdrawalDelayer
+        await hardhatWithdrawalDelayer
           .connect(hermezRollup)
-          .deposit(ownerToken1Address, buidlerERC20[0].address, DEPOSIT_AMOUNT);
+          .deposit(ownerToken1Address, hardhatERC20[0].address, DEPOSIT_AMOUNT);
         await eventDeposit;
       });
 
       it("should be able to make a ETH deposit", async function() {
         // Event Deposit
         let eventDeposit = new Promise((resolve, reject) => {
-          filter = buidlerWithdrawalDelayer.filters.Deposit();
-          buidlerWithdrawalDelayer.on(
+          filter = hardhatWithdrawalDelayer.filters.Deposit();
+          hardhatWithdrawalDelayer.on(
             filter,
             async (owner, token, amount, depositTimestamp) => {
               let latest = await ethers.provider.getBlockNumber();
@@ -173,20 +173,20 @@ describe("WithdrawalDelayer Tests", function() {
 
               await expect(
                 await ethers.provider.getBalance(
-                  buidlerWithdrawalDelayer.address
+                  hardhatWithdrawalDelayer.address
                 )
               ).to.be.equal(DEPOSIT_AMOUNT);
               let [
                 _amount,
                 _depositTimestamp,
-              ] = await buidlerWithdrawalDelayer.depositInfo(
+              ] = await hardhatWithdrawalDelayer.depositInfo(
                 owner,
                 ethers.constants.AddressZero
               );
 
               expect(_amount).to.be.equal(DEPOSIT_AMOUNT);
               expect(_depositTimestamp).to.be.equal(depositTimestamp);
-              buidlerWithdrawalDelayer.removeAllListeners();
+              hardhatWithdrawalDelayer.removeAllListeners();
               resolve();
             }
           );
@@ -199,11 +199,11 @@ describe("WithdrawalDelayer Tests", function() {
 
         // Check that WithdrawalDelayer::deposit: WRONG_TOKEN_ADDRESS
         await expect(
-          buidlerWithdrawalDelayer
+          hardhatWithdrawalDelayer
             .connect(hermezRollup)
             .deposit(
               ownerToken1Address,
-              buidlerERC20[0].address,
+              hardhatERC20[0].address,
               DEPOSIT_AMOUNT, {
                 value: DEPOSIT_AMOUNT,
               }
@@ -212,7 +212,7 @@ describe("WithdrawalDelayer Tests", function() {
 
         // WithdrawalDelayer::deposit: WRONG_AMOUNT
         await expect(
-          buidlerWithdrawalDelayer
+          hardhatWithdrawalDelayer
             .connect(hermezRollup)
             .deposit(
               ownerToken1Address,
@@ -224,7 +224,7 @@ describe("WithdrawalDelayer Tests", function() {
         ).to.be.revertedWith("WithdrawalDelayer::deposit: WRONG_AMOUNT");
 
         // Make a ETH deposit
-        await buidlerWithdrawalDelayer
+        await hardhatWithdrawalDelayer
           .connect(hermezRollup)
           .deposit(
             ownerToken1Address,
@@ -236,19 +236,19 @@ describe("WithdrawalDelayer Tests", function() {
         await eventDeposit;
       });
       it("shouldn't be able to make a ERC20Fake deposit", async function() {
-        await buidlerERC20Fake.setTransferFromResult(false);
+        await hardhatERC20Fake.setTransferFromResult(false);
         // Do the approval so that WithdrawalDelayer can transfer it
-        await buidlerERC20Fake
+        await hardhatERC20Fake
           .connect(hermezRollup)
-          .approve(buidlerWithdrawalDelayer.address, DEPOSIT_AMOUNT);
+          .approve(hardhatWithdrawalDelayer.address, DEPOSIT_AMOUNT);
 
         // Make the approval so that WithdrawalDelayer can transfer it
         await expect(
-          buidlerWithdrawalDelayer
+          hardhatWithdrawalDelayer
             .connect(hermezRollup)
             .deposit(
               ownerToken1Address,
-              buidlerERC20Fake.address,
+              hardhatERC20Fake.address,
               DEPOSIT_AMOUNT
             )
         ).to.be.revertedWith("WithdrawalDelayer::deposit: TOKEN_TRANSFER_FAILED");
@@ -256,20 +256,20 @@ describe("WithdrawalDelayer Tests", function() {
 
       it("shouldn't be able to make a deposit without enough allowance", async function() {
         // Do the approval of DEPOSIT_AMOUNT / 2
-        await buidlerERC20[0]
+        await hardhatERC20[0]
           .connect(hermezRollup)
           .approve(
-            buidlerWithdrawalDelayer.address,
+            hardhatWithdrawalDelayer.address,
             ethers.utils.parseEther("0.5")
           );
 
         // Make the approval so that WithdrawalDelayer can transfer it
         await expect(
-          buidlerWithdrawalDelayer
+          hardhatWithdrawalDelayer
             .connect(hermezRollup)
             .deposit(
               ownerToken1Address,
-              buidlerERC20[0].address,
+              hardhatERC20[0].address,
               DEPOSIT_AMOUNT
             )
         ).to.be.revertedWith("WithdrawalDelayer::deposit: NOT_ENOUGH_ALLOWANCE");
@@ -277,16 +277,16 @@ describe("WithdrawalDelayer Tests", function() {
       });
 
       it("shouldn't be able to make a deposit if not Hermez rollup", async function() {
-        await buidlerERC20[0]
+        await hardhatERC20[0]
           .connect(hermezRollup)
           .approve(ownerToken1Address, DEPOSIT_AMOUNT);
 
         await expect(
-          buidlerWithdrawalDelayer
+          hardhatWithdrawalDelayer
             .connect(ownerToken1)
             .deposit(
               ownerToken1Address,
-              buidlerERC20[0].address,
+              hardhatERC20[0].address,
               DEPOSIT_AMOUNT
             )
         ).to.be.revertedWith("WithdrawalDelayer::deposit: ONLY_ROLLUP");
@@ -296,8 +296,8 @@ describe("WithdrawalDelayer Tests", function() {
         let newDeposit = ethers.utils.parseEther("2");
         // Event Deposit
         let eventSecondDeposit = new Promise((resolve, reject) => {
-          filter = buidlerWithdrawalDelayer.filters.Deposit();
-          buidlerWithdrawalDelayer.on(
+          filter = hardhatWithdrawalDelayer.filters.Deposit();
+          hardhatWithdrawalDelayer.on(
             filter,
             async (owner, token, amount, depositTimestamp) => {
               if (amount.eq(newDeposit)) {
@@ -307,12 +307,12 @@ describe("WithdrawalDelayer Tests", function() {
                 let [
                   _amount,
                   _depositTimestamp,
-                ] = await buidlerWithdrawalDelayer.depositInfo(owner, token);
+                ] = await hardhatWithdrawalDelayer.depositInfo(owner, token);
                 expect(_depositTimestamp).to.be.equal(blockTimestamp);
                 expect(_amount).to.be.equal(
                   BigNumber.from(DEPOSIT_AMOUNT).add(newDeposit)
                 );
-                buidlerWithdrawalDelayer.removeAllListeners();
+                hardhatWithdrawalDelayer.removeAllListeners();
                 resolve();
               }
             }
@@ -325,33 +325,33 @@ describe("WithdrawalDelayer Tests", function() {
         });
 
         // Do the approval so that WithdrawalDelayer can transfer it
-        await buidlerERC20[0]
+        await hardhatERC20[0]
           .connect(hermezRollup)
-          .approve(buidlerWithdrawalDelayer.address, DEPOSIT_AMOUNT);
+          .approve(hardhatWithdrawalDelayer.address, DEPOSIT_AMOUNT);
 
         // Make the approval so that WithdrawalDelayer can transfer it
-        await buidlerWithdrawalDelayer
+        await hardhatWithdrawalDelayer
           .connect(hermezRollup)
-          .deposit(ownerToken1Address, buidlerERC20[0].address, DEPOSIT_AMOUNT);
+          .deposit(ownerToken1Address, hardhatERC20[0].address, DEPOSIT_AMOUNT);
 
         // Get first desopist info
         let [
           prevAmount,
           prevDepositTimestamp,
-        ] = await buidlerWithdrawalDelayer.depositInfo(
+        ] = await hardhatWithdrawalDelayer.depositInfo(
           ownerToken1Address,
-          buidlerERC20[0].address
+          hardhatERC20[0].address
         );
 
         // Approve second deposit
-        await buidlerERC20[0]
+        await hardhatERC20[0]
           .connect(hermezRollup)
-          .approve(buidlerWithdrawalDelayer.address, newDeposit);
+          .approve(hardhatWithdrawalDelayer.address, newDeposit);
 
         // Make second deposit
-        await buidlerWithdrawalDelayer
+        await hardhatWithdrawalDelayer
           .connect(hermezRollup)
-          .deposit(ownerToken1Address, buidlerERC20[0].address, newDeposit);
+          .deposit(ownerToken1Address, hardhatERC20[0].address, newDeposit);
         await eventSecondDeposit;
       });
     });
@@ -359,28 +359,28 @@ describe("WithdrawalDelayer Tests", function() {
     describe("Withdrawals", function() {
       beforeEach(async function() {
         //Make an ERC20 deposit
-        await buidlerERC20[0]
+        await hardhatERC20[0]
           .connect(hermezRollup)
-          .approve(buidlerWithdrawalDelayer.address, DEPOSIT_AMOUNT);
-        await buidlerWithdrawalDelayer
+          .approve(hardhatWithdrawalDelayer.address, DEPOSIT_AMOUNT);
+        await hardhatWithdrawalDelayer
           .connect(hermezRollup)
-          .deposit(ownerToken1Address, buidlerERC20[0].address, DEPOSIT_AMOUNT);
+          .deposit(ownerToken1Address, hardhatERC20[0].address, DEPOSIT_AMOUNT);
 
         //Make an ERC20Fake deposit
-        await buidlerERC20Fake.setTransferFromResult(true);
-        await buidlerERC20Fake
+        await hardhatERC20Fake.setTransferFromResult(true);
+        await hardhatERC20Fake
           .connect(hermezRollup)
-          .approve(buidlerWithdrawalDelayer.address, DEPOSIT_AMOUNT);
-        await buidlerWithdrawalDelayer
+          .approve(hardhatWithdrawalDelayer.address, DEPOSIT_AMOUNT);
+        await hardhatWithdrawalDelayer
           .connect(hermezRollup)
           .deposit(
             ownerToken1Address,
-            buidlerERC20Fake.address,
+            hardhatERC20Fake.address,
             DEPOSIT_AMOUNT
           );
 
         //Make an ETH deposit
-        await buidlerWithdrawalDelayer
+        await hardhatWithdrawalDelayer
           .connect(hermezRollup)
           .deposit(
             ownerToken1Address,
@@ -393,35 +393,35 @@ describe("WithdrawalDelayer Tests", function() {
 
       it("shouldn't be able to withdraw if not funds", async function() {
         await expect(
-          buidlerWithdrawalDelayer.withdrawal(
+          hardhatWithdrawalDelayer.withdrawal(
             registryFunderAddress,
-            buidlerERC20[0].address
+            hardhatERC20[0].address
           )
         ).to.be.revertedWith("WithdrawalDelayer::withdrawal: NO_FUNDS");
       });
 
       it("shouldn't be able to withdraw if the delay time has not exceeded", async function() {
         await expect(
-          buidlerWithdrawalDelayer.withdrawal(
+          hardhatWithdrawalDelayer.withdrawal(
             ownerToken1Address,
-            buidlerERC20[0].address
+            hardhatERC20[0].address
           )
         ).to.be.revertedWith("WithdrawalDelayer::withdrawal: WITHDRAWAL_NOT_ALLOWED");
       });
 
       it("should be able to make an ERC20 withdrawal", async function() {
-        let prevAmount = await buidlerERC20[0].balanceOf(ownerToken1Address);
+        let prevAmount = await hardhatERC20[0].balanceOf(ownerToken1Address);
 
         let eventWithdraw = new Promise((resolve, reject) => {
-          filter = buidlerWithdrawalDelayer.filters.Withdraw();
-          buidlerWithdrawalDelayer.on(filter, async (owner, token) => {
+          filter = hardhatWithdrawalDelayer.filters.Withdraw();
+          hardhatWithdrawalDelayer.on(filter, async (owner, token) => {
             let [
               newAmount,
               newTimeToClaim,
-            ] = await buidlerWithdrawalDelayer.depositInfo(owner, token);
+            ] = await hardhatWithdrawalDelayer.depositInfo(owner, token);
             expect(newAmount).to.be.eq(0);
             expect(newTimeToClaim).to.be.eq(0);
-            buidlerWithdrawalDelayer.removeAllListeners();
+            hardhatWithdrawalDelayer.removeAllListeners();
             resolve();
           });
 
@@ -434,16 +434,16 @@ describe("WithdrawalDelayer Tests", function() {
         let [
           amount,
           depositTimestamp,
-        ] = await buidlerWithdrawalDelayer.depositInfo(
+        ] = await hardhatWithdrawalDelayer.depositInfo(
           ownerToken1Address,
-          buidlerERC20[0].address
+          hardhatERC20[0].address
         );
         await time.increaseTo(depositTimestamp.toNumber() + INITIAL_DELAY);
-        await buidlerWithdrawalDelayer.withdrawal(
+        await hardhatWithdrawalDelayer.withdrawal(
           ownerToken1Address,
-          buidlerERC20[0].address
+          hardhatERC20[0].address
         );
-        expect(await buidlerERC20[0].balanceOf(ownerToken1Address)).to.be.eq(
+        expect(await hardhatERC20[0].balanceOf(ownerToken1Address)).to.be.eq(
           amount.add(prevAmount)
         );
         await eventWithdraw;
@@ -453,15 +453,15 @@ describe("WithdrawalDelayer Tests", function() {
         let prevAmount = await ethers.provider.getBalance(ownerToken1Address);
 
         let eventWithdraw = new Promise((resolve, reject) => {
-          filter = buidlerWithdrawalDelayer.filters.Withdraw();
-          buidlerWithdrawalDelayer.on(filter, async (owner, token) => {
+          filter = hardhatWithdrawalDelayer.filters.Withdraw();
+          hardhatWithdrawalDelayer.on(filter, async (owner, token) => {
             let [
               newAmount,
               newTimeToClaim,
-            ] = await buidlerWithdrawalDelayer.depositInfo(owner, token);
+            ] = await hardhatWithdrawalDelayer.depositInfo(owner, token);
             expect(newAmount).to.be.eq(0);
             expect(newTimeToClaim).to.be.eq(0);
-            buidlerWithdrawalDelayer.removeAllListeners();
+            hardhatWithdrawalDelayer.removeAllListeners();
             resolve();
           });
 
@@ -474,12 +474,12 @@ describe("WithdrawalDelayer Tests", function() {
         let [
           amount,
           depositTimestamp,
-        ] = await buidlerWithdrawalDelayer.depositInfo(
+        ] = await hardhatWithdrawalDelayer.depositInfo(
           ownerToken1Address,
           ethers.constants.AddressZero
         );
         await time.increaseTo(depositTimestamp.toNumber() + INITIAL_DELAY);
-        await buidlerWithdrawalDelayer.withdrawal(
+        await hardhatWithdrawalDelayer.withdrawal(
           ownerToken1Address,
           ethers.constants.AddressZero
         );
@@ -491,13 +491,13 @@ describe("WithdrawalDelayer Tests", function() {
 
       it("should revert if not able to send the ether", async function() {
         const PayableRevert = await ethers.getContractFactory("PayableRevert");
-        let buidlerPayableRevert = await PayableRevert.deploy();
-        await buidlerPayableRevert.deployed();
-        await buidlerPayableRevert.disablePayment();
-        await buidlerWithdrawalDelayer
+        let hardhatPayableRevert = await PayableRevert.deploy();
+        await hardhatPayableRevert.deployed();
+        await hardhatPayableRevert.disablePayment();
+        await hardhatWithdrawalDelayer
           .connect(hermezRollup)
           .deposit(
-            buidlerPayableRevert.address,
+            hardhatPayableRevert.address,
             ethers.constants.AddressZero,
             ethers.utils.parseEther("1"), {
               value: ethers.utils.parseEther("1"),
@@ -506,20 +506,20 @@ describe("WithdrawalDelayer Tests", function() {
 
         await time.increaseTo((await time.latest()) + INITIAL_DELAY);
         await expect(
-          buidlerWithdrawalDelayer.withdrawal(
-            buidlerPayableRevert.address,
+          hardhatWithdrawalDelayer.withdrawal(
+            hardhatPayableRevert.address,
             ethers.constants.AddressZero
           )
         ).to.be.revertedWith("WithdrawalDelayer::_ethWithdrawal: TRANSFER_FAILED");
       });
 
       it("should revert if not able to send the token", async function() {
-        await buidlerERC20Fake.setTransferFromResult(false);
+        await hardhatERC20Fake.setTransferFromResult(false);
         await time.increaseTo((await time.latest()) + INITIAL_DELAY);
         await expect(
-          buidlerWithdrawalDelayer.withdrawal(
+          hardhatWithdrawalDelayer.withdrawal(
             ownerToken1Address,
-            buidlerERC20Fake.address
+            hardhatERC20Fake.address
           )
         ).to.be.revertedWith("WithdrawalDelayer::_tokenWithdrawal: TOKEN_TRANSFER_FAILED");
       });
@@ -528,16 +528,16 @@ describe("WithdrawalDelayer Tests", function() {
     it("should be able change the withdrawal delay", async function() {
       // NewWithdrawalDelay event
       let eventNewWithdrawalDelay = new Promise((resolve, reject) => {
-        filter = buidlerWithdrawalDelayer.filters.NewWithdrawalDelay();
-        buidlerWithdrawalDelayer.on(filter, async (delay) => {
+        filter = hardhatWithdrawalDelayer.filters.NewWithdrawalDelay();
+        hardhatWithdrawalDelayer.on(filter, async (delay) => {
           expect(delay).to.be.eq(INITIAL_DELAY * 2);
-          buidlerWithdrawalDelayer.removeAllListeners();
+          hardhatWithdrawalDelayer.removeAllListeners();
           // Decrease the initial delay with rollup account
-          await buidlerWithdrawalDelayer
+          await hardhatWithdrawalDelayer
             .connect(hermezRollup)
             .changeWithdrawalDelay(INITIAL_DELAY);
           // Check that it has the initial delay again
-          expect(await buidlerWithdrawalDelayer.getWithdrawalDelay()).to.be.eq(
+          expect(await hardhatWithdrawalDelayer.getWithdrawalDelay()).to.be.eq(
             INITIAL_DELAY
           );
           resolve();
@@ -551,24 +551,24 @@ describe("WithdrawalDelayer Tests", function() {
 
       // Check that only hermez governance or rollup can change it
       await expect(
-        buidlerWithdrawalDelayer.connect(ownerToken1).changeWithdrawalDelay(2)
+        hardhatWithdrawalDelayer.connect(ownerToken1).changeWithdrawalDelay(2)
       ).to.be.revertedWith("WithdrawalDelayer::changeWithdrawalDelay: ONLY_ROLLUP_OR_GOVERNANCE");
 
       // Check that can't exceed the MAX_WITHDRAWAL_DELAY
       await expect(
-        buidlerHermezGovernanceDAO
-          .changeWithdrawalDelay(buidlerWithdrawalDelayer.address, MAX_WITHDRAWAL_DELAY + 1)
+        hardhatHermezGovernanceDAO
+          .changeWithdrawalDelay(hardhatWithdrawalDelayer.address, MAX_WITHDRAWAL_DELAY + 1)
       ).to.be.revertedWith("WithdrawalDelayer::changeWithdrawalDelay: EXCEEDS_MAX_WITHDRAWAL_DELAY");
 
       // check that we still have the initial withdrawalDelay
-      expect(await buidlerWithdrawalDelayer.getWithdrawalDelay()).to.be.eq(
+      expect(await hardhatWithdrawalDelayer.getWithdrawalDelay()).to.be.eq(
         INITIAL_DELAY
       );
 
       // Increase the initial delay with governance
-      await buidlerHermezGovernanceDAO
-        .changeWithdrawalDelay(buidlerWithdrawalDelayer.address, INITIAL_DELAY * 2);
-      expect(await buidlerWithdrawalDelayer.getWithdrawalDelay()).to.be.eq(
+      await hardhatHermezGovernanceDAO
+        .changeWithdrawalDelay(hardhatWithdrawalDelayer.address, INITIAL_DELAY * 2);
+      expect(await hardhatWithdrawalDelayer.getWithdrawalDelay()).to.be.eq(
         INITIAL_DELAY * 2
       );
       await eventNewWithdrawalDelay;
@@ -576,9 +576,9 @@ describe("WithdrawalDelayer Tests", function() {
 
     it("should be able to enableEmergencyMode", async function() {
       let eventEnableEmergencyMode = new Promise((resolve, reject) => {
-        filter = buidlerWithdrawalDelayer.filters.EmergencyModeEnabled();
-        buidlerWithdrawalDelayer.on(filter, async () => {
-          buidlerWithdrawalDelayer.removeAllListeners();
+        filter = hardhatWithdrawalDelayer.filters.EmergencyModeEnabled();
+        hardhatWithdrawalDelayer.on(filter, async () => {
+          hardhatWithdrawalDelayer.removeAllListeners();
           resolve();
         });
         // After 10s, we throw a timeout error
@@ -588,25 +588,25 @@ describe("WithdrawalDelayer Tests", function() {
       });
 
       await expect(
-        buidlerWithdrawalDelayer.connect(hermezRollup).enableEmergencyMode()
+        hardhatWithdrawalDelayer.connect(hermezRollup).enableEmergencyMode()
       ).to.be.revertedWith("WithdrawalDelayer::enableEmergencyMode: ONLY_GOVERNANCE");
-      expect(await buidlerWithdrawalDelayer.isEmergencyMode()).to.be.eq(false);
-      await buidlerHermezGovernanceDAO
-        .enableEmergencyMode(buidlerWithdrawalDelayer.address);
-      expect(await buidlerWithdrawalDelayer.isEmergencyMode()).to.be.eq(true);
+      expect(await hardhatWithdrawalDelayer.isEmergencyMode()).to.be.eq(false);
+      await hardhatHermezGovernanceDAO
+        .enableEmergencyMode(hardhatWithdrawalDelayer.address);
+      expect(await hardhatWithdrawalDelayer.isEmergencyMode()).to.be.eq(true);
 
       await eventEnableEmergencyMode;
     });
 
     it("shouldn't be able to make a escapeHatchWithdrawal w/o Emergency Mode", async function() {
-      let ERC20Amount = await buidlerERC20[0].balanceOf(
-        buidlerWithdrawalDelayer.address
+      let ERC20Amount = await hardhatERC20[0].balanceOf(
+        hardhatWithdrawalDelayer.address
       );
       await expect(
-        buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
-          buidlerWithdrawalDelayer.address,
+        hardhatHermezGovernanceDAO.escapeHatchWithdrawal(
+          hardhatWithdrawalDelayer.address,
           hermezGovernanceAddress,
-          buidlerERC20[0].address,
+          hardhatERC20[0].address,
           ERC20Amount
         )
       ).to.be.revertedWith("WithdrawalDelayer::escapeHatchWithdrawal: ONLY_EMODE");
@@ -614,35 +614,35 @@ describe("WithdrawalDelayer Tests", function() {
 
     it("should revert if a deposit overflows", async function() {
       // Do the approval so that WithdrawalDelayer can transfer it
-      await buidlerERC20[0]
+      await hardhatERC20[0]
         .connect(hermezRollup)
         .approve(
-          buidlerWithdrawalDelayer.address,
+          hardhatWithdrawalDelayer.address,
           ethers.BigNumber.from(
             "0xffffffffffffffffffffffffffffffffffffffffffffffff"
           )
         );
-      await buidlerWithdrawalDelayer
+      await hardhatWithdrawalDelayer
         .connect(hermezRollup)
         .deposit(
           ownerToken1Address,
-          buidlerERC20[0].address,
+          hardhatERC20[0].address,
           ethers.BigNumber.from(
             "0xffffffffffffffffffffffffffffffffffffffffffffffff"
           )
         );
-      await buidlerERC20[0]
+      await hardhatERC20[0]
         .connect(hermezRollup)
         .approve(
-          buidlerWithdrawalDelayer.address,
+          hardhatWithdrawalDelayer.address,
           ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFF")
         );
       await expect(
-        buidlerWithdrawalDelayer
+        hardhatWithdrawalDelayer
           .connect(hermezRollup)
           .deposit(
             ownerToken1Address,
-            buidlerERC20[0].address,
+            hardhatERC20[0].address,
             ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFF")
           )
       ).to.be.revertedWith("WithdrawalDelayer::_processDeposit: DEPOSIT_OVERFLOW");
@@ -653,39 +653,39 @@ describe("WithdrawalDelayer Tests", function() {
     it("should be able to set a new hermezGovernanceAddress", async function() {
       // Only the current hermezGovernanceAddress can set a new address
       await expect(
-        buidlerWithdrawalDelayer
+        hardhatWithdrawalDelayer
           .connect(ownerToken1)
-          .transferGovernance(buidlerWithdrawalDelayer.address)
+          .transferGovernance(hardhatWithdrawalDelayer.address)
       ).to.be.revertedWith("WithdrawalDelayer::transferGovernance: ONLY_GOVERNANCE");
       // Change hermezGovernanceAddress to WithdrawalDelayerAddress
-      await buidlerHermezGovernanceDAO.transferGovernance(
-        buidlerWithdrawalDelayer.address,
+      await hardhatHermezGovernanceDAO.transferGovernance(
+        hardhatWithdrawalDelayer.address,
         await hermezGovernanceDAO.getAddress()
       );
-      buidlerWithdrawalDelayer.connect(hermezGovernanceDAO).claimGovernance();
+      hardhatWithdrawalDelayer.connect(hermezGovernanceDAO).claimGovernance();
       //Check that the new address is the WithdrawalDelayerAddress
       expect(
-        await buidlerWithdrawalDelayer.getHermezGovernanceAddress()
+        await hardhatWithdrawalDelayer.getHermezGovernanceAddress()
       ).to.be.equal(await hermezGovernanceDAO.getAddress());
     });
 
     it("should be able to set a new emergencyCouncil", async function() {
       // Only the current whiteHackGroupAddress can set a new address
       await expect(
-        buidlerWithdrawalDelayer
+        hardhatWithdrawalDelayer
           .connect(ownerToken1)
-          .transferEmergencyCouncil(buidlerWithdrawalDelayer.address)
+          .transferEmergencyCouncil(hardhatWithdrawalDelayer.address)
       ).to.be.revertedWith("WithdrawalDelayer::transferEmergencyCouncil: ONLY_EMERGENCY_COUNCIL");
       // Change WhiteHackGroupAddress to WithdrawalDelayerAddress
-      await buidlerWhiteHackGroup.transferEmergencyCouncil(
-        buidlerWithdrawalDelayer.address,
+      await hardhatWhiteHackGroup.transferEmergencyCouncil(
+        hardhatWithdrawalDelayer.address,
         await hermezGovernanceDAO.getAddress()
       );
-      buidlerWithdrawalDelayer.connect(hermezGovernanceDAO).claimEmergencyCouncil();
+      hardhatWithdrawalDelayer.connect(hermezGovernanceDAO).claimEmergencyCouncil();
 
       //Check that the new address is the WithdrawalDelayerAddress
       expect(
-        await buidlerWithdrawalDelayer.getEmergencyCouncil()
+        await hardhatWithdrawalDelayer.getEmergencyCouncil()
       ).to.be.equal(await hermezGovernanceDAO.getAddress());
     });
   });
@@ -694,20 +694,20 @@ describe("WithdrawalDelayer Tests", function() {
     // Enable EmergencyMode and make a deposit ERC20 and ETH
     beforeEach(async function() {
       // Enable EmergencyMode
-      await buidlerHermezGovernanceDAO
-        .enableEmergencyMode(buidlerWithdrawalDelayer.address);
-      expect(await buidlerWithdrawalDelayer.isEmergencyMode()).to.be.eq(true);
+      await hardhatHermezGovernanceDAO
+        .enableEmergencyMode(hardhatWithdrawalDelayer.address);
+      expect(await hardhatWithdrawalDelayer.isEmergencyMode()).to.be.eq(true);
 
       //Make an ERC20 deposit
-      await buidlerERC20[0]
+      await hardhatERC20[0]
         .connect(hermezRollup)
-        .approve(buidlerWithdrawalDelayer.address, DEPOSIT_AMOUNT);
-      await buidlerWithdrawalDelayer
+        .approve(hardhatWithdrawalDelayer.address, DEPOSIT_AMOUNT);
+      await hardhatWithdrawalDelayer
         .connect(hermezRollup)
-        .deposit(ownerToken1Address, buidlerERC20[0].address, DEPOSIT_AMOUNT);
+        .deposit(ownerToken1Address, hardhatERC20[0].address, DEPOSIT_AMOUNT);
 
       //Make an ETH deposit
-      await buidlerWithdrawalDelayer
+      await hardhatWithdrawalDelayer
         .connect(hermezRollup)
         .deposit(
           ownerToken1Address,
@@ -719,29 +719,29 @@ describe("WithdrawalDelayer Tests", function() {
     });
     it("shouldn't be able to enableEmergencyMode twice", async function() {
       await expect(
-        buidlerHermezGovernanceDAO.enableEmergencyMode(buidlerWithdrawalDelayer.address)
+        hardhatHermezGovernanceDAO.enableEmergencyMode(hardhatWithdrawalDelayer.address)
       ).to.be.revertedWith("WithdrawalDelayer::enableEmergencyMode: ALREADY_ENABLED");
     });
 
     it("shouldn't be able to make a normal withdraw", async function() {
       await expect(
-        buidlerWithdrawalDelayer.withdrawal(
+        hardhatWithdrawalDelayer.withdrawal(
           ownerToken1Address,
-          buidlerERC20[0].address
+          hardhatERC20[0].address
         )
       ).to.be.revertedWith("WithdrawalDelayer::deposit: EMERGENCY_MODE");
     });
 
     it("anyone shouldn't be able to make a escapeHatchWithdrawal", async function() {
-      let amount = await buidlerERC20[0].balanceOf(
-        buidlerWithdrawalDelayer.address
+      let amount = await hardhatERC20[0].balanceOf(
+        hardhatWithdrawalDelayer.address
       );
       await expect(
-        buidlerWithdrawalDelayer
+        hardhatWithdrawalDelayer
           .connect(hermezRollup)
           .escapeHatchWithdrawal(
-            buidlerWithdrawalDelayer.address,
-            buidlerERC20[0].address,
+            hardhatWithdrawalDelayer.address,
+            hardhatERC20[0].address,
             amount
           )
       ).to.be.revertedWith("WithdrawalDelayer::escapeHatchWithdrawal: ONLY_GOVERNANCE");
@@ -750,14 +750,14 @@ describe("WithdrawalDelayer Tests", function() {
     it("GovernanceDAO should be able to make a escapeHatchWithdrawal at any time", async function() {
       // Check if the transfer is reverted (ETH)
       let ETHAmount = await ethers.provider.getBalance(
-        buidlerWithdrawalDelayer.address
+        hardhatWithdrawalDelayer.address
       );
 
 
-      await buidlerHermezGovernanceDAO.disablePayment();
+      await hardhatHermezGovernanceDAO.disablePayment();
       await expect(
-        buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
-          buidlerWithdrawalDelayer.address,
+        hardhatHermezGovernanceDAO.escapeHatchWithdrawal(
+          hardhatWithdrawalDelayer.address,
           hermezGovernanceAddress,
           ethers.constants.AddressZero,
           ETHAmount
@@ -765,29 +765,29 @@ describe("WithdrawalDelayer Tests", function() {
       ).to.be.revertedWith("WithdrawalDelayer::_ethWithdrawal: TRANSFER_FAILED");
 
       // Enable the normal behavior to test the withdrawal
-      await buidlerHermezGovernanceDAO.enablePayment();
+      await hardhatHermezGovernanceDAO.enablePayment();
 
-      let ERC20Amount = await buidlerERC20[0].balanceOf(
-        buidlerWithdrawalDelayer.address
+      let ERC20Amount = await hardhatERC20[0].balanceOf(
+        hardhatWithdrawalDelayer.address
       );
       ETHAmount = await ethers.provider.getBalance(
-        buidlerWithdrawalDelayer.address
+        hardhatWithdrawalDelayer.address
       );
 
       // Withdraw the ERC20
-      await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
-        buidlerWithdrawalDelayer.address,
+      await hardhatHermezGovernanceDAO.escapeHatchWithdrawal(
+        hardhatWithdrawalDelayer.address,
         hermezGovernanceAddress,
-        buidlerERC20[0].address,
+        hardhatERC20[0].address,
         ERC20Amount
       );
       expect(
-        await buidlerERC20[0].balanceOf(hermezGovernanceAddress)
+        await hardhatERC20[0].balanceOf(hermezGovernanceAddress)
       ).to.be.eq(ERC20Amount);
 
       // Withdraw the ETH
-      await buidlerHermezGovernanceDAO.escapeHatchWithdrawal(
-        buidlerWithdrawalDelayer.address,
+      await hardhatHermezGovernanceDAO.escapeHatchWithdrawal(
+        hardhatWithdrawalDelayer.address,
         hermezGovernanceAddress,
         ethers.constants.AddressZero,
         ETHAmount
@@ -799,23 +799,23 @@ describe("WithdrawalDelayer Tests", function() {
 
     it("WHG should be able to make a escapeHatchWithdrawal after MAX_EMERGENCY_MODE_TIME", async function() {
 
-      let ERC20Amount = await buidlerERC20[0].balanceOf(
-        buidlerWithdrawalDelayer.address
+      let ERC20Amount = await hardhatERC20[0].balanceOf(
+        hardhatWithdrawalDelayer.address
       );
       let ETHAmount = await ethers.provider.getBalance(
-        buidlerWithdrawalDelayer.address
+        hardhatWithdrawalDelayer.address
       );
       await expect(
-        buidlerWhiteHackGroup.escapeHatchWithdrawal(
-          buidlerWithdrawalDelayer.address,
+        hardhatWhiteHackGroup.escapeHatchWithdrawal(
+          hardhatWithdrawalDelayer.address,
           whiteHackGroupAddress,
-          buidlerERC20[0].address,
+          hardhatERC20[0].address,
           ERC20Amount
         )
       ).to.be.revertedWith("WithdrawalDelayer::escapeHatchWithdrawal: NO_MAX_EMERGENCY_MODE_TIME");
       await expect(
-        buidlerWhiteHackGroup.escapeHatchWithdrawal(
-          buidlerWithdrawalDelayer.address,
+        hardhatWhiteHackGroup.escapeHatchWithdrawal(
+          hardhatWithdrawalDelayer.address,
           whiteHackGroupAddress,
           ethers.constants.AddressZero,
           ETHAmount
@@ -824,15 +824,15 @@ describe("WithdrawalDelayer Tests", function() {
 
       await time.increaseTo(
         (
-          await buidlerWithdrawalDelayer.getEmergencyModeStartingTime()
+          await hardhatWithdrawalDelayer.getEmergencyModeStartingTime()
         ).toNumber() + MAX_EMERGENCY_MODE_TIME
       );
 
       // Check if the transfer is reverted (ETH)
-      await buidlerWhiteHackGroup.disablePayment();
+      await hardhatWhiteHackGroup.disablePayment();
       await expect(
-        buidlerWhiteHackGroup.escapeHatchWithdrawal(
-          buidlerWithdrawalDelayer.address,
+        hardhatWhiteHackGroup.escapeHatchWithdrawal(
+          hardhatWithdrawalDelayer.address,
           whiteHackGroupAddress,
           ethers.constants.AddressZero,
           ETHAmount
@@ -840,28 +840,28 @@ describe("WithdrawalDelayer Tests", function() {
       ).to.be.revertedWith("WithdrawalDelayer::_ethWithdrawal: TRANSFER_FAILED");
 
       // Enable the normal behavior to test the withdrawal
-      await buidlerWhiteHackGroup.enablePayment();
+      await hardhatWhiteHackGroup.enablePayment();
 
-      ERC20Amount = await buidlerERC20[0].balanceOf(
-        buidlerWithdrawalDelayer.address
+      ERC20Amount = await hardhatERC20[0].balanceOf(
+        hardhatWithdrawalDelayer.address
       );
       ETHAmount = await ethers.provider.getBalance(
-        buidlerWithdrawalDelayer.address
+        hardhatWithdrawalDelayer.address
       );
 
       // Withdraw the ERC20
-      await buidlerWhiteHackGroup.escapeHatchWithdrawal(
-        buidlerWithdrawalDelayer.address,
+      await hardhatWhiteHackGroup.escapeHatchWithdrawal(
+        hardhatWithdrawalDelayer.address,
         whiteHackGroupAddress,
-        buidlerERC20[0].address,
+        hardhatERC20[0].address,
         ERC20Amount
       );
-      expect(await buidlerERC20[0].balanceOf(whiteHackGroupAddress)).to.be.eq(
+      expect(await hardhatERC20[0].balanceOf(whiteHackGroupAddress)).to.be.eq(
         ERC20Amount
       );
       // Withdraw the ETH
-      await buidlerWhiteHackGroup.escapeHatchWithdrawal(
-        buidlerWithdrawalDelayer.address,
+      await hardhatWhiteHackGroup.escapeHatchWithdrawal(
+        hardhatWithdrawalDelayer.address,
         whiteHackGroupAddress,
         ethers.constants.AddressZero,
         ETHAmount

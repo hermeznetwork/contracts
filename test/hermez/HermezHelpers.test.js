@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("@nomiclabs/buidler");
+const { ethers } = require("hardhat");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const poseidonHashJs = require("circomlib").poseidon;
 const Scalar = require("ffjavascript").Scalar;
@@ -26,7 +26,7 @@ async function fillSmtTree() {
 }
 
 describe("Hermez Helpers", function () {
-  let buidlerHermezHelpersTest;
+  let hardhatHermezHelpersTest;
 
   let owner;
   let id1;
@@ -63,36 +63,36 @@ describe("Hermez Helpers", function () {
       poseidonUnit.createCode(4),
       owner
     );
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
 
-    const poseidonAddr2 = buidlerPoseidon2Elements.address;
-    const poseidonAddr3 = buidlerPoseidon3Elements.address;
-    const poseidonAddr4 = buidlerPoseidon4Elements.address;
+    const poseidonAddr2 = hardhatPoseidon2Elements.address;
+    const poseidonAddr3 = hardhatPoseidon3Elements.address;
+    const poseidonAddr4 = hardhatPoseidon4Elements.address;
 
-    buidlerHermezHelpersTest = await HermezHelpersTest.deploy(
+    hardhatHermezHelpersTest = await HermezHelpersTest.deploy(
       poseidonAddr2,
       poseidonAddr3,
       poseidonAddr4
     );
 
-    await buidlerHermezHelpersTest.deployed();
+    await hardhatHermezHelpersTest.deployed();
 
     fillSmtTree();
 
-    const chainSC = await buidlerHermezHelpersTest.getChainID();
+    const chainSC = await hardhatHermezHelpersTest.getChainID();
     chainIDHex = chainSC.toHexString();
   });
 
   describe("utility helpers", function () {
     it("checkSig", async function () {
       const babyjub = accounts[0].bjjCompressed;
-      const flatSig = await txUtils.signBjjAuth(owner, babyjub, chainIDHex, buidlerHermezHelpersTest.address);
+      const flatSig = await txUtils.signBjjAuth(owner, babyjub, chainIDHex, hardhatHermezHelpersTest.address);
       let sig = ethers.utils.splitSignature(flatSig);
 
       expect(
-        await buidlerHermezHelpersTest.checkSigTest(
+        await hardhatHermezHelpersTest.checkSigTest(
           `0x${babyjub}`,
           sig.r,
           sig.s,
@@ -104,21 +104,21 @@ describe("Hermez Helpers", function () {
     it("hash poseidon 2 elements", async () => {
       const resJs = poseidonHashJs([1, 2]);
 
-      const resSm = await buidlerHermezHelpersTest.testHash2Elements([1, 2]);
+      const resSm = await hardhatHermezHelpersTest.testHash2Elements([1, 2]);
       expect(resJs.toString()).to.be.equal(resSm.toString());
     });
 
     it("hash poseidon 3 elements", async () => {
       const resJs = poseidonHashJs([1, 2, 3]);
 
-      const resSm = await buidlerHermezHelpersTest.testHash3Elements([1, 2, 3]);
+      const resSm = await hardhatHermezHelpersTest.testHash3Elements([1, 2, 3]);
       expect(resJs.toString()).to.be.equal(resSm.toString());
     });
 
     it("hash poseidon 4 elements", async () => {
       const resJs = poseidonHashJs([1, 2, 3, 4]);
 
-      const resSm = await buidlerHermezHelpersTest.testHash4Elements([
+      const resSm = await hardhatHermezHelpersTest.testHash4Elements([
         1,
         2,
         3,
@@ -130,14 +130,14 @@ describe("Hermez Helpers", function () {
     it("hash node", async () => {
       const resJs = poseidonHashJs([1, 2]);
 
-      const resSm = await buidlerHermezHelpersTest.testHashNode(1, 2);
+      const resSm = await hardhatHermezHelpersTest.testHashNode(1, 2);
       expect(resJs.toString()).to.be.equal(resSm.toString());
     });
 
     it("hash final node", async () => {
       const resJs = poseidonHashJs([1, 2, 1]);
 
-      const resSm = await buidlerHermezHelpersTest.testHashFinalNode(1, 2);
+      const resSm = await hardhatHermezHelpersTest.testHashFinalNode(1, 2);
       expect(resJs.toString()).to.be.equal(resSm.toString());
     });
 
@@ -153,7 +153,7 @@ describe("Hermez Helpers", function () {
       for (let i = 0; i < resProof.siblings.length; i++) {
         siblings.push(resProof.siblings[i].toString());
       }
-      const resSm1 = await buidlerHermezHelpersTest.smtVerifierTest(
+      const resSm1 = await hardhatHermezHelpersTest.smtVerifierTest(
         root,
         siblings,
         key1.toString(),
@@ -167,7 +167,7 @@ describe("Hermez Helpers", function () {
       for (let i = 0; i < resProof.siblings.length; i++) {
         siblings.push(resProof.siblings[i].toString());
       }
-      const resSm2 = await buidlerHermezHelpersTest.smtVerifierTest(
+      const resSm2 = await hardhatHermezHelpersTest.smtVerifierTest(
         root,
         siblings,
         key2.toString(),
@@ -181,7 +181,7 @@ describe("Hermez Helpers", function () {
       for (let i = 0; i < resProof.siblings.length; i++) {
         siblings.push(resProof.siblings[i].toString());
       }
-      const resSm3 = await buidlerHermezHelpersTest.smtVerifierTest(
+      const resSm3 = await hardhatHermezHelpersTest.smtVerifierTest(
         root,
         siblings,
         key3.toString(),
@@ -220,7 +220,7 @@ describe("Hermez Helpers", function () {
       ];
 
       for (let i = 0; i < jsonProof.length; i++) {
-        const resSm1 = await buidlerHermezHelpersTest.smtVerifierTest(
+        const resSm1 = await hardhatHermezHelpersTest.smtVerifierTest(
           jsonProof[i].root,
           jsonProof[i].siblings,
           jsonProof[i].key,
@@ -245,7 +245,7 @@ describe("Hermez Helpers", function () {
       const ay = pointBjj[1].toString(16);
       const sign = bjjCompresedBuf[31] & 0x80 ? 1 : 0;
 
-      const resSC = await buidlerHermezHelpersTest.buildTreeStateTest(
+      const resSC = await hardhatHermezHelpersTest.buildTreeStateTest(
         tokenID,
         nonce,
         balance,
@@ -267,7 +267,7 @@ describe("Hermez Helpers", function () {
       expect(resSC[2]).to.be.equal(resJs[2]);
       expect(resSC[3]).to.be.equal(resJs[3]);
 
-      const resHashSC = await buidlerHermezHelpersTest.hashTreeStateTest(
+      const resHashSC = await hardhatHermezHelpersTest.hashTreeStateTest(
         tokenID,
         nonce,
         balance,
@@ -288,19 +288,19 @@ describe("Hermez Helpers", function () {
 
     it("float to fix", async () => {
       const testVector = [
-            [6 * 0x800000000 + 123, "123000000"],
-            [2 * 0x800000000 + 4545, "454500"],
-            [30 * 0x800000000 + 10235, "10235000000000000000000000000000000"],
-            [0, "0"],
-            [0x800000000, "0"],
-            [0x0001, "1"],
-            [31 * 0x800000000, "0"],
-            [0x800000000 + 1, "10"],
-            [0xFFFFFFFFFF, "343597383670000000000000000000000000000000"],
+        [6 * 0x800000000 + 123, "123000000"],
+        [2 * 0x800000000 + 4545, "454500"],
+        [30 * 0x800000000 + 10235, "10235000000000000000000000000000000"],
+        [0, "0"],
+        [0x800000000, "0"],
+        [0x0001, "1"],
+        [31 * 0x800000000, "0"],
+        [0x800000000 + 1, "10"],
+        [0xFFFFFFFFFF, "343597383670000000000000000000000000000000"],
       ];
 
       for (let i = 0; i < testVector.length; i++) {
-        const resSm = await buidlerHermezHelpersTest.float2FixTest(
+        const resSm = await hardhatHermezHelpersTest.float2FixTest(
           testVector[i][0]
         );
         expect(Scalar.e(resSm).toString()).to.be.equal(testVector[i][1]);

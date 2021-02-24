@@ -1,8 +1,8 @@
 require("dotenv").config();
 
-const bre = require("@nomiclabs/buidler");
+const bre = require("hardhat");
 const {expect} = require("chai");
-const {ethers} = require("../../node_modules/@nomiclabs/buidler");
+const {ethers} = require("hardhat");
 const {BigNumber} = require("ethers");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const {
@@ -19,16 +19,16 @@ async function main() {
 
   const Hermez = await ethers.getContractFactory("HermezTest");
 
-  buidlerHermez = Hermez.attach(process.env.HERMEZ_ADDRESS);
+  hardhatHermez = Hermez.attach(process.env.HERMEZ_ADDRESS);
 
   // get token contract
-  let buidlerToken;
+  let hardhatToken;
   if (isERC20Permit) {
     const TokenFactory = await ethers.getContractFactory("ERC20PermitMock");
-    buidlerToken = TokenFactory.attach(process.env.ERC20PERMIT_ADDRESS);
+    hardhatToken = TokenFactory.attach(process.env.ERC20PERMIT_ADDRESS);
   } else {
     const TokenFactory = await ethers.getContractFactory("ERC20Mock");
-    buidlerToken = TokenFactory.attach(process.env.ERC20_ADDRESS);
+    hardhatToken = TokenFactory.attach(process.env.ERC20_ADDRESS);
   }
 
   const fromIdx = 256;
@@ -40,7 +40,7 @@ async function main() {
     fromIdx,
     amountF,
     owner,
-    buidlerHermez
+    hardhatHermez
   );
   console.log("exit succed!");
 }

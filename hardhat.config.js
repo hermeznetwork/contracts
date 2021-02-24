@@ -1,22 +1,22 @@
 require("dotenv").config();
-//usePlugin("buidler-deploy");
-usePlugin("solidity-coverage");
-usePlugin("buidler-gas-reporter");
-usePlugin("@nomiclabs/buidler-web3");
-usePlugin("@nomiclabs/buidler-ethers");
-usePlugin("@nomiclabs/buidler-waffle");
-usePlugin("@nomiclabs/buidler-solhint");
-usePlugin("@nomiclabs/buidler-etherscan");
-usePlugin("@openzeppelin/buidler-upgrades");
-usePlugin("buidler-spdx-license-identifier");
+//usePlugin("hardhat-deploy");
+require("solidity-coverage");
+require("hardhat-gas-reporter");
+require("@nomiclabs/hardhat-web3");
+require("@nomiclabs/hardhat-ethers");
+require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-solhint");
+require("@nomiclabs/hardhat-etherscan");
+require("hardhat-spdx-license-identifier");
+require("@openzeppelin/hardhat-upgrades");
 
 const DEFAULT_MNEMONIC =
   "explain tackle mirror kit van hammer degree position ginger unfair soup bonus";
 
 module.exports = {
-  defaultNetwork: "buidlerevm",
+  defaultNetwork: "hardhat",
   networks: {
-    buidlerevm: {
+    hardhat: {
       blockGasLimit: 12500000,
       allowUnlimitedContractSize: true,
     },
@@ -82,12 +82,14 @@ module.exports = {
     // Obtain one at https://etherscan.io/
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
-  solc: {
+  solidity: {
     version: "0.6.12",
-    optimizer: {
-      enabled: true, // Default: false
-      runs: 200, // Default: 200
-    },
+    settings: {
+      optimizer: {
+        enabled: true, // Default: false
+        runs: 200, // Default: 200
+      },
+    }
   },
   gasReporter: {
     currency: "USD",

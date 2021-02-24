@@ -3,7 +3,6 @@
 pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@nomiclabs/buidler/console.sol";
 
 // mock class using ERC20
 contract ERC20MockFake is ERC20 {

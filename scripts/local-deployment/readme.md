@@ -13,7 +13,7 @@ In repository root:
    The json contains all the deployment parameters, indexed with a `chainID`
    The `1337` which is already included, is the chainId of `ganache`
 
-   - The `numAccountsFund` are the number of accounts, starting with index '0' of the mnemonic to fund with ether and HEZ **ether funding only available in evmbuidler enviroment**
+   - The `numAccountsFund` are the number of accounts, starting with index '0' of the mnemonic to fund with ether and HEZ **ether funding only available in evmhardhat enviroment**
    - Then there are some configuration parameters, related with the Smart contracts constructor
    - Lastly are some parameters which only has more relevance in testnet:
 

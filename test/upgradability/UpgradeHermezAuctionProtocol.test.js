@@ -1,4 +1,4 @@
-const { ethers, upgrades } = require("@nomiclabs/buidler");
+const { ethers, upgrades } = require("hardhat");
 const {
   expect
 } = require("chai");
@@ -130,9 +130,9 @@ describe("upgradability test", function() {
     const deployerAddress = await deployer.getAddress();
 
     // Deploy Timelock
-    const TimelockBuidler = await Timelock.deploy(hermezGovernanceAddress, 604800);
-    await TimelockBuidler.deployed();
-    await admin.connect(hermezGovernanceEthers).transferOwnership(TimelockBuidler.address);
+    const Timelockhardhat = await Timelock.deploy(hermezGovernanceAddress, 604800);
+    await Timelockhardhat.deployed();
+    await admin.connect(hermezGovernanceEthers).transferOwnership(Timelockhardhat.address);
 
     const hermezAuctionProtocolV2 = await upgrades.prepareUpgrade(hermezAuctionProtocol.address, HermezAuctionProtocolV2, {
       unsafeAllowCustomTypes: true
@@ -144,7 +144,7 @@ describe("upgradability test", function() {
     let latest = await ethers.provider.getBlockNumber();
     let blockTimestamp = (await ethers.provider.getBlock(latest)).timestamp;
     let eta = blockTimestamp + 605800;
-    await TimelockBuidler.connect(hermezGovernanceEthers).queueTransaction(
+    await Timelockhardhat.connect(hermezGovernanceEthers).queueTransaction(
       adminAddress,
       0,
       "",
@@ -152,7 +152,7 @@ describe("upgradability test", function() {
       eta
     );
 
-    await expect(TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
+    await expect(Timelockhardhat.connect(hermezGovernanceEthers).executeTransaction(
       adminAddress,
       0,
       "",
@@ -160,7 +160,7 @@ describe("upgradability test", function() {
       eta
     )).to.be.revertedWith("Timelock::executeTransaction: Transaction hasn't surpassed time lock.");
 
-    await TimelockBuidler.connect(hermezGovernanceEthers).queueTransaction(
+    await Timelockhardhat.connect(hermezGovernanceEthers).queueTransaction(
       adminAddress,
       0,
       "",
@@ -170,7 +170,7 @@ describe("upgradability test", function() {
     
     await ethers.provider.send("evm_setNextBlockTimestamp", [eta]);
 
-    await TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
+    await Timelockhardhat.connect(hermezGovernanceEthers).executeTransaction(
       adminAddress,
       0,
       "",
@@ -179,7 +179,7 @@ describe("upgradability test", function() {
     );
 
     // return the ownerwship to the deployer address for future tests!
-    await TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
+    await Timelockhardhat.connect(hermezGovernanceEthers).executeTransaction(
       adminAddress,
       0,
       "",

@@ -1,6 +1,6 @@
 const {
   ethers
-} = require("@nomiclabs/buidler");
+} = require("hardhat");
 const {
   expect
 } = require("chai");
@@ -17,8 +17,8 @@ const bootCoordinatorURL = "https://boot.coordinator.io";
 describe("Auction Protocol Management", function() {
   this.timeout(40000);
 
-  let buidlerHEZToken;
-  let buidlerHermezAuctionProtocol;
+  let hardhatHEZToken;
+  let hardhatHermezAuctionProtocol;
   let owner,
     coordinator1,
     producer1,
@@ -57,18 +57,18 @@ describe("Auction Protocol Management", function() {
     donationAddress = await donation.getAddress();
     coordinator1Address = await coordinator1.getAddress();
 
-    buidlerHEZToken = await HEZToken.deploy(await owner.getAddress());
-    await buidlerHEZToken.deployed();
+    hardhatHEZToken = await HEZToken.deploy(await owner.getAddress());
+    await hardhatHEZToken.deployed();
     // Send tokens to coordinators addresses
 
-    await buidlerHEZToken
+    await hardhatHEZToken
       .connect(owner)
       .transfer(
         await coordinator1.getAddress(),
         ethers.utils.parseEther("10000")
       );
 
-    await buidlerHEZToken
+    await hardhatHEZToken
       .connect(owner)
       .transfer(
         await coordinator2.getAddress(),
@@ -84,8 +84,8 @@ describe("Auction Protocol Management", function() {
     // To deploy our contract, we just have to call Token.deploy() and await
     // for it to be deployed(), which happens onces its transaction has been
     // mined.
-    buidlerHermezAuctionProtocol = await HermezAuctionProtocol.deploy();
-    await buidlerHermezAuctionProtocol.deployed();
+    hardhatHermezAuctionProtocol = await HermezAuctionProtocol.deploy();
+    await hardhatHermezAuctionProtocol.deployed();
 
     let current = await time.latestBlock();
     time.advanceBlock();
@@ -96,8 +96,8 @@ describe("Auction Protocol Management", function() {
     }
 
 
-    await buidlerHermezAuctionProtocol.hermezAuctionProtocolInitializer(
-      buidlerHEZToken.address,
+    await hardhatHermezAuctionProtocol.hermezAuctionProtocolInitializer(
+      hardhatHEZToken.address,
       latest + MIN_BLOCKS,
       hermezRollupAddress,
       governanceAddress,
@@ -110,13 +110,13 @@ describe("Auction Protocol Management", function() {
   describe("SlotDeadline", function() {
     it("Anyone shouldn't set a new slot deadline", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.setSlotDeadline(0)
+        hardhatHermezAuctionProtocol.setSlotDeadline(0)
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
     });
     it("should'n set a new slot deadline greater than the current BLOCKS_PER_SLOT", async function() {
-      let blocks_per_slot = await buidlerHermezAuctionProtocol.BLOCKS_PER_SLOT();
+      let blocks_per_slot = await hardhatHermezAuctionProtocol.BLOCKS_PER_SLOT();
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(governance)
           .setSlotDeadline(blocks_per_slot + 1)
       ).to.be.revertedWith("HermezAuctionProtocol::setSlotDeadline: GREATER_THAN_BLOCKS_PER_SLOT");
@@ -126,10 +126,10 @@ describe("Auction Protocol Management", function() {
 
       // NewSlotDeadline event
       let eventNewSlotDeadline = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewSlotDeadline();
-        buidlerHermezAuctionProtocol.on(filter, async (_newSlotDeadline) => {
+        filter = hardhatHermezAuctionProtocol.filters.NewSlotDeadline();
+        hardhatHermezAuctionProtocol.on(filter, async (_newSlotDeadline) => {
           expect(_newSlotDeadline).to.be.equal(newSlotDeadline);
-          buidlerHermezAuctionProtocol.removeAllListeners();
+          hardhatHermezAuctionProtocol.removeAllListeners();
           resolve();
         });
         // After 10s, we throw a timeout error
@@ -139,12 +139,12 @@ describe("Auction Protocol Management", function() {
       });
 
       // Set slot deadline
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(governance)
         .setSlotDeadline(newSlotDeadline);
       await eventNewSlotDeadline;
       // Check new slot deadline
-      expect(await buidlerHermezAuctionProtocol.getSlotDeadline()).to.be.equal(
+      expect(await hardhatHermezAuctionProtocol.getSlotDeadline()).to.be.equal(
         newSlotDeadline
       );
     });
@@ -153,7 +153,7 @@ describe("Auction Protocol Management", function() {
   describe("OpenAuctionSlots", function() {
     it("Anyone shouldn't set a new OpenAuctionSlots", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.setOpenAuctionSlots(0)
+        hardhatHermezAuctionProtocol.setOpenAuctionSlots(0)
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
     });
     it("shoul be able to set a new OpenAuctionSlots", async function() {
@@ -161,12 +161,12 @@ describe("Auction Protocol Management", function() {
 
       // NewOpenAuctionSlots event
       let eventNewOpenAuctionSlots = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewOpenAuctionSlots();
-        buidlerHermezAuctionProtocol.on(
+        filter = hardhatHermezAuctionProtocol.filters.NewOpenAuctionSlots();
+        hardhatHermezAuctionProtocol.on(
           filter,
           async (_newOpenAuctionSlots) => {
             expect(_newOpenAuctionSlots).to.be.equal(newOpenAuctionSlots);
-            buidlerHermezAuctionProtocol.removeAllListeners();
+            hardhatHermezAuctionProtocol.removeAllListeners();
             resolve();
           }
         );
@@ -177,13 +177,13 @@ describe("Auction Protocol Management", function() {
       });
 
       // Set open auction slots
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(governance)
         .setOpenAuctionSlots(newOpenAuctionSlots);
       await eventNewOpenAuctionSlots;
       // Check new open auction slots
       expect(
-        await buidlerHermezAuctionProtocol.getOpenAuctionSlots()
+        await hardhatHermezAuctionProtocol.getOpenAuctionSlots()
       ).to.be.equal(newOpenAuctionSlots);
     });
   });
@@ -191,7 +191,7 @@ describe("Auction Protocol Management", function() {
   describe("ClosedAuctionSlots", function() {
     it("Anyone shouldn't set a new ClosedAuctionSlots", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.setClosedAuctionSlots(0)
+        hardhatHermezAuctionProtocol.setClosedAuctionSlots(0)
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
     });
     it("shoul be able to set a new ClosedAuctionSlots", async function() {
@@ -199,12 +199,12 @@ describe("Auction Protocol Management", function() {
 
       // NewClosedAuctionSlots event
       let eventClosedAuctionSlots = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewClosedAuctionSlots();
-        buidlerHermezAuctionProtocol.on(
+        filter = hardhatHermezAuctionProtocol.filters.NewClosedAuctionSlots();
+        hardhatHermezAuctionProtocol.on(
           filter,
           async (_newClosedAuctionSlots) => {
             expect(_newClosedAuctionSlots).to.be.equal(newClosedAuctionSlots);
-            buidlerHermezAuctionProtocol.removeAllListeners();
+            hardhatHermezAuctionProtocol.removeAllListeners();
             resolve();
           }
         );
@@ -215,13 +215,13 @@ describe("Auction Protocol Management", function() {
       });
 
       // Set closed auction slots
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(governance)
         .setClosedAuctionSlots(newClosedAuctionSlots);
       await eventClosedAuctionSlots;
       // Check new closed auction slots
       expect(
-        await buidlerHermezAuctionProtocol.getClosedAuctionSlots()
+        await hardhatHermezAuctionProtocol.getClosedAuctionSlots()
       ).to.be.equal(newClosedAuctionSlots);
     });
   });
@@ -229,7 +229,7 @@ describe("Auction Protocol Management", function() {
   describe("Outbidding", function() {
     it("Anyone shouldn't set a new Outbidding", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.setOutbidding(0)
+        hardhatHermezAuctionProtocol.setOutbidding(0)
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
     });
     it("should be able to set a new Outbidding", async function() {
@@ -237,10 +237,10 @@ describe("Auction Protocol Management", function() {
 
       // NewOutbidding event
       let eventNewOutbidding = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewOutbidding();
-        buidlerHermezAuctionProtocol.on(filter, async (_newOutbidding) => {
+        filter = hardhatHermezAuctionProtocol.filters.NewOutbidding();
+        hardhatHermezAuctionProtocol.on(filter, async (_newOutbidding) => {
           expect(_newOutbidding).to.be.equal(newOutbidding);
-          buidlerHermezAuctionProtocol.removeAllListeners();
+          hardhatHermezAuctionProtocol.removeAllListeners();
           resolve();
         });
         // After 10s, we throw a timeout error
@@ -249,23 +249,23 @@ describe("Auction Protocol Management", function() {
         }, TIMEOUT);
       });
 
-      await expect(buidlerHermezAuctionProtocol
+      await expect(hardhatHermezAuctionProtocol
         .connect(governance)
         .setOutbidding(0)
       ).to.be.revertedWith("HermezAuctionProtocol::setOutbidding: OUTBIDDING_NOT_VALID");
-      await expect(buidlerHermezAuctionProtocol
+      await expect(hardhatHermezAuctionProtocol
         .connect(governance)
         .setOutbidding(10001)
       ).to.be.revertedWith("HermezAuctionProtocol::setOutbidding: OUTBIDDING_NOT_VALID");
 
       // Set outbidding
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(governance)
         .setOutbidding(newOutbidding);
 
       await eventNewOutbidding;
       // Check new outbidding
-      expect(await buidlerHermezAuctionProtocol.getOutbidding()).to.be.equal(
+      expect(await hardhatHermezAuctionProtocol.getOutbidding()).to.be.equal(
         newOutbidding
       );
     });
@@ -274,22 +274,22 @@ describe("Auction Protocol Management", function() {
   describe("AllocationRatio", function() {
     it("Anyone shouldn't set a new AllocationRatio", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.setAllocationRatio([30, 30, 40])
+        hardhatHermezAuctionProtocol.setAllocationRatio([30, 30, 40])
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
     });
     it("shouldn't set an AllocationRatio whose sum is not 100%", async function() {
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(governance)
           .setAllocationRatio([1, 10, 1])
       ).to.be.revertedWith("HermezAuctionProtocol::setAllocationRatio: ALLOCATION_RATIO_NOT_VALID");
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(governance)
           .setAllocationRatio([1, 10000, 65535])
       ).to.be.revertedWith("HermezAuctionProtocol::setAllocationRatio: ALLOCATION_RATIO_NOT_VALID");
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(governance)
           .setAllocationRatio([120, 120, 120])
       ).to.be.revertedWith("HermezAuctionProtocol::setAllocationRatio: ALLOCATION_RATIO_NOT_VALID");
@@ -299,12 +299,12 @@ describe("Auction Protocol Management", function() {
 
       // NewClosedAuctionSlots event
       let eventNewAllocationRatio = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewAllocationRatio();
-        buidlerHermezAuctionProtocol.on(filter, async (_newAllocationRatio) => {
+        filter = hardhatHermezAuctionProtocol.filters.NewAllocationRatio();
+        hardhatHermezAuctionProtocol.on(filter, async (_newAllocationRatio) => {
           expect(_newAllocationRatio[0]).to.be.equal(newAllocationRatio[0]);
           expect(_newAllocationRatio[1]).to.be.equal(newAllocationRatio[1]);
           expect(_newAllocationRatio[2]).to.be.equal(newAllocationRatio[2]);
-          buidlerHermezAuctionProtocol.removeAllListeners();
+          hardhatHermezAuctionProtocol.removeAllListeners();
           resolve();
         });
         // After 10s, we throw a timeout error
@@ -314,12 +314,12 @@ describe("Auction Protocol Management", function() {
       });
 
       // Set allocation ratio
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(governance)
         .setAllocationRatio(newAllocationRatio);
       await eventNewAllocationRatio;
       // Check new allocation ratio
-      let allocationRatio = await buidlerHermezAuctionProtocol.getAllocationRatio();
+      let allocationRatio = await hardhatHermezAuctionProtocol.getAllocationRatio();
       expect(allocationRatio[0]).to.be.equal(newAllocationRatio[0]);
       expect(allocationRatio[1]).to.be.equal(newAllocationRatio[1]);
       expect(allocationRatio[2]).to.be.equal(newAllocationRatio[2]);
@@ -329,7 +329,7 @@ describe("Auction Protocol Management", function() {
   describe("DonationAddress", function() {
     it("Anyone shouldn't set a new DonationAddress", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.setDonationAddress(
+        hardhatHermezAuctionProtocol.setDonationAddress(
           ethers.constants.AddressZero
         )
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
@@ -341,10 +341,10 @@ describe("Auction Protocol Management", function() {
 
       // NewClosedAuctionSlots event
       let eventNewDonationAddress = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewDonationAddress();
-        buidlerHermezAuctionProtocol.on(filter, async (_newDonationAddress) => {
+        filter = hardhatHermezAuctionProtocol.filters.NewDonationAddress();
+        hardhatHermezAuctionProtocol.on(filter, async (_newDonationAddress) => {
           expect(_newDonationAddress).to.be.equal(newDonationAddress);
-          buidlerHermezAuctionProtocol.removeAllListeners();
+          hardhatHermezAuctionProtocol.removeAllListeners();
           resolve();
         });
         // After 10s, we throw a timeout error
@@ -354,19 +354,19 @@ describe("Auction Protocol Management", function() {
       });
 
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(governance)
           .setDonationAddress(ethers.constants.AddressZero))
         .to.be.revertedWith("HermezAuctionProtocol::setDonationAddress: NOT_VALID_ADDRESS");
 
       // Set donation address
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(governance)
         .setDonationAddress(newDonationAddress);
       await eventNewDonationAddress;
       // Check new donation address
       expect(
-        await buidlerHermezAuctionProtocol.getDonationAddress()
+        await hardhatHermezAuctionProtocol.getDonationAddress()
       ).to.be.equal(newDonationAddress);
     });
   });
@@ -374,7 +374,7 @@ describe("Auction Protocol Management", function() {
   describe("BootCoordinator", function() {
     it("Anyone shouldn't set a new DonationAddress", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.setBootCoordinator(
+        hardhatHermezAuctionProtocol.setBootCoordinator(
           ethers.constants.AddressZero, "urlBootCoordinator"
         )
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
@@ -386,10 +386,10 @@ describe("Auction Protocol Management", function() {
 
       // NewClosedAuctionSlots event
       let eventNewBootCoordinator = new Promise((resolve, reject) => {
-        filter = buidlerHermezAuctionProtocol.filters.NewBootCoordinator();
-        buidlerHermezAuctionProtocol.on(filter, async (_newBootCoordinator) => {
+        filter = hardhatHermezAuctionProtocol.filters.NewBootCoordinator();
+        hardhatHermezAuctionProtocol.on(filter, async (_newBootCoordinator) => {
           expect(_newBootCoordinator).to.be.equal(newBootCoordinator);
-          buidlerHermezAuctionProtocol.removeAllListeners();
+          hardhatHermezAuctionProtocol.removeAllListeners();
           resolve();
         });
         // After 10s, we throw a timeout error
@@ -399,26 +399,26 @@ describe("Auction Protocol Management", function() {
       });
 
       // Set boot coordinator
-      await buidlerHermezAuctionProtocol
+      await hardhatHermezAuctionProtocol
         .connect(governance)
         .setBootCoordinator(newBootCoordinator, "urlBootCoordinator");
       await eventNewBootCoordinator;
       // Check new boot coordinator
       expect(
-        await buidlerHermezAuctionProtocol.getBootCoordinator()
+        await hardhatHermezAuctionProtocol.getBootCoordinator()
       ).to.be.equal(newBootCoordinator);
     });
   });
   describe("changeDefaultSlotSetBid", function() {
     it("Anyone shouldn't set a new changeDefaultSlotSetBid", async function() {
       await expect(
-        buidlerHermezAuctionProtocol.changeDefaultSlotSetBid(0, 0)
+        hardhatHermezAuctionProtocol.changeDefaultSlotSetBid(0, 0)
       ).to.be.revertedWith("HermezAuctionProtocol::onlyGovernance: ONLY_GOVERNANCE");
     });
 
     it("should revert if an invalid slot set", async function() {
       await expect(
-        buidlerHermezAuctionProtocol
+        hardhatHermezAuctionProtocol
           .connect(governance)
           .changeDefaultSlotSetBid(123, ethers.utils.parseEther("112"))
       ).to.be.revertedWith("HermezAuctionProtocol::changeDefaultSlotSetBid: NOT_VALID_SLOT_SET");
@@ -427,20 +427,20 @@ describe("Auction Protocol Management", function() {
     it("shouldn't be able to change a 0 min bid", async function() {
       for (i = 0; i < 6; i++) {
         // Change default slot set bid to 0
-        await buidlerHermezAuctionProtocol
+        await hardhatHermezAuctionProtocol
           .connect(governance)
           .changeDefaultSlotSetBid(i, 0);
       }
       for (i = 0; i < 6; i++) {
         // Check default slot set bid update
         expect(
-          await buidlerHermezAuctionProtocol.getDefaultSlotSetBid(i)
+          await hardhatHermezAuctionProtocol.getDefaultSlotSetBid(i)
         ).to.be.equal(0);
       }
       for (i = 0; i < 6; i++) {
         // Can't change minbid if previous minBid == 0
         await expect(
-          buidlerHermezAuctionProtocol
+          hardhatHermezAuctionProtocol
             .connect(governance)
             .changeDefaultSlotSetBid(i, ethers.utils.parseEther("112"))
         ).to.be.revertedWith("HermezAuctionProtocol::changeDefaultSlotSetBid: SLOT_DECENTRALIZED");

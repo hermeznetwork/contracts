@@ -1,8 +1,8 @@
 require("dotenv").config();
 
-const bre = require("@nomiclabs/buidler");
+const bre = require("hardhat");
 const { expect } = require("chai");
-const { ethers } = require("../../node_modules/@nomiclabs/buidler");
+const { ethers } = require("hardhat");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 const { BigNumber } = require("ethers");
 const {
@@ -14,10 +14,10 @@ async function main() {
   // compìle contracts
   await bre.run("compile");
 
-  let buidlerTokenERC20Mock;
-  let buidlerHermez;
-  let buidlerWithdrawalDelayer;
-  let buidlerHEZ;
+  let hardhatTokenERC20Mock;
+  let hardhatHermez;
+  let hardhatWithdrawalDelayer;
+  let hardhatHEZ;
   let owner;
   let id1;
   let id2;
@@ -42,13 +42,13 @@ async function main() {
 
   hermezGovernanceAddress = governance.getAddress();
 
-  // load default account 0 from buidlerEvm
+  // load default account 0 from hardhatEvm
   // Account #0: 0xc783df8a850f42e7f7e57013759c285caa701eb6 (10000 ETH)
   // Private Key: 0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122
-  const privateKeyBuidler =
+  const privateKeyhardhat =
     "0xc5e8f61d1ab959b397eecc0a37a6517b8e67a0e7cf1f4bce5591f3ed80199122";
   const ownerWallet = new ethers.Wallet(
-    privateKeyBuidler,
+    privateKeyhardhat,
     ethers.provider
   );
 
@@ -86,26 +86,26 @@ async function main() {
     poseidonUnit.createCode(4),
     owner
   );
-  const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-  const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-  const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
+  const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+  const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+  const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
 
-  const poseidonAddr2 = buidlerPoseidon2Elements.address;
-  const poseidonAddr3 = buidlerPoseidon3Elements.address;
-  const poseidonAddr4 = buidlerPoseidon4Elements.address;
+  const poseidonAddr2 = hardhatPoseidon2Elements.address;
+  const poseidonAddr3 = hardhatPoseidon3Elements.address;
+  const poseidonAddr4 = hardhatPoseidon4Elements.address;
 
   // factory hermez
   const Hermez = await ethers.getContractFactory("HermezTest");
 
   // deploy tokens
-  buidlerTokenERC20Mock = await TokenERC20Mock.deploy(
+  hardhatTokenERC20Mock = await TokenERC20Mock.deploy(
     "tokenname",
     "TKN",
     await owner.getAddress(),
     tokenInitialAmount
   );
 
-  buidlerHEZ = await TokenERC20PermitMock.deploy(
+  hardhatHEZ = await TokenERC20PermitMock.deploy(
     "tokenname",
     "TKN",
     await owner.getAddress(),
@@ -113,32 +113,32 @@ async function main() {
   );
 
   // deploy helpers
-  let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
-  let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+  let hardhatVerifierRollupHelper = await VerifierRollupHelper.deploy();
+  let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
 
-  let buidlerHermezAuctionTest = await HermezAuctionTest.deploy();
+  let hardhatHermezAuctionTest = await HermezAuctionTest.deploy();
 
   // deploy hermez
-  buidlerHermez = await Hermez.deploy();
-  await buidlerHermez.deployed();
+  hardhatHermez = await Hermez.deploy();
+  await hardhatHermez.deployed();
 
   const delay = parseInt(process.env.DELAY ? process.env.DELAY : 60);
 
-  buidlerWithdrawalDelayer = await WithdrawalDelayer.deploy(
+  hardhatWithdrawalDelayer = await WithdrawalDelayer.deploy(
     delay,
-    buidlerHermez.address,
+    hardhatHermez.address,
     hermezGovernanceAddress,
     hermezGovernanceAddress
   );
-  await buidlerWithdrawalDelayer.deployed();
+  await hardhatWithdrawalDelayer.deployed();
 
   // initialize hermez
-  await buidlerHermez.initializeHermez(
-    [buidlerVerifierRollupHelper.address],
+  await hardhatHermez.initializeHermez(
+    [hardhatVerifierRollupHelper.address],
     calculateInputMaxTxLevels([maxTx], [nLevels]),
-    buidlerVerifierWithdrawHelper.address,
-    buidlerHermezAuctionTest.address,
-    buidlerHEZ.address,
+    hardhatVerifierWithdrawHelper.address,
+    hardhatHermezAuctionTest.address,
+    hardhatHEZ.address,
     forgeL1L2BatchTimeout,
     feeAddToken,
     poseidonAddr2,
@@ -146,26 +146,26 @@ async function main() {
     poseidonAddr4,
     hermezGovernanceAddress,
     withdrawalDelay,
-    buidlerWithdrawalDelayer.address
+    hardhatWithdrawalDelayer.address
   );
 
   // add tokens
 
   // wait until is deployed
-  await buidlerTokenERC20Mock.deployed();
-  await buidlerHEZ.deployed();
+  await hardhatTokenERC20Mock.deployed();
+  await hardhatHEZ.deployed();
 
   await AddToken(
-    buidlerHermez,
-    buidlerTokenERC20Mock,
-    buidlerHEZ,
+    hardhatHermez,
+    hardhatTokenERC20Mock,
+    hardhatHEZ,
     ownerWallet,
     feeAddToken
   );
   await AddToken(
-    buidlerHermez,
-    buidlerHEZ,
-    buidlerHEZ,
+    hardhatHermez,
+    hardhatHEZ,
+    hardhatHEZ,
     ownerWallet,
     feeAddToken
   );
@@ -173,12 +173,12 @@ async function main() {
   // wait until is deployed
 
   // transfer tokens and ether
-  await buidlerTokenERC20Mock.transfer(
+  await hardhatTokenERC20Mock.transfer(
     process.env.ETH_ADDRESS,
     ethers.utils.parseEther("10000")
   );
 
-  await buidlerHEZ.transfer(
+  await hardhatHEZ.transfer(
     process.env.ETH_ADDRESS,
     ethers.utils.parseEther("10000")
   );
@@ -201,10 +201,10 @@ async function main() {
     "note that if the blockchain is restarted the contracts will be deployed in the same address:"
   );
   console.log("account with tokens and funds:", process.env.ETH_ADDRESS);
-  console.log("hermez SC deployed in; ", buidlerHermez.address);
-  console.log("token ERC20 Contract Address: ", buidlerTokenERC20Mock.address);
-  console.log("(ERC20Permit) HEZ deployed in; ", buidlerHEZ.address);
-  console.log("withdrawal delayer deployed in; ", buidlerWithdrawalDelayer.address);
+  console.log("hermez SC deployed in; ", hardhatHermez.address);
+  console.log("token ERC20 Contract Address: ", hardhatTokenERC20Mock.address);
+  console.log("(ERC20Permit) HEZ deployed in; ", hardhatHEZ.address);
+  console.log("withdrawal delayer deployed in; ", hardhatWithdrawalDelayer.address);
   console.log();
   console.log(
     "/////////////////////////////////////////////////////////////////"

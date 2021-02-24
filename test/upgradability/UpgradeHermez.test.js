@@ -1,4 +1,4 @@
-const { ethers, upgrades } = require("@nomiclabs/buidler");
+const { ethers, upgrades } = require("hardhat");
 
 const {
   expect
@@ -25,7 +25,7 @@ describe("upgradability test Hermez", function() {
   this.timeout(TIMEOUT);
 
   let hermez, libVerifiersAddress, maxTxVerifier, nLevelsVerifer, libverifiersWithdrawAddress,
-    hermezAuctionProtocol, buidlerHEZToken, libposeidonsAddress, hermezGovernanceAddress, 
+    hermezAuctionProtocol, hardhatHEZToken, libposeidonsAddress, hermezGovernanceAddress, 
     withdrawalDelayer;
   
   beforeEach(async function() {
@@ -121,44 +121,44 @@ describe("upgradability test Hermez", function() {
     console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
     // deploy HEZ (erc20Permit) token
-    buidlerHEZToken = await HEZToken.deploy(
+    hardhatHEZToken = await HEZToken.deploy(
       await deployer.getAddress(),
     );
-    await buidlerHEZToken.deployed();
-    console.log("HEZToken deployed at: ", buidlerHEZToken.address);
+    await hardhatHEZToken.deployed();
+    console.log("HEZToken deployed at: ", hardhatHEZToken.address);
 
-    const buidlerPoseidon2Elements = await Poseidon2Elements.deploy();
-    const buidlerPoseidon3Elements = await Poseidon3Elements.deploy();
-    const buidlerPoseidon4Elements = await Poseidon4Elements.deploy();
-    await buidlerPoseidon2Elements.deployed();
-    await buidlerPoseidon3Elements.deployed();
-    await buidlerPoseidon4Elements.deployed();
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
+    await hardhatPoseidon2Elements.deployed();
+    await hardhatPoseidon3Elements.deployed();
+    await hardhatPoseidon4Elements.deployed();
 
     libposeidonsAddress = [
-      buidlerPoseidon2Elements.address,
-      buidlerPoseidon3Elements.address,
-      buidlerPoseidon4Elements.address,
+      hardhatPoseidon2Elements.address,
+      hardhatPoseidon3Elements.address,
+      hardhatPoseidon4Elements.address,
     ];
     console.log("deployed poseidon libs");
-    console.log("poseidon 2 elements at: ", buidlerPoseidon2Elements.address);
-    console.log("poseidon 3 elements at: ", buidlerPoseidon3Elements.address);
-    console.log("poseidon 4 elements at: ", buidlerPoseidon4Elements.address);
+    console.log("poseidon 2 elements at: ", hardhatPoseidon2Elements.address);
+    console.log("poseidon 3 elements at: ", hardhatPoseidon3Elements.address);
+    console.log("poseidon 4 elements at: ", hardhatPoseidon4Elements.address);
 
-    let buidlerVerifierRollupHelper = await VerifierRollupHelper.deploy();
-    await buidlerVerifierRollupHelper.deployed();
-    libVerifiersAddress = [buidlerVerifierRollupHelper.address];
-    console.log("libVerifiersAddress at: ", buidlerVerifierRollupHelper.address);
+    let hardhatVerifierRollupHelper = await VerifierRollupHelper.deploy();
+    await hardhatVerifierRollupHelper.deployed();
+    libVerifiersAddress = [hardhatVerifierRollupHelper.address];
+    console.log("libVerifiersAddress at: ", hardhatVerifierRollupHelper.address);
 
-    let buidlerVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
-    await buidlerVerifierWithdrawHelper.deployed();
-    libverifiersWithdrawAddress = buidlerVerifierWithdrawHelper.address;
-    console.log("libverifiersWithdrawAddress at: ", buidlerVerifierWithdrawHelper.address);
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    await hardhatVerifierWithdrawHelper.deployed();
+    libverifiersWithdrawAddress = hardhatVerifierWithdrawHelper.address;
+    console.log("libverifiersWithdrawAddress at: ", hardhatVerifierWithdrawHelper.address);
 
     let genesisBlock =
           (await time.latestBlock()).toNumber() + 100;
 
     await hermezAuctionProtocol.hermezAuctionProtocolInitializer(
-      buidlerHEZToken.address,
+      hardhatHEZToken.address,
       genesisBlock,
       hermez.address,
       hermezGovernanceAddress,
@@ -181,7 +181,7 @@ describe("upgradability test Hermez", function() {
       calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
       libverifiersWithdrawAddress,
       hermezAuctionProtocol.address,
-      buidlerHEZToken.address,
+      hardhatHEZToken.address,
       10,
       10,
       libposeidonsAddress[0],
@@ -210,7 +210,7 @@ describe("upgradability test Hermez", function() {
       calculateInputMaxTxLevels(maxTxVerifier, nLevelsVerifer),
       libverifiersWithdrawAddress,
       hermezAuctionProtocol.address,
-      buidlerHEZToken.address,
+      hardhatHEZToken.address,
       10,
       10,
       libposeidonsAddress[0],
@@ -277,9 +277,9 @@ describe("upgradability test Hermez", function() {
     const deployerAddress = await deployer.getAddress();
 
     // Deploy Timelock
-    const TimelockBuidler = await Timelock.deploy(hermezGovernanceAddress, 604800);
-    await TimelockBuidler.deployed();
-    await admin.connect(hermezGovernanceEthers).transferOwnership(TimelockBuidler.address);
+    const Timelockhardhat = await Timelock.deploy(hermezGovernanceAddress, 604800);
+    await Timelockhardhat.deployed();
+    await admin.connect(hermezGovernanceEthers).transferOwnership(Timelockhardhat.address);
 
     const hermezV2 = await upgrades.prepareUpgrade(hermez.address, HermezV2, {
       unsafeAllowCustomTypes: true
@@ -291,7 +291,7 @@ describe("upgradability test Hermez", function() {
     let latest = await ethers.provider.getBlockNumber();
     let blockTimestamp = (await ethers.provider.getBlock(latest)).timestamp;
     let eta = blockTimestamp + 605800;
-    await TimelockBuidler.connect(hermezGovernanceEthers).queueTransaction(
+    await Timelockhardhat.connect(hermezGovernanceEthers).queueTransaction(
       adminAddress,
       0,
       "",
@@ -299,7 +299,7 @@ describe("upgradability test Hermez", function() {
       eta
     );
 
-    await expect(TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
+    await expect(Timelockhardhat.connect(hermezGovernanceEthers).executeTransaction(
       adminAddress,
       0,
       "",
@@ -308,7 +308,7 @@ describe("upgradability test Hermez", function() {
     )).to.be.revertedWith("Timelock::executeTransaction: Transaction hasn't surpassed time lock.");
 
 
-    await TimelockBuidler.connect(hermezGovernanceEthers).queueTransaction(
+    await Timelockhardhat.connect(hermezGovernanceEthers).queueTransaction(
       adminAddress,
       0,
       "",
@@ -318,7 +318,7 @@ describe("upgradability test Hermez", function() {
 
     await ethers.provider.send("evm_setNextBlockTimestamp", [eta]);
 
-    await TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
+    await Timelockhardhat.connect(hermezGovernanceEthers).executeTransaction(
       adminAddress,
       0,
       "",
@@ -327,7 +327,7 @@ describe("upgradability test Hermez", function() {
     );
 
     // return the ownerwship to the deployer address for future tests!
-    await TimelockBuidler.connect(hermezGovernanceEthers).executeTransaction(
+    await Timelockhardhat.connect(hermezGovernanceEthers).executeTransaction(
       adminAddress,
       0,
       "",
