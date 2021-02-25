@@ -35,6 +35,29 @@ contract HermezHelpers is Initializable {
 
     uint256 private constant _WORD_SIZE = 32;
 
+    // bytes32 public constant EIP712DOMAIN_HASH =
+    //      keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+    bytes32 public constant EIP712DOMAIN_HASH =
+        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+    // bytes32 public constant NAME_HASH =
+    //      keccak256("Hermez Network")
+    bytes32 public constant NAME_HASH =
+        0xbe287413178bfeddef8d9753ad4be825ae998706a6dabff23978b59dccaea0ad;
+    // bytes32 public constant VERSION_HASH =
+    //      keccak256("1")
+    bytes32 public constant VERSION_HASH =
+        0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
+    // bytes32 public constant AUTHORISE_TYPEHASH =
+    //      keccak256("Authorise(string Provider,string Autorisation,bytes32 BJJKey)");
+    bytes32 public constant AUTHORISE_TYPEHASH =
+        0xf8629c6d2e2fa9bf29db1605d43320ce0fa149fb2a4621606bd47ecac27b1a01;
+    // bytes32 public constant HERMEZ_NETWORK_HASH = keccak256(bytes("Hermez Network")),
+    bytes32 public constant HERMEZ_NETWORK_HASH =
+        0xbe287413178bfeddef8d9753ad4be825ae998706a6dabff23978b59dccaea0ad;
+    // bytes32 public constant ACCOUNT_CREATION_HASH = keccak256(bytes("Account creation")),
+    bytes32 public constant ACCOUNT_CREATION_HASH =
+        0xff946cf82975b1a2b6e6d28c9a76a4b8d7a1fd0592b785cb92771933310f9ee7;
+
     /**
      * @dev Load poseidon smart contract
      * @param _poseidon2Elements Poseidon contract address for 2 elements
@@ -204,6 +227,32 @@ contract HermezHelpers is Initializable {
     }
 
     /**
+     * @dev Retrieve the DOMAIN_SEPARATOR hash
+     * @return domainSeparator hash used for sign messages
+     */
+    function DOMAIN_SEPARATOR() public view returns (bytes32 domainSeparator) {
+        return
+            keccak256(
+                abi.encode(
+                    EIP712DOMAIN_HASH,
+                    NAME_HASH,
+                    VERSION_HASH,
+                    getChainId(),
+                    address(this)
+                )
+            );
+    }
+
+    /**
+     * @return chainId The current chainId where the smarctoncract is executed
+     */
+    function getChainId() public pure returns (uint256 chainId) {
+        assembly {
+            chainId := chainid()
+        }
+    }
+
+    /**
      * @dev Retrieve ethereum address from a (defaultMessage + babyjub) signature
      * @param babyjub Public key babyjubjub represented as point: sign + (Ay)
      * @param r Signature parameter
@@ -233,21 +282,21 @@ contract HermezHelpers is Initializable {
             "HermezHelpers::_checkSig: INVALID_S_VALUE"
         );
 
-        uint16 chainId;
-        assembly {
-            chainId := chainid()
-        }
+        bytes32 encodeData =
+            keccak256(
+                abi.encode(
+                    AUTHORISE_TYPEHASH,
+                    HERMEZ_NETWORK_HASH,
+                    ACCOUNT_CREATION_HASH,
+                    babyjub
+                )
+            );
 
-        // 120 bytes --> 66 bytes (string message) + 32 bytes (babyjub) + 2 bytes (chainId) +  20 bytes (Hermez address)
-        bytes32 messageDigest = keccak256(
-            abi.encodePacked(
-                "\x19Ethereum Signed Message:\n120",
-                "I authorize this babyjubjub key for hermez rollup account creation",
-                babyjub,
-                chainId,
-                address(this)
-            )
-        );
+        bytes32 messageDigest =
+            keccak256(
+                abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), encodeData)
+            );
+
         address ethAddress = ecrecover(messageDigest, v, r, s);
 
         require(
