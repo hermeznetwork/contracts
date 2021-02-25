@@ -47,10 +47,10 @@ contract HermezHelpers is Initializable {
     //      keccak256("1")
     bytes32 public constant VERSION_HASH =
         0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
-    // bytes32 public constant AUTHORISE_TYPEHASH =
-    //      keccak256("Authorise(string Provider,string Autorisation,bytes32 BJJKey)");
-    bytes32 public constant AUTHORISE_TYPEHASH =
-        0xf8629c6d2e2fa9bf29db1605d43320ce0fa149fb2a4621606bd47ecac27b1a01;
+    // bytes32 public constant AUTHORIZE_TYPEHASH =
+    //      keccak256("Authorize(string Provider,string Authorization,bytes32 BJJKey)");
+    bytes32 public constant AUTHORIZE_TYPEHASH =
+        0xafd642c6a37a2e6887dc4ad5142f84197828a904e53d3204ecb1100329231eaa;
     // bytes32 public constant HERMEZ_NETWORK_HASH = keccak256(bytes("Hermez Network")),
     bytes32 public constant HERMEZ_NETWORK_HASH =
         0xbe287413178bfeddef8d9753ad4be825ae998706a6dabff23978b59dccaea0ad;
@@ -285,7 +285,7 @@ contract HermezHelpers is Initializable {
         bytes32 encodeData =
             keccak256(
                 abi.encode(
-                    AUTHORISE_TYPEHASH,
+                    AUTHORIZE_TYPEHASH,
                     HERMEZ_NETWORK_HASH,
                     ACCOUNT_CREATION_HASH,
                     babyjub
