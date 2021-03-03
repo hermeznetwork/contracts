@@ -14,7 +14,6 @@ const {
 
 const maxTxVerifierDefault = [512, 376, 376];
 const nLevelsVeriferDefault = [32, 32, 32];
-const verifierTypeDefault = ["mock","mock", "real"];
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
@@ -24,6 +23,7 @@ const pathDeployParameters = path.join(__dirname, inputDeployFile || "./deploy_p
 const deployParameters = require(pathDeployParameters);
 
 const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
+const atemptsDeployProxy = 10; // await 10 minuts for the deploy transaction to be mined
 
 async function main() {
   // compìle contracts
@@ -119,14 +119,24 @@ async function main() {
   }
   
   //Deploy auction with proxy
-  const hermezAuctionProtocol = await upgrades.deployProxy(
-    HermezAuctionProtocol,
-    [],
-    {
-      unsafeAllowCustomTypes: true,
-      initializer: undefined,
+  let hermezAuctionProtocol;
+  for (let i = 0; i < atemptsDeployProxy; i++) {
+    try {
+      hermezAuctionProtocol = await upgrades.deployProxy(
+        HermezAuctionProtocol,
+        [],
+        {
+          unsafeAllowCustomTypes: true,
+          initializer: undefined,
+        }
+      );
+      break;
     }
-  );
+    catch (error){
+      console.log(`attempt ${atemptsDeployProxy}`);
+      console.log("upgrades.deployProxy of hermezAuctionProtocol ", error);
+    }
+  }
   await hermezAuctionProtocol.deployed();
   console.log(
     "hermezAuctionProtocol deployed at: ",
@@ -134,13 +144,26 @@ async function main() {
   );
 
   // Deploy hermez
-  const hermez = await upgrades.deployProxy(Hermez, [], {
-    unsafeAllowCustomTypes: true,
-    initializer: undefined,
-  });
+  let hermez;
+  for (let i = 0; i < atemptsDeployProxy; i++) {
+    try {
+      hermez = await upgrades.deployProxy(Hermez, [], {
+        unsafeAllowCustomTypes: true,
+        initializer: undefined,
+      });
+      break;
+    }
+    catch (error){
+      console.log(`attempt ${atemptsDeployProxy}`);
+      console.log("upgrades.deployProxy of Hermez ", error);
+    }
+  }
   await hermez.deployed();
+  console.log(
+    "hermez deployed at: ",
+    hermez.address
+  );
 
-  console.log("hermez deployed at: ", hermez.address);
 
   // Deploy withdrawalDelayer
   const withdrawalDelayer = await WithdrawalDelayer.deploy(
