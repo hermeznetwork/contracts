@@ -21,7 +21,7 @@ contract HermezGovernance is AccessControl {
         bytes32 role
     ) external {
         require(
-            this == msg.sender,
+            address(this) == msg.sender,
             "HermezGovernance::decentralize ONLY_GOBERNANCE"
         );
         forbidden[role] = true;
