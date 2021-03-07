@@ -56,7 +56,7 @@ contract HermezGovernance is AccessControl {
 
         require(
             !forbidden[role],
-            "HermezGovernance::execute: FORBIDDEN_ROLE""
+            "HermezGovernance::execute: FORBIDDEN_ROLE"
         );
 
         (bool succcess, bytes memory returnData) = destination.call{
