@@ -91,7 +91,7 @@ contract InstantWithdrawManager is HermezHelpers {
 
         // find the appropiate bucketId
         int256 bucketIdx = _findBucketIdx(amountUSD);
-        if (bucketIdx == -1) return false;
+        if (bucketIdx == -1) return true;
 
         (uint256 ceilUSD, uint256 blockStamp, uint256 withdrawals, uint256 rateBlocks, uint256 rateWithdrawals, uint256 maxWithdrawals) = unpackBucket(buckets[bucketIdx]);
 
@@ -100,12 +100,16 @@ contract InstantWithdrawManager is HermezHelpers {
         uint256 periods = differenceBlocks.div(rateBlocks);
 
         withdrawals = withdrawals.add( periods.mul(rateWithdrawals));
-        if (withdrawals>maxWithdrawals) withdrawals = maxWithdrawals;
+        if (withdrawals>=maxWithdrawals) {
+            withdrawals = maxWithdrawals;
+            blockStamp = block.number;
+        } else {
+            blockStamp = blockStamp.add(periods.mul(rateBlocks));
+        }
 
         if (withdrawals == 0) return false;
 
         withdrawals = withdrawals.sub(1);
-        blockStamp = blockStamp.add(periods.mul(rateBlocks));
 
         buckets[bucketIdx] = packBucket(ceilUSD, blockStamp, withdrawals, rateBlocks, rateWithdrawals, maxWithdrawals);
 
@@ -277,7 +281,10 @@ contract InstantWithdrawManager is HermezHelpers {
      */
     function _findBucketIdx(uint256 amountUSD) internal view returns (int256) {
         for (int256 i = 0; i < int256(nBuckets); i++) {
-            if (amountUSD <= (buckets[i] & 0xFFFFFFFF_FFFFFFFF_FFFFFFFF)) {
+            uint256 ceilUSD = buckets[i] & 0xFFFFFFFF_FFFFFFFF_FFFFFFFF;
+            if ((amountUSD <= ceilUSD) ||
+                (ceilUSD == 0xFFFFFFFF_FFFFFFFF_FFFFFFFF))
+            {
                 return i;
             }
         }
