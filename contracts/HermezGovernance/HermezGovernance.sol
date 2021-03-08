@@ -22,7 +22,7 @@ contract HermezGovernance is AccessControl {
     ) external {
         require(
             address(this) == msg.sender,
-            "HermezGovernance::decentralize ONLY_GOBERNANCE"
+            "HermezGovernance::decentralize ONLY_GOVERNANCE"
         );
         forbidden[role] = true;
     }
