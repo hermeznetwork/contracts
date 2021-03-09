@@ -3,7 +3,8 @@ require("dotenv").config();
 const path = require("path");
 const bre = require("hardhat");
 const { ethers, upgrades } = require("hardhat");
-
+const { getAdminAddress } = require("@openzeppelin/upgrades-core");
+const ProxyAdmin = require("@openzeppelin/upgrades-core/artifacts/ProxyAdmin.json");
 const fs = require("fs");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 
@@ -82,7 +83,10 @@ async function main() {
     "HermezGovernance"
   );
 
-
+  const TimeLock = await ethers.getContractFactory(
+    "Timelock"
+  );
+  
   const Poseidon2Elements = new ethers.ContractFactory(
     poseidonUnit.generateABI(2),
     poseidonUnit.createCode(2),
@@ -331,6 +335,26 @@ async function main() {
 
   console.log("hermez Initialized");
 
+  // Deploy Governance
+
+  let timeLockAddress = deployParameters.timeLockAddress;
+  if (!timeLockAddress) {
+    // deploy Time Lock
+    const hardhatTimeLock = await TimeLock.deploy(hermezGovernanceAddress, deployParameters.timeLockDelay);
+    await hardhatTimeLock.deployed();
+
+    timeLockAddress = hardhatTimeLock.address;
+    console.log("Time Lock Address deployed at: ", timeLockAddress);
+  }
+  else {
+    console.log("Time Lock Address already deployed");
+  }
+  
+  // trnasfer update privileges to TimeLock
+  const AdminFactory = await ethers.getContractFactory(ProxyAdmin.abi, ProxyAdmin.bytecode);
+  const admin = AdminFactory.attach(await getAdminAddress(ethers.provider, hermez.address));
+  await admin.transferOwnership(timeLockAddress);
+
   // in case the mnemonic accounts are used, return the index, otherwise, return null
   const outputJson = {
     hermezAuctionProtocolAddress: hermezAuctionProtocol.address,
@@ -344,6 +368,7 @@ async function main() {
     communitCouncilAddress,
     libVerifiersAddress,
     libverifiersWithdrawAddress,
+    timeLockAddress,
     network: process.env.hardhat_NETWORK
   };
 
