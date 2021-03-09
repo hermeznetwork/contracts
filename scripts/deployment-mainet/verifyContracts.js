@@ -60,6 +60,22 @@ async function main() {
   } catch (error) {
     expect(error.message).to.be.equal("Contract source code already verified");
   }
+
+  try {
+    // verify timeLock
+    await bre.run("verify:verify",
+      {
+        address:deployOutputParameters.timeLockAddress,
+        constructorArguments: [
+          deployOutputParameters.hermezGovernanceAddress,
+          deployParameters.timeLockDelay,
+        ]
+      }
+    );
+  } catch (error) {
+    expect(error.message).to.be.equal("Contract source code already verified");
+  }
+    
   // verify upgradable SC (hermez and Auction)
   for (const property in openzeppelinUpgrade.impls) {
     const address = openzeppelinUpgrade.impls[property].address;
