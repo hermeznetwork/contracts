@@ -2,13 +2,13 @@
 
 pragma solidity 0.6.12;
 
-import "../hermez/lib/InstantWithdrawManager.sol";
-import "../hermez/interfaces/VerifierRollupInterface.sol";
-import "../hermez/interfaces/VerifierWithdrawInterface.sol";
-import "../interfaces/IHermezAuctionProtocol.sol";
+import "../lib/InstantWithdrawManager.sol";
+import "../interfaces/VerifierRollupInterface.sol";
+import "../interfaces/VerifierWithdrawInterface.sol";
+import "../../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract HermezV2 is InstantWithdrawManager {
+contract HermezCircuitUpgrade is InstantWithdrawManager {
     struct VerifierRollup {
         VerifierRollupInterface verifierInterface;
         uint256 maxTx; // maximum rollup transactions in a batch: L2-tx + L1-tx transactions
@@ -140,8 +140,8 @@ contract HermezV2 is InstantWithdrawManager {
     // HEZ token address
     address public tokenHEZ;
 
-    // upgradability test
-    uint256 public version;
+    // // upgradability test only if upgraded V2 before
+    // uint256 public version;
 
     // Event emitted when a L1-user transaction is called and added to the nextL1FillingQueue queue
     event L1UserTxEvent(
@@ -175,6 +175,23 @@ contract HermezV2 is InstantWithdrawManager {
         uint256 feeAddToken,
         uint64 withdrawalDelay
     );
+
+    // Event emitted when the contract is updated to the new version
+    event hermezV2();
+
+    function addVerifier() external {
+        require(rollupVerifiers.length == 2, "Only can be called once");
+        rollupVerifiers.push(
+            VerifierRollup({
+                verifierInterface: VerifierRollupInterface(
+                    address(0x7E4F5c7Ad36b54b7d78f9DAa4E4aA57722917163)
+                ),
+                maxTx: 1964,
+                nLevels: 32
+            })
+        );
+        emit hermezV2();
+    }
 
     /**
      * @dev Initializer function (equivalent to the constructor). Since we use
@@ -1212,14 +1229,5 @@ contract HermezV2 is InstantWithdrawManager {
                 s
             )
         );
-    }
-
-    // upgradability test
-    function setVersion() public {
-        version = 2;
-    }
-
-    function getVersion() external view returns (uint256) {
-        return version;
     }
 }
