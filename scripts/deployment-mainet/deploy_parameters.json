@@ -19,7 +19,7 @@
   "initialWithdrawalDelay": 3600,
   "bootCoordinatorURL": "https://api.internaltestnet.hermez.io",
   "maxTxVerifier": [
-    352, 1960
+    344, 1912
   ],
   "nLevelsVerifer": [
     32, 32

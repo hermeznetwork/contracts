@@ -20,7 +20,7 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512, 352, 1960
+      512, 344, 1912
     ],
     "nLevelsVerifer": [
       32, 32, 32
@@ -52,7 +52,7 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512, 352, 1960
+      512, 344, 1912
     ],
     "nLevelsVerifer": [
       32, 32, 32
@@ -80,7 +80,7 @@
     "initialWithdrawalDelay": 3600,
     "bootCoordinatorURL": "http://localhost:8086",
     "maxTxVerifier": [
-      512, 352, 1960
+      512, 344, 1912
     ],
     "nLevelsVerifer": [
       32, 32, 32
