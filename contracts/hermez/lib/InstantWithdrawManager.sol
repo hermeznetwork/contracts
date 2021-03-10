@@ -13,9 +13,9 @@ contract InstantWithdrawManager is HermezHelpers {
 
 
     // Number of buckets
-    uint256 private constant MAX_BUCKETS = 5;
-    // Bucket array
+    uint256 private constant _MAX_BUCKETS = 5;
 
+    // Bucket array
     uint256 public nBuckets;
     mapping (int256 => uint256) public buckets;
 
@@ -99,7 +99,7 @@ contract InstantWithdrawManager is HermezHelpers {
         uint256 differenceBlocks = block.number.sub(blockStamp);
         uint256 periods = differenceBlocks.div(rateBlocks);
 
-        withdrawals = withdrawals.add( periods.mul(rateWithdrawals));
+        withdrawals = withdrawals.add(periods.mul(rateWithdrawals));
         if (withdrawals>=maxWithdrawals) {
             withdrawals = maxWithdrawals;
             blockStamp = block.number;
@@ -113,6 +113,7 @@ contract InstantWithdrawManager is HermezHelpers {
 
         buckets[bucketIdx] = packBucket(ceilUSD, blockStamp, withdrawals, rateBlocks, rateWithdrawals, maxWithdrawals);
 
+        emit UpdateBucketWithdraw(uint8(bucketIdx), blockStamp, withdrawals);
         return true;
     }
 
@@ -126,7 +127,7 @@ contract InstantWithdrawManager is HermezHelpers {
     ) external onlyGovernance {
         uint256 n = newBuckets.length;
         require(
-            n <= MAX_BUCKETS,
+            n <= _MAX_BUCKETS,
             "InstantWithdrawManager::updateBucketsParameters: MAX_NUM_BUCKETS"
         );
 
@@ -232,7 +233,7 @@ contract InstantWithdrawManager is HermezHelpers {
         uint256 differenceBlocks = block.number.sub(blockStamp);
         uint256 periods = differenceBlocks.div(rateBlocks);
 
-        withdrawals = withdrawals.add( periods.mul(rateWithdrawals));
+        withdrawals = withdrawals.add(periods.mul(rateWithdrawals));
         if (withdrawals>maxWithdrawals) withdrawals = maxWithdrawals;
 
         if (withdrawals == 0) return false;

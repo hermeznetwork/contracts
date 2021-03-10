@@ -16,9 +16,12 @@ const INITIAL_WITHDRAWAL_DELAY = 3600; //seconds
 const maxTxVerifierConstant = 512;
 const nLevelsVeriferConstant = 32;
 const bootCoordinatorURL = "https://boot.coordinator.io";
+const Scalar = require("ffjavascript").Scalar;
 
 const {
   calculateInputMaxTxLevels,
+  packBucket,
+  unpackBucket
 } = require("../hermez/helpers/helpers");
 describe("Hermez Governance", function() {
   let communityCouncil, bootstrapCouncil, emergencyCouncil, hermezKeeper, donation, bootCoordinator, deployer;
@@ -461,22 +464,27 @@ describe("Hermez Governance", function() {
 
       for (let i = 0; i < numBuckets; i++) {
         const ceilUSD = (i + 1) * 1000;
+        const blockStamp = 0; // does not matter!
         const withdrawals = 0;
-        const blockWithdrawalRate = i * 2;
-        const maxWithdrawals = 100000000000;
-        buckets.push([
-          ethers.BigNumber.from(ceilUSD),
-          ethers.BigNumber.from(withdrawals),
-          ethers.BigNumber.from(blockWithdrawalRate),
-          ethers.BigNumber.from(maxWithdrawals),
-        ]);
+        const rateBlocks = (i + 1) * 4;
+        const rateWithdrawals = 3;
+        const maxWithdrawals = 4000000000; // max value 4294967296;
+        buckets.push({
+          ceilUSD,
+          blockStamp,
+          withdrawals,
+          rateBlocks,
+          rateWithdrawals,
+          maxWithdrawals
+        });
       }
+      const bucketsPacked = buckets.map((bucket) => packBucket(bucket));
 
       await expect(
-        hermez.updateBucketsParameters(buckets)
+        hermez.updateBucketsParameters(bucketsPacked)
       ).to.be.revertedWith("InstantWithdrawManager::onlyGovernance: ONLY_GOVERNANCE");
 
-      let data = hermez.interface.encodeFunctionData("updateBucketsParameters", [buckets]);
+      let data = hermez.interface.encodeFunctionData("updateBucketsParameters", [bucketsPacked]);
       await expect(
         hermezGovernance
           .execute(hermez.address, 0, data))
@@ -486,11 +494,15 @@ describe("Hermez Governance", function() {
           .execute(hermez.address, 0, data))
         .to.emit(hermezGovernance, "ExecOk");
       for (let i = 0; i < numBuckets; i++) {
-        let bucket = await hermez.buckets(i);
-        expect(bucket.ceilUSD).to.be.equal(buckets[i][0]);
-        expect(bucket.blockWithdrawalRate).to.be.equal(buckets[i][2]);
-        expect(bucket.maxWithdrawals).to.be.equal(buckets[i][3]);
+        const bucket = await hermez.buckets(i);
+        const unpackedBucket = unpackBucket(bucket._hex);
+        expect(buckets[i].ceilUSD).to.be.equal(ethers.BigNumber.from(unpackedBucket.ceilUSD));
+        expect(buckets[i].withdrawals).to.be.equal(ethers.BigNumber.from(unpackedBucket.withdrawals));
+        expect(buckets[i].rateBlocks).to.be.equal(ethers.BigNumber.from(unpackedBucket.rateBlocks));
+        expect(buckets[i].rateWithdrawals).to.be.equal(ethers.BigNumber.from(unpackedBucket.rateWithdrawals));
+        expect(buckets[i].maxWithdrawals).to.be.equal(ethers.BigNumber.from(unpackedBucket.maxWithdrawals));
       }
+  
     });
     it("should be able to change updateTokenExchange", async function() {
       const addressArray = [hardhatHEZToken.address];
@@ -536,8 +548,6 @@ describe("Hermez Governance", function() {
     });
     it("should be able to change safeMode", async function() {
 
-      const numBuckets = 5;
-      const buckets = [];
       await expect(
         hermez.safeMode()
       ).to.be.revertedWith("InstantWithdrawManager::onlyGovernance: ONLY_GOVERNANCE_ADDRESS");
@@ -556,46 +566,65 @@ describe("Hermez Governance", function() {
         .to.emit(hermezGovernance, "ExecOk");
 
 
-      for (let i = 0; i < numBuckets; i++) {
-        let bucket = await hermez.buckets(i);
-        expect(bucket.ceilUSD).to.be.equal(0);
-        expect(bucket.blockWithdrawalRate).to.be.equal(0);
-        expect(bucket.maxWithdrawals).to.be.equal(0);
-      }
+      const bucketSafe = await hermez.buckets(0);
+      const unpackedBucketSafe = unpackBucket(bucketSafe._hex);
+  
+      expect(await hermez.nBuckets()).to.be.equal(1);
+      expect(unpackedBucketSafe.ceilUSD.toString(16)).to.be.equal("ffffffffffffffffffffffff");
+      expect(unpackedBucketSafe.withdrawals).to.be.equal(Scalar.e(0));
+      expect(unpackedBucketSafe.rateBlocks).to.be.equal(Scalar.e(1));
+      expect(unpackedBucketSafe.rateWithdrawals).to.be.equal(Scalar.e(0));
+      expect(unpackedBucketSafe.maxWithdrawals).to.be.equal(Scalar.e(0));
+
 
       // add buckets
+      const numBuckets = 5;
+      const buckets = [];
       for (let i = 0; i < numBuckets; i++) {
         const ceilUSD = (i + 1) * 1000;
+        const blockStamp = 0; // does not matter!
         const withdrawals = 0;
-        const blockWithdrawalRate = (i + 1) * 2;
-        const maxWithdrawals = 100000000000;
-        buckets.push([
+        const rateBlocks = (i + 1) * 4;
+        const rateWithdrawals = 3;
+        const maxWithdrawals = 4000000000; // max value 4294967296;
+        buckets.push({
           ceilUSD,
+          blockStamp,
           withdrawals,
-          blockWithdrawalRate,
-          maxWithdrawals,
-        ]);
+          rateBlocks,
+          rateWithdrawals,
+          maxWithdrawals
+        });
       }
+      const bucketsPacked = buckets.map((bucket) => packBucket(bucket));
 
-      let dataBuckets = hermez.interface.encodeFunctionData("updateBucketsParameters", [buckets]);
+      let dataBuckets = hermez.interface.encodeFunctionData("updateBucketsParameters", [bucketsPacked]);
       await expect(
         hermezGovernance.connect(bootstrapCouncil)
           .execute(hermez.address, 0, dataBuckets))
         .to.emit(hermezGovernance, "ExecOk");
 
+      for (let i = 0; i < numBuckets; i++) {
+        const bucket = await hermez.buckets(i);
+        const unpackedBucket = unpackBucket(bucket._hex);
+        expect(buckets[i].ceilUSD).to.be.equal(ethers.BigNumber.from(unpackedBucket.ceilUSD));
+        expect(buckets[i].withdrawals).to.be.equal(ethers.BigNumber.from(unpackedBucket.withdrawals));
+        expect(buckets[i].rateBlocks).to.be.equal(ethers.BigNumber.from(unpackedBucket.rateBlocks));
+        expect(buckets[i].rateWithdrawals).to.be.equal(ethers.BigNumber.from(unpackedBucket.rateWithdrawals));
+        expect(buckets[i].maxWithdrawals).to.be.equal(ethers.BigNumber.from(unpackedBucket.maxWithdrawals));
+      }
+        
       await expect(
         hermezGovernance.connect(hermezKeeper)
           .execute(hermez.address, 0, dataEncoded))
         .to.emit(hermezGovernance, "ExecOk");
 
-
-      for (let i = 0; i < numBuckets; i++) {
-        let bucket = await hermez.buckets(i);
-        expect(bucket.ceilUSD).to.be.equal(0);
-        expect(bucket.blockWithdrawalRate).to.be.equal(0);
-        expect(bucket.maxWithdrawals).to.be.equal(0);
-      }
-
+      expect(await hermez.nBuckets()).to.be.equal(1);
+      expect(unpackedBucketSafe.ceilUSD.toString(16)).to.be.equal("ffffffffffffffffffffffff");
+      expect(unpackedBucketSafe.withdrawals).to.be.equal(Scalar.e(0));
+      expect(unpackedBucketSafe.rateBlocks).to.be.equal(Scalar.e(1));
+      expect(unpackedBucketSafe.rateWithdrawals).to.be.equal(Scalar.e(0));
+      expect(unpackedBucketSafe.maxWithdrawals).to.be.equal(Scalar.e(0));
     });
 
     it("should be able to change updateForgeL1L2BatchTimeout", async function() {
