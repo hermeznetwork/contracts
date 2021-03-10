@@ -32,7 +32,7 @@ contract HermezTest is Hermez {
     function findBucketIdxTest(uint256 amountUSD)
         public
         view
-        returns (uint256)
+        returns (int256)
     {
         return _findBucketIdx(amountUSD);
     }
@@ -42,7 +42,7 @@ contract HermezTest is Hermez {
     {
         require(
             _processInstantWithdrawal(tokenAddress, amount),
-            "Hermez::withdrawMerkleProof: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
+            "HermezTest::withdrawMerkleProof: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
         );
     }
 

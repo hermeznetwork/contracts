@@ -1013,6 +1013,90 @@ async function createPermitSignature(hardhatToken, wallet, spenderAddress, value
   };
 }
 
+
+/**
+ * Encode L1 tx data
+ * @param {Object} bucket - bucket object
+ * @returns {String} 32 hexadecimal bits of bucket encoded
+ */
+function packBucket(bucket) {
+  const ceilUSDB = 96;
+  const ceilValue = Scalar.band(bucket.ceilUSD, Scalar.fromString("0xFFFFFFFFFFFFFFFFFFFFFFFF", 16));
+
+  const blockStampB = 32;
+  const blockStampValue = Scalar.band(bucket.blockStamp, Scalar.fromString("0xFFFFFFFF", 16));
+
+  const withdrawalsB = 32;
+  const withdrawalsValue = Scalar.band(bucket.withdrawals, Scalar.fromString("0xFFFFFFFF", 16));
+
+  const rateBlocksB = 32;
+  const rateBlocksValue = Scalar.band(bucket.rateBlocks, Scalar.fromString("0xFFFFFFFF", 16));
+
+  const rateWithdrawalsB = 32; 
+  const rateWithdrawalsValue = Scalar.band(bucket.rateWithdrawals, Scalar.fromString("0xFFFFFFFF", 16));
+
+  const maxWithdrawalsB = 32; 
+  const maxWithdrawalsValue = Scalar.band(bucket.maxWithdrawals, Scalar.fromString("0xFFFFFFFF", 16));
+
+  let res = ceilValue;
+  let shift = ceilUSDB;
+
+  res = Scalar.add(res, Scalar.shl(blockStampValue, shift));
+  shift += blockStampB;
+
+  res = Scalar.add(res, Scalar.shl(withdrawalsValue, shift));
+  shift += withdrawalsB;
+
+  res = Scalar.add(res, Scalar.shl(rateBlocksValue, shift));
+  shift += rateBlocksB;
+
+  res = Scalar.add(res, Scalar.shl(rateWithdrawalsValue, shift));
+  shift += rateWithdrawalsB;
+
+  res = Scalar.add(res, Scalar.shl(maxWithdrawalsValue, shift));
+
+  return utils.padding256(res);
+}
+
+/**
+* unpacl Bucket
+* @param {String} bucketEncoded - 32 hexadecimal bits of bucket encoded
+* @returns {Object} Object representing a Bucket
+*/
+function unpackBucket(encodeBucket) {
+  const bucketScalar = Scalar.fromString(encodeBucket, 16);
+
+  const ceilUSDB = 96;
+  const blockStampB = 32;
+  const withdrawalsB = 32;
+  const rateBlocksB = 32;
+  const rateWithdrawalsB = 32; 
+  const maxWithdrawalsB = 32; 
+
+  let bucket = {};
+  let shift = 0;
+
+  bucket.ceilUSD = utils.extract(bucketScalar, shift, ceilUSDB);
+  shift += ceilUSDB;
+
+  bucket.blockStamp = utils.extract(bucketScalar, shift, blockStampB);
+  shift += blockStampB;
+
+  bucket.withdrawals = utils.extract(bucketScalar, shift, withdrawalsB);
+  shift += withdrawalsB;
+
+  bucket.rateBlocks = utils.extract(bucketScalar, shift, rateBlocksB);
+  shift += rateBlocksB;
+
+  bucket.rateWithdrawals = utils.extract(bucketScalar, shift, rateWithdrawalsB);
+  shift += rateWithdrawalsB;
+
+  bucket.maxWithdrawals = utils.extract(bucketScalar, shift, maxWithdrawalsB);
+
+  return bucket;
+}
+
+
 module.exports = {
   ForgerTest,
   l1UserTxCreateAccountDeposit,
@@ -1026,5 +1110,7 @@ module.exports = {
   AddToken,
   createAccounts,
   calculateInputMaxTxLevels,
-  createPermitSignature
+  createPermitSignature,
+  packBucket,
+  unpackBucket
 };
