@@ -1222,4 +1222,28 @@ contract HermezV2 is InstantWithdrawManager {
     function getVersion() external view returns (uint256) {
         return version;
     }
+
+    // hermez test
+    event ReturnUint256(uint256);
+
+    function calculateInputTest(
+        uint32 newLastIdx,
+        uint256 newStRoot,
+        uint256 newExitRoot,
+        bytes calldata compressedL1CoordinatorTx,
+        bytes calldata l1L2TxsData,
+        bytes calldata feeIdxCoordinator,
+        bool l1Batch,
+        uint8 verifierIdx
+    ) public {
+        emit ReturnUint256(
+            _constructCircuitInput(
+                newLastIdx,
+                newStRoot,
+                newExitRoot,
+                l1Batch,
+                verifierIdx
+            )
+        );
+    }
 }
