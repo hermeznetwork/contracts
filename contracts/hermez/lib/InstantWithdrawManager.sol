@@ -99,8 +99,9 @@ contract InstantWithdrawManager is HermezHelpers {
         uint256 differenceBlocks = block.number.sub(blockStamp);
         uint256 periods = differenceBlocks.div(rateBlocks);
 
+        // add the withdrawals available
         withdrawals = withdrawals.add(periods.mul(rateWithdrawals));
-        if (withdrawals>=maxWithdrawals) {
+        if (withdrawals >= maxWithdrawals) {
             withdrawals = maxWithdrawals;
             blockStamp = block.number;
         } else {
@@ -111,6 +112,7 @@ contract InstantWithdrawManager is HermezHelpers {
 
         withdrawals = withdrawals.sub(1);
 
+        // update the bucket with the new values
         buckets[bucketIdx] = packBucket(ceilUSD, blockStamp, withdrawals, rateBlocks, rateWithdrawals, maxWithdrawals);
 
         emit UpdateBucketWithdraw(uint8(bucketIdx), blockStamp, withdrawals);
@@ -120,7 +122,7 @@ contract InstantWithdrawManager is HermezHelpers {
     /**
      * @dev Update bucket parameters
      * @param newBuckets Array of buckets to replace the current ones, this array includes the
-     * following parameters: [ceilUSD, withdrawals, blockWithdrawalRate, maxWithdrawals]
+     * following parameters: [ceilUSD, withdrawals, rateBlocks, rateWithdrawals, maxWithdrawals]
      */
     function updateBucketsParameters(
         uint256[] memory newBuckets
@@ -195,7 +197,7 @@ contract InstantWithdrawManager is HermezHelpers {
      * also update the 'withdrawalDelay' of the 'withdrawDelayer' contract
      */
     function safeMode() external onlyGovernance {
-        // all buckets to 0
+        // only 1 bucket that does not allow any instant withdraw
         nBuckets = 1;
         buckets[0] = packBucket(
             0xFFFFFFFF_FFFFFFFF_FFFFFFFF,
@@ -278,7 +280,7 @@ contract InstantWithdrawManager is HermezHelpers {
     /**
      * @dev Find the corresponding bucket for the input amount
      * @param amountUSD USD amount
-     * @return Bucket index
+     * @return Bucket index, -1 in case there is no match
      */
     function _findBucketIdx(uint256 amountUSD) internal view returns (int256) {
         for (int256 i = 0; i < int256(nBuckets); i++) {
@@ -292,6 +294,16 @@ contract InstantWithdrawManager is HermezHelpers {
         return -1;
     }
 
+     /**
+     * @dev Unpack a packed uint256 into the bucket parameters
+     * @param bucket Token address
+     * @return ceilUSD max USD value that bucket holds
+     * @return blockStamp block number of the last bucket update
+     * @return withdrawals available withdrawals of the bucket
+     * @return rateBlocks every `rateBlocks` blocks add `rateWithdrawals` withdrawal
+     * @return rateWithdrawals add `rateWithdrawals` every `rateBlocks`
+     * @return maxWithdrawals max withdrawals the bucket can hold
+     */
     function unpackBucket(uint256 bucket) public pure returns(
         uint256 ceilUSD,
         uint256 blockStamp,
@@ -308,6 +320,16 @@ contract InstantWithdrawManager is HermezHelpers {
         maxWithdrawals = (bucket >> 224) & 0xFFFFFFFF;
     }
 
+     /**
+     * @dev Pack all the bucket parameters into a uint256
+     * @param ceilUSD max USD value that bucket holds
+     * @param blockStamp block number of the last bucket update
+     * @param withdrawals available withdrawals of the bucket
+     * @param rateBlocks every `rateBlocks` blocks add `rateWithdrawals` withdrawal
+     * @param rateWithdrawals add `rateWithdrawals` every `rateBlocks`
+     * @param maxWithdrawals max withdrawals the bucket can hold
+     * @return ret all bucket varaibles packed [ceilUSD, blockStamp, withdrawals, rateBlocks, rateWithdrawals, maxWithdrawals]
+     */
     function packBucket(
         uint256 ceilUSD,
         uint256 blockStamp,
@@ -323,7 +345,5 @@ contract InstantWithdrawManager is HermezHelpers {
               (rateWithdrawals << 192) |
               (maxWithdrawals << 224);
     }
-
-
 }
 
