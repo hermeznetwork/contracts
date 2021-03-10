@@ -3,7 +3,8 @@ require("dotenv").config();
 const path = require("path");
 const bre = require("hardhat");
 const { ethers, upgrades } = require("hardhat");
-
+const { getAdminAddress } = require("@openzeppelin/upgrades-core");
+const ProxyAdmin = require("@openzeppelin/upgrades-core/artifacts/ProxyAdmin.json");
 const fs = require("fs");
 const poseidonUnit = require("circomlib/src/poseidon_gencontract");
 
@@ -14,7 +15,6 @@ const {
 
 const maxTxVerifierDefault = [512, 376, 376];
 const nLevelsVeriferDefault = [32, 32, 32];
-const verifierTypeDefault = ["mock","mock", "real"];
 const tokenInitialAmount = ethers.BigNumber.from(
   "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
 );
@@ -24,6 +24,7 @@ const pathDeployParameters = path.join(__dirname, inputDeployFile || "./deploy_p
 const deployParameters = require(pathDeployParameters);
 
 const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
+const atemptsDeployProxy = 10; // await 10 minuts for the deploy transaction to be mined
 
 async function main() {
   // compìle contracts
@@ -82,7 +83,10 @@ async function main() {
     "HermezGovernance"
   );
 
-
+  const TimeLock = await ethers.getContractFactory(
+    "Timelock"
+  );
+  
   const Poseidon2Elements = new ethers.ContractFactory(
     poseidonUnit.generateABI(2),
     poseidonUnit.createCode(2),
@@ -119,14 +123,24 @@ async function main() {
   }
   
   //Deploy auction with proxy
-  const hermezAuctionProtocol = await upgrades.deployProxy(
-    HermezAuctionProtocol,
-    [],
-    {
-      unsafeAllowCustomTypes: true,
-      initializer: undefined,
+  let hermezAuctionProtocol;
+  for (let i = 0; i < atemptsDeployProxy; i++) {
+    try {
+      hermezAuctionProtocol = await upgrades.deployProxy(
+        HermezAuctionProtocol,
+        [],
+        {
+          unsafeAllowCustomTypes: true,
+          initializer: undefined,
+        }
+      );
+      break;
     }
-  );
+    catch (error){
+      console.log(`attempt ${atemptsDeployProxy}`);
+      console.log("upgrades.deployProxy of hermezAuctionProtocol ", error);
+    }
+  }
   await hermezAuctionProtocol.deployed();
   console.log(
     "hermezAuctionProtocol deployed at: ",
@@ -134,13 +148,26 @@ async function main() {
   );
 
   // Deploy hermez
-  const hermez = await upgrades.deployProxy(Hermez, [], {
-    unsafeAllowCustomTypes: true,
-    initializer: undefined,
-  });
+  let hermez;
+  for (let i = 0; i < atemptsDeployProxy; i++) {
+    try {
+      hermez = await upgrades.deployProxy(Hermez, [], {
+        unsafeAllowCustomTypes: true,
+        initializer: undefined,
+      });
+      break;
+    }
+    catch (error){
+      console.log(`attempt ${atemptsDeployProxy}`);
+      console.log("upgrades.deployProxy of Hermez ", error);
+    }
+  }
   await hermez.deployed();
+  console.log(
+    "hermez deployed at: ",
+    hermez.address
+  );
 
-  console.log("hermez deployed at: ", hermez.address);
 
   // Deploy withdrawalDelayer
   const withdrawalDelayer = await WithdrawalDelayer.deploy(
@@ -308,6 +335,26 @@ async function main() {
 
   console.log("hermez Initialized");
 
+  // Deploy Governance
+
+  let timeLockAddress = deployParameters.timeLockAddress;
+  if (!timeLockAddress) {
+    // deploy Time Lock
+    const hardhatTimeLock = await TimeLock.deploy(hermezGovernanceAddress, deployParameters.timeLockDelay);
+    await hardhatTimeLock.deployed();
+
+    timeLockAddress = hardhatTimeLock.address;
+    console.log("Time Lock Address deployed at: ", timeLockAddress);
+  }
+  else {
+    console.log("Time Lock Address already deployed");
+  }
+  
+  // trnasfer update privileges to TimeLock
+  const AdminFactory = await ethers.getContractFactory(ProxyAdmin.abi, ProxyAdmin.bytecode);
+  const admin = AdminFactory.attach(await getAdminAddress(ethers.provider, hermez.address));
+  await admin.transferOwnership(timeLockAddress);
+
   // in case the mnemonic accounts are used, return the index, otherwise, return null
   const outputJson = {
     hermezAuctionProtocolAddress: hermezAuctionProtocol.address,
@@ -321,6 +368,7 @@ async function main() {
     communitCouncilAddress,
     libVerifiersAddress,
     libverifiersWithdrawAddress,
+    timeLockAddress,
     network: process.env.hardhat_NETWORK
   };
 

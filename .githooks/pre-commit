@@ -6,7 +6,7 @@ yarn run compile
 git add -u artifacts/contracts/hermez/Hermez.sol/Hermez.json
 git add -u artifacts/contracts/hermez/lib/InstantWithdrawManager.sol/InstantWithdrawManager.json
 git add -u artifacts/contracts/hermez/lib/HermezHelpers.sol/HermezHelpers.json
-git add -u artifacts/contracts/auction/HermezAuctionProtocol.json
+git add -u artifacts/contracts/auction/HermezAuctionProtocol.sol/HermezAuctionProtocol.json
 git add -u artifacts/contracts/withdrawalDelayer/WithdrawalDelayer.sol/WithdrawalDelayer.json
 
 exit
