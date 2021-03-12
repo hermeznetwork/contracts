@@ -17,6 +17,36 @@ contract HermezHelpersTest is HermezHelpers {
         );
     }
 
+    function testHash2ElementsGas(uint256[2] memory inputs)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 gasFirst = gasleft();
+        _hash2Elements(inputs);
+        return (gasFirst - gasleft());
+    }
+
+    function testHash3ElementsGas(uint256[3] memory inputs)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 gasFirst = gasleft();
+        _hash3Elements(inputs);
+        return (gasFirst - gasleft());
+    }
+
+    function testHash4ElementsGas(uint256[4] memory inputs)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 gasFirst = gasleft();
+        _hash4Elements(inputs);
+        return (gasFirst - gasleft());
+    }
+
     function testHash2Elements(uint256[2] memory inputs)
         public
         view
@@ -55,6 +85,17 @@ contract HermezHelpersTest is HermezHelpers {
         returns (uint256)
     {
         return _hashFinalNode(key, value);
+    }
+
+    function smtVerifierTestGas(
+        uint256 root,
+        uint256[] memory siblings,
+        uint256 key,
+        uint256 value
+    ) public view returns (uint256) {
+        uint256 gasFirst = gasleft();
+        _smtVerifier(root, siblings, key, value);
+        return (gasFirst - gasleft());
     }
 
     function smtVerifierTest(

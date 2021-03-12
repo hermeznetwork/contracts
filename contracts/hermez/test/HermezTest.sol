@@ -8,6 +8,34 @@ contract HermezTest is Hermez {
     event ReturnUint256(uint256);
     event ReturnBytes(bytes);
 
+    function testVerifyWithdraw(
+        uint256[2] calldata proofA,
+        uint256[2][2] calldata proofB,
+        uint256[2] calldata proofC,
+        uint256[1] calldata input
+    ) public view returns (uint256) {
+        uint256 gasFirst = gasleft();
+        withdrawVerifier.verifyProof(proofA, proofB, proofC, input);
+        uint256 gasLast = gasFirst - gasleft();
+        return gasLast;
+    }
+
+    function testVerifyHermez344(
+        uint256[2] calldata proofA,
+        uint256[2][2] calldata proofB,
+        uint256[2] calldata proofC,
+        uint256[1] calldata input
+    ) public view returns (uint256) {
+        uint256 gasFirst = gasleft();
+        rollupVerifiers[0].verifierInterface.verifyProof(
+            proofA,
+            proofB,
+            proofC,
+            input
+        );
+        return (gasFirst - gasleft());
+    }
+
     function setLastIdx(uint48 newLastIdx) public {
         lastIdx = newLastIdx;
     }
@@ -29,11 +57,7 @@ contract HermezTest is Hermez {
         return _token2USD(tokenAddress, amount);
     }
 
-    function findBucketIdxTest(uint256 amountUSD)
-        public
-        view
-        returns (int256)
-    {
+    function findBucketIdxTest(uint256 amountUSD) public view returns (int256) {
         return _findBucketIdx(amountUSD);
     }
 

@@ -19,7 +19,7 @@ describe("Hermez Helpers", function () {
   this.timeout(0);
   before(async function () {
     let ProverContract = await ethers.getContractFactory(
-      "Verifier"
+      "Verifier344"
     );
     hardhatProverContract = await ProverContract.deploy();
 
@@ -27,37 +27,9 @@ describe("Hermez Helpers", function () {
   });
 
   describe("utility helpers", function () {
-    it("verify proof precalculated", async function () {
-      const proofA = ["12823142741947462018376637068611061184530582773186663424558261242088932958650",
-        "15510239331731659263324114188636716065802904878544094401484954593592807049671"
-      ];
-      const proofB = [
-        [
-          "4371287187348687214940133605217733703004883222445181026251086972719957113140",
-          "638637090244761631320234407798004725080627654045822348011813051565608453553"
-        ],
-        [
-          "18997382790062900837772601169152115987807912448818596344809193940214862573620",
-          "8789312473863924963986961093085972083579326466071861905150970567781475516666"
-        ]
-      ];
-      const proofC =  ["15066023575175611296256118607366459860389282373417919892396785242139851111235",
-        "20614173163416102479367448539231727763415631163149570165039228652167811930586"
-      ];
-      const input = ["13125286639093380931878518383173032474507961807467565131003538765912150608017"];
-
-      expect(
-        await hardhatProverContract.verifyProof(
-          proofA,
-          proofB,
-          proofC,
-          input,
-        )
-      ).to.equal(true);
-    });
 
     it("verify proof server proof", async function () {
-      const maxTx = 376;
+      const maxTx = 344;
       const nLevels = 32;
       const maxL1Tx = 256;
       const nFeeTx = 64;
@@ -74,11 +46,11 @@ describe("Hermez Helpers", function () {
 
 
       const inputJson = stringifyBigInts(bb.getInput());
-      await axios.post("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/input", inputJson);
+      await axios.post("http://10.48.11.192:9080/input", inputJson);
 
       let response;
       do {
-        response = await axios.get("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/status");
+        response = await axios.get("http://10.48.11.192:9080/status");
         await sleep(1000);
       } while (response.data.status == "busy");
 
@@ -108,6 +80,15 @@ describe("Hermez Helpers", function () {
           input,
         )
       ).to.equal(true);
+
+            
+      const gas = await hardhatProverContract.estimateGas.verifyProof(
+        proofA,
+        proofB,
+        proofC,
+        input,
+      );
+      console.log({gas: gas.toNumber()});
     });
   });
 });
