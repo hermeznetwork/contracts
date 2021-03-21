@@ -25,8 +25,10 @@ const deployParameters = require(pathDeployParameters);
 
 const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 const atemptsDeployProxy = 10; // await 10 minuts for the deploy transaction to be mined
+const atemptsInfuraEvent = 15; // await 15 seg total for the event synch in infura
 
 async function main() {
+  console.log("using parameters in: ", pathDeployParameters)
   // compìle contracts
   await bre.run("compile");
 
@@ -106,10 +108,98 @@ async function main() {
   );
 
   // Deploy smart contacts:
-  // Deploy Governance
 
+  // Load or deploy libs
+
+  // HEZ token
+  let hardhatHEZToken;
+  let HEZTokenAddress =
+    deployParameters.HEZTokenAddress;
+  if (!HEZTokenAddress) {
+    // deploy HEZ (erc20Permit) token
+    hardhatHEZToken = await HEZToken.deploy(
+      "HEZ token",
+      "HEZ",
+      await deployer.getAddress(),
+      tokenInitialAmount
+    );
+    await hardhatHEZToken.deployed();
+
+    HEZTokenAddress = hardhatHEZToken.address;
+    console.log("HEZToken deployed at: ", HEZTokenAddress);
+  }
+  else {
+    console.log("HEZ already deployed");
+  }
+
+  // Poseidon libs
+  let libposeidonsAddress = deployParameters.libposeidonsAddress;
+  if (!libposeidonsAddress || libposeidonsAddress.length != 3) {
+    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
+    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
+    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
+    await hardhatPoseidon2Elements.deployed();
+    await hardhatPoseidon3Elements.deployed();
+    await hardhatPoseidon4Elements.deployed();
+
+    libposeidonsAddress = [
+      hardhatPoseidon2Elements.address,
+      hardhatPoseidon3Elements.address,
+      hardhatPoseidon4Elements.address,
+    ];
+    console.log("deployed poseidon libs");
+    console.log("poseidon 2 elements at: ", hardhatPoseidon2Elements.address);
+    console.log("poseidon 3 elements at: ", hardhatPoseidon3Elements.address);
+    console.log("poseidon 4 elements at: ", hardhatPoseidon4Elements.address);
+  } else {
+    console.log("posidon libs already depoloyed");
+  }
+
+  // maxTx and nLevelsVerifer must have the same number of elements as verifiers
+  let maxTxVerifier = deployParameters.maxTxVerifier || maxTxVerifierDefault;
+  let nLevelsVerifer = deployParameters.nLevelsVerifer || nLevelsVeriferDefault;
+
+  // verifiers rollup libs
+  let libVerifiersAddress = deployParameters.libVerifiersAddress;
+
+  // assert maxTx Nlevels and libVerifiersAddress match
+  expect(maxTxVerifier.length).to.be.equal(nLevelsVerifer.length);
+  if (libVerifiersAddress && libVerifiersAddress.length != 0) { 
+    expect(maxTxVerifier.length).to.be.equal(libVerifiersAddress.length);
+  }
+
+  if (!libVerifiersAddress || libVerifiersAddress.length == 0) {
+    libVerifiersAddress = [];
+    console.log("deployed verifiers libs");
+    for (let i = 0; i < maxTxVerifier.length; i++) {
+      const VerifierRollupReal = await ethers.getContractFactory(
+        `Verifier${maxTxVerifier[i]}`
+      );
+      const hardhatVerifierRollupReal = await VerifierRollupReal.deploy();
+      await hardhatVerifierRollupReal.deployed();
+      libVerifiersAddress.push(hardhatVerifierRollupReal.address);
+      console.log("verifiers Real deployed at: ", hardhatVerifierRollupReal.address);
+    }
+  } else {
+    console.log("verifier libs already depoloyed");
+  }
+
+  // Verifier withdraw lib
+  let libverifiersWithdrawAddress =
+    deployParameters.libVerifiersWithdrawAddress;
+  if (!libverifiersWithdrawAddress) {
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    await hardhatVerifierWithdrawHelper.deployed();
+    libverifiersWithdrawAddress = hardhatVerifierWithdrawHelper.address;
+    console.log("deployed withdraw verifiers libs");
+    console.log("withdraw verifiers deployed at: ", libverifiersWithdrawAddress);
+  } else {
+    console.log("withdraw verifier libs already depoloyed");
+  }
+
+  // Deploy Governance
   let hermezGovernanceAddress =
-    deployParameters.hermezGovernanceAddress;
+  deployParameters.hermezGovernanceAddress;
   if (!hermezGovernanceAddress) {
     // deploy Hermez Governance
     const hardhatHermezGovernance = await HermezGovernance.deploy(communitCouncilAddress);
@@ -122,7 +212,7 @@ async function main() {
     console.log("Hermez Governance Address already deployed");
   }
   
-  //Deploy auction with proxy
+  // Deploy auction with proxy
   let hermezAuctionProtocol;
   for (let i = 0; i < atemptsDeployProxy; i++) {
     try {
@@ -168,7 +258,6 @@ async function main() {
     hermez.address
   );
 
-
   // Deploy withdrawalDelayer
   const withdrawalDelayer = await WithdrawalDelayer.deploy(
     deployParameters.initialWithdrawalDelay,
@@ -179,100 +268,22 @@ async function main() {
   await withdrawalDelayer.deployed();
 
   const filterInitialize = withdrawalDelayer.filters.InitializeWithdrawalDelayerEvent(null, null, null);
-  const eventsInitialize = await withdrawalDelayer.queryFilter(filterInitialize, 0, "latest");
-  expect(eventsInitialize[0].args.initialWithdrawalDelay).to.be.equal(deployParameters.initialWithdrawalDelay);
-  expect(eventsInitialize[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
-  expect(eventsInitialize[0].args.initialEmergencyCouncil).to.be.equal(emergencyCouncilAddress);
-
+  for (let i = 0; i < atemptsInfuraEvent; i++) {
+    const eventsInitialize = await withdrawalDelayer.queryFilter(filterInitialize, 0, "latest");
+    if(eventsInitialize[0] != undefined) {
+      expect(eventsInitialize[0].args.initialWithdrawalDelay).to.be.equal(deployParameters.initialWithdrawalDelay);
+      expect(eventsInitialize[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
+      expect(eventsInitialize[0].args.initialEmergencyCouncil).to.be.equal(emergencyCouncilAddress);
+      break;
+    } else {
+      await sleep(1000);
+      if (i == atemptsInfuraEvent - 1) {
+        throw new Error("Withdrawal delayer initialize failed")
+      }
+    }
+  }
   console.log("withdrawalDelayer deployed at: ", withdrawalDelayer.address);
 
-  let hardhatHEZToken;
-  let HEZTokenAddress =
-    deployParameters.HEZTokenAddress;
-  if (!HEZTokenAddress) {
-    // deploy HEZ (erc20Permit) token
-    hardhatHEZToken = await HEZToken.deploy(
-      "HEZ token",
-      "HEZ",
-      await deployer.getAddress(),
-      tokenInitialAmount
-    );
-    await hardhatHEZToken.deployed();
-
-    HEZTokenAddress = hardhatHEZToken.address;
-    console.log("HEZToken deployed at: ", HEZTokenAddress);
-  }
-  else {
-    console.log("HEZ already deployed");
-  }
-  // load or deploy libs
-
-  // poseidon libs
-  let libposeidonsAddress = deployParameters.libposeidonsAddress;
-  if (!libposeidonsAddress || libposeidonsAddress.length != 3) {
-    const hardhatPoseidon2Elements = await Poseidon2Elements.deploy();
-    const hardhatPoseidon3Elements = await Poseidon3Elements.deploy();
-    const hardhatPoseidon4Elements = await Poseidon4Elements.deploy();
-    await hardhatPoseidon2Elements.deployed();
-    await hardhatPoseidon3Elements.deployed();
-    await hardhatPoseidon4Elements.deployed();
-
-    libposeidonsAddress = [
-      hardhatPoseidon2Elements.address,
-      hardhatPoseidon3Elements.address,
-      hardhatPoseidon4Elements.address,
-    ];
-    console.log("deployed poseidon libs");
-    console.log("poseidon 2 elements at: ", hardhatPoseidon2Elements.address);
-    console.log("poseidon 3 elements at: ", hardhatPoseidon3Elements.address);
-    console.log("poseidon 4 elements at: ", hardhatPoseidon4Elements.address);
-  } else {
-    console.log("posidon libs already depoloyed");
-  }
-
-
-  // maxTx and nLevelsVerifer must have the same number of elements as verifiers
-  let maxTxVerifier = deployParameters.maxTxVerifier || maxTxVerifierDefault;
-  let nLevelsVerifer = deployParameters.nLevelsVerifer || nLevelsVeriferDefault;
-
-  // verifiers rollup libs
-  let libVerifiersAddress = deployParameters.libVerifiersAddress;
-
-  // assert maxTx Nlevels and libVerifiersAddress match
-  expect(maxTxVerifier.length).to.be.equal(nLevelsVerifer.length);
-  if (libVerifiersAddress && libVerifiersAddress.length != 0) { 
-    expect(maxTxVerifier.length).to.be.equal(libVerifiersAddress.length);
-  }
-
-  if (!libVerifiersAddress || libVerifiersAddress.length == 0) {
-    libVerifiersAddress = [];
-    console.log("deployed verifiers libs");
-    for (let i = 0; i < maxTxVerifier.length; i++) {
-      const VerifierRollupReal = await ethers.getContractFactory(
-        `Verifier${maxTxVerifier[i]}`
-      );
-      const hardhatVerifierRollupReal = await VerifierRollupReal.deploy();
-      await hardhatVerifierRollupReal.deployed();
-      libVerifiersAddress.push(hardhatVerifierRollupReal.address);
-      console.log("verifiers Real deployed at: ", hardhatVerifierRollupReal.address);
-    }
-  } else {
-    console.log("verifier libs already depoloyed");
-  }
-
-
-  // verifier withdraw lib
-  let libverifiersWithdrawAddress =
-    deployParameters.libVerifiersWithdrawAddress;
-  if (!libverifiersWithdrawAddress) {
-    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
-    await hardhatVerifierWithdrawHelper.deployed();
-    libverifiersWithdrawAddress = hardhatVerifierWithdrawHelper.address;
-    console.log("deployed withdraw verifiers libs");
-    console.log("withdraw verifiers deployed at: ", libverifiersWithdrawAddress);
-  } else {
-    console.log("withdraw verifier libs already depoloyed");
-  }
 
   // initialize upgradable smart contracts
 
@@ -335,7 +346,7 @@ async function main() {
 
   console.log("hermez Initialized");
 
-  // Deploy Governance
+  // Deploy Time Lock
 
   let timeLockAddress = deployParameters.timeLockAddress;
   if (!timeLockAddress) {
@@ -350,12 +361,11 @@ async function main() {
     console.log("Time Lock Address already deployed");
   }
   
-  // trnasfer update privileges to TimeLock
+  // transfer update privileges to TimeLock
   const AdminFactory = await ethers.getContractFactory(ProxyAdmin.abi, ProxyAdmin.bytecode);
   const admin = AdminFactory.attach(await getAdminAddress(ethers.provider, hermez.address));
   await admin.transferOwnership(timeLockAddress);
 
-  // in case the mnemonic accounts are used, return the index, otherwise, return null
   const outputJson = {
     hermezAuctionProtocolAddress: hermezAuctionProtocol.address,
     hermezAddress: hermez.address,
@@ -380,3 +390,9 @@ main()
     console.error(error);
     process.exit(1);
   });
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}

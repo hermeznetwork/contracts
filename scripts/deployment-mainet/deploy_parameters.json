@@ -1,9 +1,8 @@
 {
-  "libVerifiersAddress": ["0xB109363EF277B6637F3fD1b4F5Ff4e6378333518",
-    "0x6AC60A5acd03A38E99f4788B99b153Da7ea74748"],
+  "libVerifiersAddress": [],
   "libposeidonsAddress": [],
   "hermezGovernanceAddress": "",
-  "libVerifiersWithdrawAddress": "0x3Ad064b60f96103AA3950509DE7BEF88Cba9C25b",
+  "libVerifiersWithdrawAddress": "",
   "communitCouncilAddress": "0x60422e5d05748Eac412479AcAd9A02C2503A9705",
   "emergencyCouncilAddress": "0x040799535f0359ac3175E2F61A0F30d9cBe85044",
   "donationAddress": "0x51a2f0Dc3Bb99986fFf569d28E524A55Ee2c372F",
@@ -11,13 +10,13 @@
   "HEZTokenAddress":"0x55a1Db90A5753e6Ff50FD018d7E648d58A081486",
   "timeLockAddress":"",
   "timeLockDelay":172800,
-  "genesisBlock": "",
-  "genesisBlockOffsetCurrent": 10,
+  "genesisBlock": 4482584,
+  "genesisBlockOffsetCurrent": "",
   "feeAddToken": "200000000000000000000000000",
   "forgeL1L2BatchTimeout": 16,
   "withdrawalDelayHermez": 259200,
   "initialWithdrawalDelay": 3600,
-  "bootCoordinatorURL": "https://api.internaltestnet.hermez.io",
+  "bootCoordinatorURL": "https://api.mainnet.hermez.io",
   "maxTxVerifier": [
     344, 1912
   ],
