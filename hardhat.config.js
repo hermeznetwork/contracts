@@ -28,7 +28,7 @@ module.exports = {
         initialIndex: 0,
         count: 20,
       },
-      gasPrice: 4000000000 //4 gwei
+      gasPrice: 140000000000 // 140 gwei
     },
     localhostMnemonic: {
       url: "http://127.0.0.1:8545",

@@ -44,7 +44,7 @@ contract HermezAuctionProtocol is
     // Blocks per slot
     uint8 public constant BLOCKS_PER_SLOT = 40;
     // Minimum bid when no one has bid yet
-    uint128 public constant INITIAL_MINIMAL_BIDDING = 10 * (1e18);
+    uint128 public constant INITIAL_MINIMAL_BIDDING = 1000000 * (1e18);
 
     // Hermez Network Token with which the bids will be made
     IHEZToken public tokenHEZ;
