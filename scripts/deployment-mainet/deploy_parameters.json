@@ -7,20 +7,22 @@
   "emergencyCouncilAddress": "0x040799535f0359ac3175E2F61A0F30d9cBe85044",
   "donationAddress": "0x51a2f0Dc3Bb99986fFf569d28E524A55Ee2c372F",
   "bootCoordinatorAddress": "0x459264cc7d2bF350AFDDa828C273E81367729c1f",
-  "HEZTokenAddress":"0x55a1Db90A5753e6Ff50FD018d7E648d58A081486",
-  "timeLockAddress":"",
-  "timeLockDelay":172800,
+  "HEZTokenAddress": "0x55a1Db90A5753e6Ff50FD018d7E648d58A081486",
+  "timeLockAddress": "",
+  "timeLockDelay": 172800,
   "genesisBlock": 4482584,
   "genesisBlockOffsetCurrent": "",
-  "feeAddToken": "200000000000000000000000000",
+  "feeAddToken": "200000000 000000000000000000",
   "forgeL1L2BatchTimeout": 16,
   "withdrawalDelayHermez": 259200,
   "initialWithdrawalDelay": 3600,
   "bootCoordinatorURL": "https://api.mainnet.hermez.io",
   "maxTxVerifier": [
-    344, 1912
+    344,
+    1912
   ],
   "nLevelsVerifer": [
-    32, 32
+    32,
+    32
   ]
 }
