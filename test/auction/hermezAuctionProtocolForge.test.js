@@ -118,6 +118,12 @@ describe("Auction Protocol", function() {
       bootCoordinatorAddress,
       bootCoordinatorURL
     );
+
+    for( let i = 0; i < 6; i++) {
+      await hardhatHermezAuctionProtocol
+        .connect(governance)
+        .changeDefaultSlotSetBid(i, ethers.utils.parseEther("10"));
+    }
   });
 
   describe("Forge process", function() {

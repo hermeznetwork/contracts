@@ -144,6 +144,14 @@ describe("Consensus Protocol Bidding", function() {
         await erc2612Wallet.getAddress(),
         ethers.utils.parseEther("100000")
       );
+
+
+    for( let i = 0; i < 6; i++) {
+      await hardhatHermezAuctionProtocol
+        .connect(governance)
+        .changeDefaultSlotSetBid(i, ethers.utils.parseEther("10"));
+    }
+
   });
 
   describe("Call bid", function() {

@@ -126,6 +126,12 @@ describe("Auction Protocol", function() {
       bootCoordinator,
       bootCoordinatorURL
     );
+
+    for( let i = 0; i < 6; i++) {
+      await hardhatHermezAuctionProtocol
+        .connect(governance)
+        .changeDefaultSlotSetBid(i, ethers.utils.parseEther("10"));
+    }
   });
 
   it("shouldn't be able to initialize twice", async function() {
