@@ -20,6 +20,16 @@ module.exports = {
       blockGasLimit: 12500000,
       allowUnlimitedContractSize: true,
     },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+      accounts: {
+        mnemonic: process.env.MNEMONIC || DEFAULT_MNEMONIC,
+        path: "m/44'/60'/0'/0",
+        initialIndex: 0,
+        count: 20,
+      },
+      gasPrice: 4000000000 //4 gwei
+    },
     localhostMnemonic: {
       url: "http://127.0.0.1:8545",
       accounts: {
@@ -63,6 +73,7 @@ module.exports = {
         initialIndex: 0,
         count: 20,
       },
+      gasPrice: 4000000000 //4 gwei
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,

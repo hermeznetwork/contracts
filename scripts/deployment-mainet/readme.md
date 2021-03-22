@@ -11,7 +11,14 @@ In repository root:
      - rinkeby
      - goerli
      - ropsten
-6. `node deploy.js`
+     - mainnet
+6. In root directory erase `cache/artifacts`
+7. In `scripts/deployment-mainet` delete .openzeppelin file
+8. npx hardhat compile
+9. Update `GasPrice` parameter of mainnet network
+10. `node deploy.js`
+11. node verifyContracts
+12. node verifyParameters
 
 # Guide:
 
