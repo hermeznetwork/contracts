@@ -261,15 +261,18 @@ contract InstantWithdrawManager is HermezHelpers {
             uint256(tokenExchange[tokenAddress])) / _EXCHANGE_MULTIPLIER;
 
         uint8 decimals;
-
-        // if decimals() is not implemented 0 decimals are assumed
-        (bool success, bytes memory data) = tokenAddress.staticcall(
-            abi.encodeWithSelector(_ERC20_DECIMALS)
-        );
-        if (success) {
-            decimals = abi.decode(data, (uint8));
+        // in case of ether, set 18 decimals
+        if (tokenAddress == address(0)) {
+            decimals = 18;
+        } else {
+            // if decimals() is not implemented 0 decimals are assumed
+            (bool success, bytes memory data) = tokenAddress.staticcall(
+                abi.encodeWithSelector(_ERC20_DECIMALS)
+            );
+            if (success) {
+                decimals = abi.decode(data, (uint8));
+            }
         }
-
         require(
             decimals < 77,
             "InstantWithdrawManager::_token2USD: TOKEN_DECIMALS_OVERFLOW"

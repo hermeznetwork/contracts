@@ -156,7 +156,44 @@ describe("Hermez instant withdraw manager", function () {
   });
 
   describe("Instant withdraw functionality", function () {
+    it("test token/eth to usd", async function () {
+      const tokenAddress = hardhatTokenERC20Mock.address;
+      const ethereumAddress = "0x0000000000000000000000000000000000000000"
+      const tokenPriceERC20 = 10 * _EXCHANGE_MULTIPLIER; //USD
+      const ethereumPrice = 1800 * _EXCHANGE_MULTIPLIER; //USD
 
+      const addressArray = [tokenAddress, ethereumAddress];
+      const valueArray = [tokenPriceERC20, ethereumPrice];
+
+      await expect(hardhatHermez
+        .connect(governance)
+        .updateTokenExchange(addressArray, valueArray))
+        .to.emit(hardhatHermez, "UpdateTokenExchange")
+        .withArgs(addressArray, valueArray);
+
+      expect(
+        await hardhatHermez.tokenExchange(tokenAddress)
+      ).to.equal(valueArray[0]);
+
+      expect(
+        await hardhatHermez.tokenExchange(ethereumAddress)
+      ).to.equal(valueArray[1]);
+
+      const tokenAmount = 2; 
+      const tokenAmountDecimals = ethers.utils.parseEther(
+        tokenAmount.toString()
+      ); // 18 decimals
+
+      const resultUSDToken = tokenPriceERC20 / _EXCHANGE_MULTIPLIER * tokenAmount;
+      const resultUSDEthereum = ethereumPrice / _EXCHANGE_MULTIPLIER * tokenAmount;
+      expect(
+        await hardhatHermez.token2USDTest(tokenAddress, tokenAmountDecimals)
+      ).to.equal(resultUSDToken);
+      expect(
+        await hardhatHermez.token2USDTest(ethereumAddress, tokenAmountDecimals)
+      ).to.equal(resultUSDEthereum);
+    });
+    
     it("test Helpers pack/unpack function matches SC", async function () {
       const numBuckets = 5;
       const buckets = [];
