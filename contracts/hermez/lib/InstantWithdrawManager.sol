@@ -7,22 +7,17 @@ import "./HermezHelpers.sol";
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
+
 contract InstantWithdrawManager is HermezHelpers {
     using SafeMath for uint256;
 
-    // every time a withdraw is performed, a withdrawal is wasted
-    struct Bucket {
-        uint256 ceilUSD; // max USD value
-        uint256 blockStamp; // last time a withdrawal was added ( or removed if the bucket was full)
-        uint256 withdrawals; // available withdrawals of the bucket
-        uint256 blockWithdrawalRate; // every `blockWithdrawalRate` blocks add 1 withdrawal
-        uint256 maxWithdrawals; // max withdrawals the bucket can hold
-    }
 
     // Number of buckets
-    uint256 private constant _NUM_BUCKETS = 5;
+    uint256 private constant _MAX_BUCKETS = 5;
+
     // Bucket array
-    Bucket[_NUM_BUCKETS] public buckets;
+    uint256 public nBuckets;
+    mapping (int256 => uint256) public buckets;
 
     // Governance address
     address public hermezGovernanceAddress;
@@ -41,13 +36,13 @@ contract InstantWithdrawManager is HermezHelpers {
 
     // Mapping tokenAddress --> (USD value)/token , default 0, means that token does not worth
     // 2^64 = 1.8446744e+19
-    // fixed point codification is used, 5 digits for integer part, 14 digits for decimal
-    // In other words, the USD value of a token base unit is multiplied by 1e14
-    // MaxUSD value for a base unit token: 184467$
-    // MinUSD value for a base unit token: 1e-14$
+    // fixed point codification is used, 9 digits for integer part, 10 digits for decimal
+    // In other words, the USD value of a token base unit is multiplied by 1e10
+    // MaxUSD value for a base unit token: 1844674407,3709551616$
+    // MinUSD value for a base unit token: 1e-10$
     mapping(address => uint64) public tokenExchange;
 
-    uint256 private constant _EXCHANGE_MULTIPLIER = 1e14;
+    uint256 private constant _EXCHANGE_MULTIPLIER = 1e10;
 
     event UpdateBucketWithdraw(
         uint8 indexed numBucket,
@@ -56,7 +51,7 @@ contract InstantWithdrawManager is HermezHelpers {
     );
 
     event UpdateWithdrawalDelay(uint64 newWithdrawalDelay);
-    event UpdateBucketsParameters(uint256[4][_NUM_BUCKETS] arrayBuckets);
+    event UpdateBucketsParameters(uint256[] arrayBuckets);
     event UpdateTokenExchange(address[] addressArray, uint64[] valueArray);
     event SafeMode();
 
@@ -95,92 +90,70 @@ contract InstantWithdrawManager is HermezHelpers {
         }
 
         // find the appropiate bucketId
-        uint256 bucketIdx = _findBucketIdx(amountUSD);
-        Bucket storage currentBucket = buckets[bucketIdx];
+        int256 bucketIdx = _findBucketIdx(amountUSD);
+        if (bucketIdx == -1) return true;
+
+        (uint256 ceilUSD, uint256 blockStamp, uint256 withdrawals, uint256 rateBlocks, uint256 rateWithdrawals, uint256 maxWithdrawals) = unpackBucket(buckets[bucketIdx]);
 
         // update the bucket and check again if are withdrawals available
-        uint256 differenceBlocks = block.number.sub(currentBucket.blockStamp);
+        uint256 differenceBlocks = block.number.sub(blockStamp);
+        uint256 periods = differenceBlocks.div(rateBlocks);
 
-        // check if some withdrawal can be added
-        if ((differenceBlocks < currentBucket.blockWithdrawalRate)) {
-            if (currentBucket.withdrawals > 0) {
-                // can't add any wihtdrawal, retrieve the current withdrawal
-                if (currentBucket.withdrawals == currentBucket.maxWithdrawals) {
-                    // if the bucket was full set the blockStamp to the current block number
-                    currentBucket.blockStamp = block.number;
-                }
-                currentBucket.withdrawals--;
-                emit UpdateBucketWithdraw(
-                    uint8(bucketIdx),
-                    currentBucket.blockStamp,
-                    currentBucket.withdrawals
-                );
-                return true;
-            }
-            // the bucket still empty, instant withdrawal can't be performed
-            return false;
+        // add the withdrawals available
+        withdrawals = withdrawals.add(periods.mul(rateWithdrawals));
+        if (withdrawals >= maxWithdrawals) {
+            withdrawals = maxWithdrawals;
+            blockStamp = block.number;
         } else {
-            // add withdrawals
-            uint256 addWithdrawals = differenceBlocks.div(
-                currentBucket.blockWithdrawalRate
-            );
-
-            if (
-                currentBucket.withdrawals.add(addWithdrawals) >=
-                currentBucket.maxWithdrawals
-            ) {
-                // if the bucket is full, set to maxWithdrawals, and retrieve the current withdrawal
-                // set the blockStamp to the current block number
-                currentBucket.withdrawals = currentBucket.maxWithdrawals.sub(1);
-                currentBucket.blockStamp = block.number;
-            } else {
-                // if the bucket is not filled, add the withdrawals minus the current one and update the blockstamp
-                // blockstamp increments with a multiple of blockWithdrawalRate nearest and smaller than differenceBlocks
-                // addWithdrawals is that multiple because solidity divisions always round to floor
-                // this expression, can be reduced into currentBucket.blockStamp = block.number only if addWithdrawals is a multiple of blockWithdrawalRate
-                currentBucket.withdrawals =
-                    currentBucket.withdrawals +
-                    addWithdrawals -
-                    1;
-                currentBucket.blockStamp = currentBucket.blockStamp.add(
-                    (addWithdrawals.mul(currentBucket.blockWithdrawalRate))
-                );
-            }
-            emit UpdateBucketWithdraw(
-                uint8(bucketIdx),
-                currentBucket.blockStamp,
-                currentBucket.withdrawals
-            );
-            return true;
+            blockStamp = blockStamp.add(periods.mul(rateBlocks));
         }
+
+        if (withdrawals == 0) return false;
+
+        withdrawals = withdrawals.sub(1);
+
+        // update the bucket with the new values
+        buckets[bucketIdx] = packBucket(ceilUSD, blockStamp, withdrawals, rateBlocks, rateWithdrawals, maxWithdrawals);
+
+        emit UpdateBucketWithdraw(uint8(bucketIdx), blockStamp, withdrawals);
+        return true;
     }
 
     /**
      * @dev Update bucket parameters
-     * @param arrayBuckets Array of buckets to replace the current ones, this array includes the
-     * following parameters: [ceilUSD, withdrawals, blockWithdrawalRate, maxWithdrawals]
+     * @param newBuckets Array of buckets to replace the current ones, this array includes the
+     * following parameters: [ceilUSD, withdrawals, rateBlocks, rateWithdrawals, maxWithdrawals]
      */
     function updateBucketsParameters(
-        uint256[4][_NUM_BUCKETS] memory arrayBuckets
+        uint256[] memory newBuckets
     ) external onlyGovernance {
-        for (uint256 i = 0; i < _NUM_BUCKETS; i++) {
-            uint256 ceilUSD = arrayBuckets[i][0];
-            uint256 withdrawals = arrayBuckets[i][1];
-            uint256 blockWithdrawalRate = arrayBuckets[i][2];
-            uint256 maxWithdrawals = arrayBuckets[i][3];
+        uint256 n = newBuckets.length;
+        require(
+            n <= _MAX_BUCKETS,
+            "InstantWithdrawManager::updateBucketsParameters: MAX_NUM_BUCKETS"
+        );
+
+        nBuckets = n;
+        for (uint256 i = 0; i < n; i++) {
+            (uint256 ceilUSD, , uint256 withdrawals, uint256 rateBlocks, uint256 rateWithdrawals, uint256 maxWithdrawals) = unpackBucket(newBuckets[i]);
             require(
                 withdrawals <= maxWithdrawals,
                 "InstantWithdrawManager::updateBucketsParameters: WITHDRAWALS_MUST_BE_LESS_THAN_MAXWITHDRAWALS"
             );
-            buckets[i] = Bucket(
+            require(
+                rateBlocks > 0,
+                "InstantWithdrawManager::updateBucketsParameters: RATE_BLOCKS_MUST_BE_MORE_THAN_0"
+            );
+            buckets[int256(i)] = packBucket(
                 ceilUSD,
                 block.number,
                 withdrawals,
-                blockWithdrawalRate,
+                rateBlocks,
+                rateWithdrawals,
                 maxWithdrawals
             );
         }
-        emit UpdateBucketsParameters(arrayBuckets);
+        emit UpdateBucketsParameters(newBuckets);
     }
 
     /**
@@ -224,10 +197,16 @@ contract InstantWithdrawManager is HermezHelpers {
      * also update the 'withdrawalDelay' of the 'withdrawDelayer' contract
      */
     function safeMode() external onlyGovernance {
-        // all buckets to 0
-        for (uint256 i = 0; i < _NUM_BUCKETS; i++) {
-            buckets[i] = Bucket(0, 0, 0, 0, 0);
-        }
+        // only 1 bucket that does not allow any instant withdraw
+        nBuckets = 1;
+        buckets[0] = packBucket(
+            0xFFFFFFFF_FFFFFFFF_FFFFFFFF,
+            0,
+            0,
+            1,
+            0,
+            0
+        );
         withdrawDelayerContract.changeWithdrawalDelay(withdrawalDelay);
         emit SafeMode();
     }
@@ -247,19 +226,21 @@ contract InstantWithdrawManager is HermezHelpers {
         uint256 amountUSD = _token2USD(tokenAddress, amount);
         if (amountUSD == 0) return true;
 
-        uint256 bucketIdx = _findBucketIdx(amountUSD);
+        int256 bucketIdx = _findBucketIdx(amountUSD);
+        if (bucketIdx == -1) return true;
 
-        Bucket storage currentBucket = buckets[bucketIdx];
-        if (currentBucket.withdrawals > 0) {
-            return true;
-        } else {
-            uint256 differenceBlocks = block.number.sub(
-                currentBucket.blockStamp
-            );
-            if (differenceBlocks < currentBucket.blockWithdrawalRate)
-                return false;
-            else return true;
-        }
+
+        (, uint256 blockStamp, uint256 withdrawals, uint256 rateBlocks, uint256 rateWithdrawals, uint256 maxWithdrawals) = unpackBucket(buckets[bucketIdx]);
+
+        uint256 differenceBlocks = block.number.sub(blockStamp);
+        uint256 periods = differenceBlocks.div(rateBlocks);
+
+        withdrawals = withdrawals.add(periods.mul(rateWithdrawals));
+        if (withdrawals>maxWithdrawals) withdrawals = maxWithdrawals;
+
+        if (withdrawals == 0) return false;
+
+        return true;
     }
 
     /**
@@ -299,14 +280,70 @@ contract InstantWithdrawManager is HermezHelpers {
     /**
      * @dev Find the corresponding bucket for the input amount
      * @param amountUSD USD amount
-     * @return Bucket index
+     * @return Bucket index, -1 in case there is no match
      */
-    function _findBucketIdx(uint256 amountUSD) internal view returns (uint256) {
-        for (uint256 i = 0; i < _NUM_BUCKETS; i++) {
-            if (amountUSD <= buckets[i].ceilUSD) {
+    function _findBucketIdx(uint256 amountUSD) internal view returns (int256) {
+        for (int256 i = 0; i < int256(nBuckets); i++) {
+            uint256 ceilUSD = buckets[i] & 0xFFFFFFFF_FFFFFFFF_FFFFFFFF;
+            if ((amountUSD <= ceilUSD) ||
+                (ceilUSD == 0xFFFFFFFF_FFFFFFFF_FFFFFFFF))
+            {
                 return i;
             }
         }
-        revert("InstantWithdrawManager::_findBucketIdx: EXCEED_MAX_AMOUNT");
+        return -1;
+    }
+
+     /**
+     * @dev Unpack a packed uint256 into the bucket parameters
+     * @param bucket Token address
+     * @return ceilUSD max USD value that bucket holds
+     * @return blockStamp block number of the last bucket update
+     * @return withdrawals available withdrawals of the bucket
+     * @return rateBlocks every `rateBlocks` blocks add `rateWithdrawals` withdrawal
+     * @return rateWithdrawals add `rateWithdrawals` every `rateBlocks`
+     * @return maxWithdrawals max withdrawals the bucket can hold
+     */
+    function unpackBucket(uint256 bucket) public pure returns(
+        uint256 ceilUSD,
+        uint256 blockStamp,
+        uint256 withdrawals,
+        uint256 rateBlocks,
+        uint256 rateWithdrawals,
+        uint256 maxWithdrawals
+    ) {
+        ceilUSD = bucket & 0xFFFFFFFF_FFFFFFFF_FFFFFFFF;
+        blockStamp = (bucket >> 96) & 0xFFFFFFFF;
+        withdrawals = (bucket >> 128) & 0xFFFFFFFF;
+        rateBlocks = (bucket >> 160) & 0xFFFFFFFF;
+        rateWithdrawals = (bucket >> 192) & 0xFFFFFFFF;
+        maxWithdrawals = (bucket >> 224) & 0xFFFFFFFF;
+    }
+
+     /**
+     * @dev Pack all the bucket parameters into a uint256
+     * @param ceilUSD max USD value that bucket holds
+     * @param blockStamp block number of the last bucket update
+     * @param withdrawals available withdrawals of the bucket
+     * @param rateBlocks every `rateBlocks` blocks add `rateWithdrawals` withdrawal
+     * @param rateWithdrawals add `rateWithdrawals` every `rateBlocks`
+     * @param maxWithdrawals max withdrawals the bucket can hold
+     * @return ret all bucket varaibles packed [ceilUSD, blockStamp, withdrawals, rateBlocks, rateWithdrawals, maxWithdrawals]
+     */
+    function packBucket(
+        uint256 ceilUSD,
+        uint256 blockStamp,
+        uint256 withdrawals,
+        uint256 rateBlocks,
+        uint256 rateWithdrawals,
+        uint256 maxWithdrawals
+    ) public pure returns(uint256 ret) {
+        ret = ceilUSD |
+              (blockStamp << 96) |
+              (withdrawals << 128) |
+              (rateBlocks << 160) |
+              (rateWithdrawals << 192) |
+              (maxWithdrawals << 224);
     }
 }
+

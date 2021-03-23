@@ -35,6 +35,29 @@ contract HermezHelpers is Initializable {
 
     uint256 private constant _WORD_SIZE = 32;
 
+    // bytes32 public constant EIP712DOMAIN_HASH =
+    //      keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+    bytes32 public constant EIP712DOMAIN_HASH =
+        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+    // bytes32 public constant NAME_HASH =
+    //      keccak256("Hermez Network")
+    bytes32 public constant NAME_HASH =
+        0xbe287413178bfeddef8d9753ad4be825ae998706a6dabff23978b59dccaea0ad;
+    // bytes32 public constant VERSION_HASH =
+    //      keccak256("1")
+    bytes32 public constant VERSION_HASH =
+        0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
+    // bytes32 public constant AUTHORISE_TYPEHASH =
+    //      keccak256("Authorise(string Provider,string Authorisation,bytes32 BJJKey)");
+    bytes32 public constant AUTHORISE_TYPEHASH =
+        0xafd642c6a37a2e6887dc4ad5142f84197828a904e53d3204ecb1100329231eaa;
+    // bytes32 public constant HERMEZ_NETWORK_HASH = keccak256(bytes("Hermez Network")),
+    bytes32 public constant HERMEZ_NETWORK_HASH =
+        0xbe287413178bfeddef8d9753ad4be825ae998706a6dabff23978b59dccaea0ad;
+    // bytes32 public constant ACCOUNT_CREATION_HASH = keccak256(bytes("Account creation")),
+    bytes32 public constant ACCOUNT_CREATION_HASH =
+        0xff946cf82975b1a2b6e6d28c9a76a4b8d7a1fd0592b785cb92771933310f9ee7;
+
     /**
      * @dev Load poseidon smart contract
      * @param _poseidon2Elements Poseidon contract address for 2 elements
@@ -186,14 +209,13 @@ contract HermezHelpers is Initializable {
 
     /**
      * @dev Decode half floating precision.
-     * Max value encoded with this codification: 0x1F89FDCA17AF0E4E3F46CC0000000 (aprox 116 bits)
+     * Max value encoded with this codification: 0x1f8def8800cca870c773f6eb4d980000000 (aprox 137 bits)
      * @param float Float half precision encode number
      * @return Decoded floating half precision
      */
-    function _float2Fix(uint16 float) internal pure returns (uint256) {
-        uint256 m = float & 0x3FF;
-        uint256 e = float >> 11;
-        uint256 e5 = (float >> 10) & 1;
+    function _float2Fix(uint40 float) internal pure returns (uint256) {
+        uint256 m = float & 0x7FFFFFFFF;
+        uint256 e = float >> 35;
 
         // never overflow, max "e" value is 32
         uint256 exp = 10**e;
@@ -201,10 +223,33 @@ contract HermezHelpers is Initializable {
         // never overflow, max "fix" value is 1023 * 10^32
         uint256 fix = m * exp;
 
-        if ((e5 == 1) && (e != 0)) {
-            fix = fix + (exp / 2);
-        }
         return fix;
+    }
+
+    /**
+     * @dev Retrieve the DOMAIN_SEPARATOR hash
+     * @return domainSeparator hash used for sign messages
+     */
+    function DOMAIN_SEPARATOR() public view returns (bytes32 domainSeparator) {
+        return
+            keccak256(
+                abi.encode(
+                    EIP712DOMAIN_HASH,
+                    NAME_HASH,
+                    VERSION_HASH,
+                    getChainId(),
+                    address(this)
+                )
+            );
+    }
+
+    /**
+     * @return chainId The current chainId where the smarctoncract is executed
+     */
+    function getChainId() public pure returns (uint256 chainId) {
+        assembly {
+            chainId := chainid()
+        }
     }
 
     /**
@@ -237,21 +282,21 @@ contract HermezHelpers is Initializable {
             "HermezHelpers::_checkSig: INVALID_S_VALUE"
         );
 
-        uint16 chainId;
-        assembly {
-            chainId := chainid()
-        }
+        bytes32 encodeData =
+            keccak256(
+                abi.encode(
+                    AUTHORISE_TYPEHASH,
+                    HERMEZ_NETWORK_HASH,
+                    ACCOUNT_CREATION_HASH,
+                    babyjub
+                )
+            );
 
-        // 120 bytes --> 66 bytes (string message) + 32 bytes (babyjub) + 2 bytes (chainId) +  20 bytes (Hermez address)
-        bytes32 messageDigest = keccak256(
-            abi.encodePacked(
-                "\x19Ethereum Signed Message:\n120",
-                "I authorize this babyjubjub key for hermez rollup account creation",
-                babyjub,
-                chainId,
-                address(this)
-            )
-        );
+        bytes32 messageDigest =
+            keccak256(
+                abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), encodeData)
+            );
+
         address ethAddress = ecrecover(messageDigest, v, r, s);
 
         require(

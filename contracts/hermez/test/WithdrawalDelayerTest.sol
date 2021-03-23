@@ -26,12 +26,12 @@ contract WithdrawalDelayerTest is ReentrancyGuard, Initializable {
     }
     mapping(bytes32 => DepositState) public deposits;
 
-    function withdrawalDelayerInitializer(
+    constructor(
         uint64 _initialWithdrawalDelay,
         address _initialHermezRollup,
-        address _initialhermezGovernanceAddress,
-        address payable _initialWhiteHackGroupAddress
-    ) public initializer {
+        address _initialHermezGovernanceAddress,
+        address payable _initialEmergencyCouncil
+    ) public {
         hermezRollupAddress = _initialHermezRollup;
     }
 

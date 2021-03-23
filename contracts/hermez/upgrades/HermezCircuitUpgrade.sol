@@ -2,13 +2,13 @@
 
 pragma solidity 0.6.12;
 
-import "./lib/InstantWithdrawManager.sol";
-import "./interfaces/VerifierRollupInterface.sol";
-import "./interfaces/VerifierWithdrawInterface.sol";
-import "../interfaces/IHermezAuctionProtocol.sol";
+import "../lib/InstantWithdrawManager.sol";
+import "../interfaces/VerifierRollupInterface.sol";
+import "../interfaces/VerifierWithdrawInterface.sol";
+import "../../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Hermez is InstantWithdrawManager {
+contract HermezCircuitUpgrade is InstantWithdrawManager {
     struct VerifierRollup {
         VerifierRollupInterface verifierInterface;
         uint256 maxTx; // maximum rollup transactions in a batch: L2-tx + L1-tx transactions
@@ -140,6 +140,9 @@ contract Hermez is InstantWithdrawManager {
     // HEZ token address
     address public tokenHEZ;
 
+    // // upgradability test only if upgraded V2 before
+    // uint256 public version;
+
     // Event emitted when a L1-user transaction is called and added to the nextL1FillingQueue queue
     event L1UserTxEvent(
         uint32 indexed queueIndex,
@@ -172,6 +175,23 @@ contract Hermez is InstantWithdrawManager {
         uint256 feeAddToken,
         uint64 withdrawalDelay
     );
+
+    // Event emitted when the contract is updated to the new version
+    event hermezV2();
+
+    function addVerifier() external {
+        require(rollupVerifiers.length == 2, "Only can be called once");
+        rollupVerifiers.push(
+            VerifierRollup({
+                verifierInterface: VerifierRollupInterface(
+                    address(0x7E4F5c7Ad36b54b7d78f9DAa4E4aA57722917163)
+                ),
+                maxTx: 1964,
+                nLevels: 32
+            })
+        );
+        emit hermezV2();
+    }
 
     /**
      * @dev Initializer function (equivalent to the constructor). Since we use
@@ -680,10 +700,6 @@ contract Hermez is InstantWithdrawManager {
      * Events: `AddToken`
      */
     function addToken(address tokenAddress, bytes calldata permit) public {
-        require(
-            IERC20(tokenAddress).totalSupply() > 0,
-            "Hermez::addToken: TOTAL_SUPPLY_ZERO"
-        );
         uint256 currentTokens = tokenList.length;
         require(
             currentTokens < _LIMIT_TOKENS,
@@ -694,6 +710,10 @@ contract Hermez is InstantWithdrawManager {
             "Hermez::addToken: ADDRESS_0_INVALID"
         );
         require(tokenMap[tokenAddress] == 0, "Hermez::addToken: ALREADY_ADDED");
+        require(
+            IERC20(tokenAddress).totalSupply() > 0,
+            "Hermez::addToken: TOTAL_SUPPLY_ZERO"
+        );
 
         if (msg.sender != hermezGovernanceAddress) {
             // permit and transfer HEZ tokens
@@ -913,8 +933,10 @@ contract Hermez is InstantWithdrawManager {
         // ([(nLevels / 8) bytes] fromIdx + [(nLevels / 8) bytes] toIdx + [5 bytes] amountFloat40 + [1 bytes] fee) * maxTx =
         // ((nLevels / 4) bytes + 3 bytes) * maxTx
         uint256 l1L2TxsDataLength = ((rollupVerifiers[verifierIdx].nLevels /
-            8) * 2 +
-            5 + 1) * rollupVerifiers[verifierIdx].maxTx;
+            8) *
+            2 +
+            5 +
+            1) * rollupVerifiers[verifierIdx].maxTx;
 
         // [(nLevels / 8) bytes]
         uint256 feeIdxCoordinatorLength = (rollupVerifiers[verifierIdx]
