@@ -9,6 +9,7 @@ coverage
 .coverage_*
 .openzeppelin
 artifacts/
+check-mainnet/config.json
 !Hermez.json
 !HermezHelpers.json
 !WithdrawalDelayer.json
