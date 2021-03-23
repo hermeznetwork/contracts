@@ -51,7 +51,7 @@ async function main() {
     const withdrawVerifier = await hermezContract.withdrawVerifier();
     console.log("   withdrawVerifier: ", withdrawVerifier);
 
-    const totalTokens = 1;
+    const totalTokens = 6;
     const tokenList = [];
     for (let i = 0; i < totalTokens; i++) {
         const tokenInfo = await hermezContract.tokenList(i);
