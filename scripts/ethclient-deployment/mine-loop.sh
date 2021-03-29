@@ -57,5 +57,5 @@ done
 
 while [ true ]; do
         mine
-        sleep 1
+        sleep 4
 done
