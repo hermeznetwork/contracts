@@ -145,20 +145,29 @@ class ForgerTest {
     const feeIdxCoordinator = bb.getFeeTxsDataSM();
     const verifierIdx = 0;
 
-    await expect(
-      this.hardhatHermez.calculateInputTest(
-        newLastIdx,
-        newStateRoot,
-        newExitRoot,
-        compressedL1CoordinatorTx,
-        L1L2TxsData,
-        feeIdxCoordinator,
-        l1Batch,
-        verifierIdx
+    let implementCalculateInputTest = false;
+    for (const functionSC in this.hardhatHermez.interface.functions) {
+      if (this.hardhatHermez.interface.functions[functionSC].name == "calculateInputTest") {
+        implementCalculateInputTest = true;
+        break;
+      }
+    }
+
+    if (implementCalculateInputTest)
+      await expect(
+        this.hardhatHermez.calculateInputTest(
+          newLastIdx,
+          newStateRoot,
+          newExitRoot,
+          compressedL1CoordinatorTx,
+          L1L2TxsData,
+          feeIdxCoordinator,
+          l1Batch,
+          verifierIdx
+        )
       )
-    )
-      .to.emit(this.hardhatHermez, "ReturnUint256")
-      .withArgs(bb.getHashInputs());
+        .to.emit(this.hardhatHermez, "ReturnUint256")
+        .withArgs(bb.getHashInputs());
 
     await expect(
       this.hardhatHermez.forgeBatch(
@@ -244,7 +253,7 @@ async function l1UserTxCreateAccountDeposit(
       );
 
       expect(finalOwnerBalance).to.equal(
-        BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+        BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
       );
     } else {
       // tokens ERC20Permit
@@ -294,7 +303,7 @@ async function l1UserTxCreateAccountDeposit(
       );
 
       expect(finalOwnerBalance).to.equal(
-        BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+        BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
       );
     }
   } else {
@@ -321,7 +330,7 @@ async function l1UserTxCreateAccountDeposit(
     const finalOwnerBalance = await wallet.getBalance();
 
     expect(finalOwnerBalance).to.equal(
-      BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
     );
   }
 
@@ -387,7 +396,7 @@ async function l1UserTxDeposit(
       );
 
       expect(finalOwnerBalance).to.equal(
-        BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+        BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
       );
     } else {
       // tokens ERC20Permit
@@ -437,7 +446,7 @@ async function l1UserTxDeposit(
       );
 
       expect(finalOwnerBalance).to.equal(
-        BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+        BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
       );
     }
   } else {
@@ -465,7 +474,7 @@ async function l1UserTxDeposit(
     const finalOwnerBalance = await wallet.getBalance();
 
     expect(finalOwnerBalance).to.equal(
-      BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
     );
   }
 
@@ -533,7 +542,7 @@ async function l1UserTxDepositTransfer(
       );
 
       expect(finalOwnerBalance).to.equal(
-        BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+        BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
       );
     } else {
       // tokens ERC20Permit
@@ -583,7 +592,7 @@ async function l1UserTxDepositTransfer(
       );
 
       expect(finalOwnerBalance).to.equal(
-        BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+        BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
       );
     }
   } else {
@@ -611,7 +620,7 @@ async function l1UserTxDepositTransfer(
     const finalOwnerBalance = await wallet.getBalance();
 
     expect(finalOwnerBalance).to.equal(
-      BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
     );
   }
 
@@ -679,7 +688,7 @@ async function l1UserTxCreateAccountDepositTransfer(
       );
 
       expect(finalOwnerBalance).to.equal(
-        BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+        BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
       );
     } else {
       // tokens ERC20Permit
@@ -729,7 +738,7 @@ async function l1UserTxCreateAccountDepositTransfer(
       );
 
       expect(finalOwnerBalance).to.equal(
-        BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+        BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
       );
     }
   } else {
@@ -757,7 +766,7 @@ async function l1UserTxCreateAccountDepositTransfer(
     const finalOwnerBalance = await wallet.getBalance();
 
     expect(finalOwnerBalance).to.equal(
-      BigNumber.from(initialOwnerBalance).sub(Scalar.toNumber(loadAmount))
+      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
     );
   }
   return l1Txbytes;

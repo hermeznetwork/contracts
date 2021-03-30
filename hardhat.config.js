@@ -72,7 +72,6 @@ module.exports = {
         initialIndex: 0,
         count: 20,
       },
-      gasPrice: 4000000000 //4 gwei
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
