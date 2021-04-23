@@ -9,8 +9,3 @@ coverage
 .coverage_*
 .openzeppelin
 artifacts/
-!Hermez.json
-!HermezHelpers.json
-!WithdrawalDelayer.json
-!HermezAuctionProtocol.json
-!InstantWithdrawManager.json

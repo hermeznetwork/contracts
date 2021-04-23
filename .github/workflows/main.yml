@@ -24,5 +24,10 @@ jobs:
       - name: check artifacts
         run: |
           yarn compile
+          cp artifacts/contracts/hermez/Hermez.sol/Hermez.json compiled-contracts/
+          cp artifacts/contracts/hermez/lib/InstantWithdrawManager.sol/InstantWithdrawManager.json compiled-contracts/
+          cp artifacts/contracts/hermez/lib/HermezHelpers.sol/HermezHelpers.json compiled-contracts/
+          cp artifacts/contracts/auction/HermezAuctionProtocol.sol/HermezAuctionProtocol.json compiled-contracts/
+          cp artifacts/contracts/withdrawalDelayer/WithdrawalDelayer.sol/WithdrawalDelayer.json compiled-contracts/
           # This line checks that there is no change in the repository after compiling the contracts
-          [[ -z $(git status -s) ]] || exit 1 
+          [[ -z $(git status -s) ]] || exit 1

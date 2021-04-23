@@ -3,10 +3,11 @@ echo
 ## Compile the smart contracts
 yarn run compile
 ## Add to the commit the new artifacts
-git add -u artifacts/contracts/hermez/Hermez.sol/Hermez.json
-git add -u artifacts/contracts/hermez/lib/InstantWithdrawManager.sol/InstantWithdrawManager.json
-git add -u artifacts/contracts/hermez/lib/HermezHelpers.sol/HermezHelpers.json
-git add -u artifacts/contracts/auction/HermezAuctionProtocol.sol/HermezAuctionProtocol.json
-git add -u artifacts/contracts/withdrawalDelayer/WithdrawalDelayer.sol/WithdrawalDelayer.json
+cp artifacts/contracts/hermez/Hermez.sol/Hermez.json compiled-contracts/
+cp artifacts/contracts/hermez/lib/InstantWithdrawManager.sol/InstantWithdrawManager.json compiled-contracts/
+cp artifacts/contracts/hermez/lib/HermezHelpers.sol/HermezHelpers.json compiled-contracts/
+cp artifacts/contracts/auction/HermezAuctionProtocol.sol/HermezAuctionProtocol.json compiled-contracts/
+cp artifacts/contracts/withdrawalDelayer/WithdrawalDelayer.sol/WithdrawalDelayer.json compiled-contracts/
+git add compiled-contracts
 
 exit
