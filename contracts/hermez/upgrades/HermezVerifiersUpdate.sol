@@ -8,7 +8,7 @@ import "../interfaces/VerifierWithdrawInterface.sol";
 import "../../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract HermezCircuitUpgrade is InstantWithdrawManager {
+contract HermezVerifiersUpdate is InstantWithdrawManager {
     struct VerifierRollup {
         VerifierRollupInterface verifierInterface;
         uint256 maxTx; // maximum rollup transactions in a batch: L2-tx + L1-tx transactions
@@ -140,9 +140,6 @@ contract HermezCircuitUpgrade is InstantWithdrawManager {
     // HEZ token address
     address public tokenHEZ;
 
-    // // upgradability test only if upgraded V2 before
-    // uint256 public version;
-
     // Event emitted when a L1-user transaction is called and added to the nextL1FillingQueue queue
     event L1UserTxEvent(
         uint32 indexed queueIndex,
@@ -179,16 +176,30 @@ contract HermezCircuitUpgrade is InstantWithdrawManager {
     // Event emitted when the contract is updated to the new version
     event hermezV2();
 
-    function addVerifier() external {
-        require(rollupVerifiers.length == 2, "Only can be called once");
-        rollupVerifiers.push(
-            VerifierRollup({
-                verifierInterface: VerifierRollupInterface(
-                    address(0x7E4F5c7Ad36b54b7d78f9DAa4E4aA57722917163)
-                ),
-                maxTx: 1964,
-                nLevels: 32
-            })
+    function updateVerifiers() external {
+        require(
+            address(rollupVerifiers[0].verifierInterface) ==
+                address(0xE388aFB8b6590C81C96Afdc9D1d8470945dFceB4), // Old verifier 344 tx
+            "Hermez::updateVerifiers VERIFIERS_ALREADY_UPDATED"
+        );
+        rollupVerifiers[0] = VerifierRollup({
+            verifierInterface: VerifierRollupInterface(
+                address(0x1cdc41A552d8ba95835770E2949ed370d9d76dbf) // New verifier 344 tx
+            ),
+            maxTx: 344,
+            nLevels: 32
+        });
+
+        rollupVerifiers[1] = VerifierRollup({
+            verifierInterface: VerifierRollupInterface(
+                address(0x44C62ffdF7e3454a1D14B6D9c1693B4aE3a14184) // New verifier 1912 tx
+            ),
+            maxTx: 1912,
+            nLevels: 32
+        });
+
+        withdrawVerifier = VerifierWithdrawInterface(
+            0xa01552163229a3184c3099D9e522A4057cA45501
         );
         emit hermezV2();
     }
@@ -700,6 +711,10 @@ contract HermezCircuitUpgrade is InstantWithdrawManager {
      * Events: `AddToken`
      */
     function addToken(address tokenAddress, bytes calldata permit) public {
+        require(
+            IERC20(tokenAddress).totalSupply() > 0,
+            "Hermez::addToken: TOTAL_SUPPLY_ZERO"
+        );
         uint256 currentTokens = tokenList.length;
         require(
             currentTokens < _LIMIT_TOKENS,
@@ -710,10 +725,6 @@ contract HermezCircuitUpgrade is InstantWithdrawManager {
             "Hermez::addToken: ADDRESS_0_INVALID"
         );
         require(tokenMap[tokenAddress] == 0, "Hermez::addToken: ALREADY_ADDED");
-        require(
-            IERC20(tokenAddress).totalSupply() > 0,
-            "Hermez::addToken: TOTAL_SUPPLY_ZERO"
-        );
 
         if (msg.sender != hermezGovernanceAddress) {
             // permit and transfer HEZ tokens

@@ -20,7 +20,7 @@ async function main() {
   // compìle contracts
   await bre.run("compile");
 
-  const HermezV2 = await ethers.getContractFactory("HermezCircuitUpgrade"); //HermezCircuitUpgrade
+  const HermezV2 = await ethers.getContractFactory("HermezVerifiersUpdate"); // HermezVerifiersUpdate 
 
   const hermezAddress = deployOutputParameters.hermezAddress;
 
