@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, network } = require("hardhat");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const { time } = require("@openzeppelin/test-helpers");
 const Scalar = require("ffjavascript").Scalar;
@@ -137,7 +137,7 @@ describe("Hermez ERC 20", function () {
 
 
     // factory hermez
-    const Hermez = await ethers.getContractFactory("HermezVerifiersUpdate");
+    const Hermez = await ethers.getContractFactory("Hermez");
 
     // deploy tokens
     hardhatTokenERC20Mock = await TokenERC20Mock.deploy(
@@ -207,21 +207,37 @@ describe("Hermez ERC 20", function () {
       expect(verifier1Before.maxTx).to.be.equal(1912);
       expect(verifier1Before.nLevels).to.be.equal(32);
     
-      const tx = await hardhatHermez.updateVerifiers();
+ 
+      // load deployer account
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xb6D3f1056c015962fA66A4020E50522B58292D1E"],
+      });
+      const signerDeployer = await ethers.provider.getSigner(
+        "0xb6D3f1056c015962fA66A4020E50522B58292D1E"
+      );
+      await owner.sendTransaction({
+        to: "0xb6D3f1056c015962fA66A4020E50522B58292D1E",
+        value: ethers.utils.parseEther("1.0")
+      });
 
-      expect( await hardhatHermez.withdrawVerifier()).to.be.equal("0xa01552163229a3184c3099D9e522A4057cA45501");
+      // updateVerifiers
+      await expect(hardhatHermez.updateVerifiers()).to.be.revertedWith("Hermez::updateVerifiers ONLY_DEPLOYER");
+      await hardhatHermez.connect(signerDeployer).updateVerifiers();
 
+      expect( await hardhatHermez.withdrawVerifier()).to.be.equal("0x4464A1E499cf5443541da6728871af1D5C4920ca");
       const verifier0 = await hardhatHermez.rollupVerifiers(0);
-      expect(verifier0.verifierInterface).to.be.equal("0x1cdc41A552d8ba95835770E2949ed370d9d76dbf");
-      expect(verifier0.maxTx).to.be.equal(344);
+      expect(verifier0.verifierInterface).to.be.equal("0x3DAa0B2a994b1BC60dB9e312aD0a8d87a1Bb16D2");
+      expect(verifier0.maxTx).to.be.equal(400);
       expect(verifier0.nLevels).to.be.equal(32);
 
       const verifier1 = await hardhatHermez.rollupVerifiers(1);
-      expect(verifier1.verifierInterface).to.be.equal("0x44C62ffdF7e3454a1D14B6D9c1693B4aE3a14184");
-      expect(verifier1.maxTx).to.be.equal(1912);
+      expect(verifier1.verifierInterface).to.be.equal("0x1DC4b451DFcD0e848881eDE8c7A99978F00b1342");
+      expect(verifier1.maxTx).to.be.equal(2048);
       expect(verifier1.nLevels).to.be.equal(32);
 
-      await expect(hardhatHermez.updateVerifiers()).to.be.revertedWith("Hermez::updateVerifiers VERIFIERS_ALREADY_UPDATED");
+      await expect(hardhatHermez.updateVerifiers()).to.be.revertedWith("Hermez::updateVerifiers ONLY_DEPLOYER");
+      await expect(hardhatHermez.connect(signerDeployer).updateVerifiers()).to.be.revertedWith("Hermez::updateVerifiers VERIFIERS_ALREADY_UPDATED");
     });
   });
 });

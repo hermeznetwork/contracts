@@ -16,10 +16,10 @@ async function main() {
   const deployerAddress = await deployer.getAddress();
 
   try {
-    // verify 344
+    // verify 400
     await hre.run("verify:verify",
       {
-        address:deployOutputParameters.verifier344Address,
+        address:deployOutputParameters.verifier400Address,
       }
     );
   } catch (error) {
@@ -28,10 +28,10 @@ async function main() {
 
 
   try {
-  // verify 1912
+  // verify 2048
     await hre.run("verify:verify",
       {
-        address:deployOutputParameters.verifier1912Address,
+        address:deployOutputParameters.verifier2048Address,
       }
     );
   } catch (error) {

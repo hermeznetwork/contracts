@@ -8,7 +8,7 @@ import "../interfaces/VerifierWithdrawInterface.sol";
 import "../../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract HermezVerifiersUpdate is InstantWithdrawManager {
+contract Hermez_v1 is InstantWithdrawManager {
     struct VerifierRollup {
         VerifierRollupInterface verifierInterface;
         uint256 maxTx; // maximum rollup transactions in a batch: L2-tx + L1-tx transactions
@@ -172,37 +172,6 @@ contract HermezVerifiersUpdate is InstantWithdrawManager {
         uint256 feeAddToken,
         uint64 withdrawalDelay
     );
-
-    // Event emitted when the contract is updated to the new version
-    event hermezV2();
-
-    function updateVerifiers() external {
-        require(
-            address(rollupVerifiers[0].verifierInterface) ==
-                address(0xE388aFB8b6590C81C96Afdc9D1d8470945dFceB4), // Old verifier 344 tx
-            "Hermez::updateVerifiers VERIFIERS_ALREADY_UPDATED"
-        );
-        rollupVerifiers[0] = VerifierRollup({
-            verifierInterface: VerifierRollupInterface(
-                address(0x1cdc41A552d8ba95835770E2949ed370d9d76dbf) // New verifier 344 tx
-            ),
-            maxTx: 344,
-            nLevels: 32
-        });
-
-        rollupVerifiers[1] = VerifierRollup({
-            verifierInterface: VerifierRollupInterface(
-                address(0x44C62ffdF7e3454a1D14B6D9c1693B4aE3a14184) // New verifier 1912 tx
-            ),
-            maxTx: 1912,
-            nLevels: 32
-        });
-
-        withdrawVerifier = VerifierWithdrawInterface(
-            0xa01552163229a3184c3099D9e522A4057cA45501
-        );
-        emit hermezV2();
-    }
 
     /**
      * @dev Initializer function (equivalent to the constructor). Since we use
@@ -944,10 +913,8 @@ contract HermezVerifiersUpdate is InstantWithdrawManager {
         // ([(nLevels / 8) bytes] fromIdx + [(nLevels / 8) bytes] toIdx + [5 bytes] amountFloat40 + [1 bytes] fee) * maxTx =
         // ((nLevels / 4) bytes + 3 bytes) * maxTx
         uint256 l1L2TxsDataLength = ((rollupVerifiers[verifierIdx].nLevels /
-            8) *
-            2 +
-            5 +
-            1) * rollupVerifiers[verifierIdx].maxTx;
+            8) * 2 +
+            5 + 1) * rollupVerifiers[verifierIdx].maxTx;
 
         // [(nLevels / 8) bytes]
         uint256 feeIdxCoordinatorLength = (rollupVerifiers[verifierIdx]

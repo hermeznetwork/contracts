@@ -29,7 +29,7 @@ async function main() {
     console.log("\n\nrole address don't specified, community Council address will be used from the deploy_output.json");
   }
   // load SC
-  const HermezV2 = await ethers.getContractFactory("HermezVerifiersUpdate"); // HermezVerifiersUpdate 
+  const HermezV2 = await ethers.getContractFactory("Hermez"); // Hermez 
   const Timelock = await ethers.getContractFactory("Timelock"); // TimeLock
   const Governance = await ethers.getContractFactory("HermezGovernance"); // Governance
 

@@ -24,7 +24,7 @@ async function main() {
   await bre.run("compile");
 
   // load SC
-  const HermezV2 = await ethers.getContractFactory("HermezVerifiersUpdate"); // HermezVerifiersUpdate 
+  const HermezV2 = await ethers.getContractFactory("Hermez"); // Hermez 
   const Timelock = await ethers.getContractFactory("Timelock"); // TimeLock
   const Governance = await ethers.getContractFactory("HermezGovernance"); // Governance
 
