@@ -15,7 +15,7 @@ const {
 } = require("../../test/hermez/helpers/helpers");
 
 
-const maxTxVerifierDefault = [512, 344, 1912];
+const maxTxVerifierDefault = [512, 400, 2048];
 const nLevelsVeriferDefault = [32, 32, 32];
 const verifierTypeDefault = ["mock","real", "real"];
 const tokenInitialAmount = ethers.BigNumber.from(

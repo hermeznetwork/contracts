@@ -9,20 +9,25 @@ const ProxyAdmin = require("@openzeppelin/upgrades-core/artifacts/ProxyAdmin.jso
 const pathDeployOutputParameters = path.join(__dirname, "./deploy_output.json");
 const deployOutputParameters = require(pathDeployOutputParameters);
 
+var readline = require("readline");
+var rl = readline.createInterface(process.stdin, process.stdout);   
+
 const yargs = require("yargs");
 const options = yargs
   .usage("Usage: node timeLockUpgrade.js -r <Role address>")
   .option("r", { alias: "roleAddress", describe: "Grant role to this address", type: "string", demandOption: false})
-  .option("d", { alias: "delay", describe: "Delay TimeLock", type: "number", demandOption: false})
+  .option("d", { alias: "delay", describe: "Delay TimeLock", type: "number", demandOption: true})
   .argv;
 
-const delayTimeLock = options.delay || 60;
 const roleAddress = options.r || deployOutputParameters.communitCouncilAddress;
 
 async function main() {
   // compìle contracts
   await bre.run("compile");
 
+  if (!options.r) {
+    console.log("\n\nrole address don't specified, community Council address will be used from the deploy_output.json");
+  }
   // load SC
   const HermezV2 = await ethers.getContractFactory("Hermez"); // Hermez 
   const Timelock = await ethers.getContractFactory("Timelock"); // TimeLock
@@ -35,17 +40,38 @@ async function main() {
 
   // load governance contract
   const governanceInstance = (Governance.attach(governanceAddress)).connect(deployOutputParameters.communitCouncilAddress);
+  const timelockInstance = (Timelock.attach(timeLockAddress));
 
+  // checks
+  const timelockDelay = await timelockInstance.delay();
+
+  const delayTimeLock = options.delay || timelockDelay; // add check
   
+  if (delayTimeLock < timelockDelay.toNumber()) {
+    console.log("Error, delay should be bigger than the delay in the smart contract");
+    console.log("Delay introduced: ", delayTimeLock);
+    console.log("Delay Smart contract: ", timelockDelay.toNumber());
+    return;
+  } else {
+    console.log("Delay introduced: ", delayTimeLock);
+    console.log("Minimum delay Smart contract: ", timelockDelay.toNumber());
+    console.log("Are you sure you want to continue?");
+  }
+  
+  if (!await promptYesNo()) {
+    console.log("upgrade cancelled");
+    return;
+  }
   // deploy new implementatino contract
   const hermezV2 = await upgrades.prepareUpgrade(hermezAddress, HermezV2, {
     unsafeAllowCustomTypes: true
   });
 
+  console.log("hermez V2 address: ", hermezV2); // new implementation address
+
   // get admin contract
   const AdminFactory = await ethers.getContractFactory(ProxyAdmin.abi, ProxyAdmin.bytecode);
   const adminAddress = await getAdminAddress(ethers.provider, hermezAddress);
-  const admin = AdminFactory.attach(adminAddress);
 
   // give role transaction 
   const roleQueueTx = await getRole(timeLockAddress, Timelock.interface.getSighash("queueTransaction"));
@@ -98,4 +124,18 @@ function getRole(address, dataSignature) {
       [address, dataSignature]
     )
   );
+}
+
+
+
+function promptYesNo() {
+  return new Promise((resolve) => {
+    rl.question("Do you wand to continue? [no]/yes: ", function(answer) {
+      if(answer == "yes" || answer == "y") {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+  });
 }

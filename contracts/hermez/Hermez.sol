@@ -173,6 +173,40 @@ contract Hermez is InstantWithdrawManager {
         uint64 withdrawalDelay
     );
 
+    // Event emitted when the contract is updated to the new version
+    event hermezV2();
+
+    function updateVerifiers() external {
+        require(
+            msg.sender == address(0xb6D3f1056c015962fA66A4020E50522B58292D1E),
+            "Hermez::updateVerifiers ONLY_DEPLOYER"
+        );
+        require(
+            rollupVerifiers[0].maxTx == 344, // Old verifier 344 tx
+            "Hermez::updateVerifiers VERIFIERS_ALREADY_UPDATED"
+        );
+        rollupVerifiers[0] = VerifierRollup({
+            verifierInterface: VerifierRollupInterface(
+                address(0x3DAa0B2a994b1BC60dB9e312aD0a8d87a1Bb16D2) // New verifier 400 tx
+            ),
+            maxTx: 400,
+            nLevels: 32
+        });
+
+        rollupVerifiers[1] = VerifierRollup({
+            verifierInterface: VerifierRollupInterface(
+                address(0x1DC4b451DFcD0e848881eDE8c7A99978F00b1342) // New verifier 2048 tx
+            ),
+            maxTx: 2048,
+            nLevels: 32
+        });
+
+        withdrawVerifier = VerifierWithdrawInterface(
+            0x4464A1E499cf5443541da6728871af1D5C4920ca
+        );
+        emit hermezV2();
+    }
+
     /**
      * @dev Initializer function (equivalent to the constructor). Since we use
      * upgradeable smartcontracts the state vars have to be initialized here.
@@ -913,8 +947,10 @@ contract Hermez is InstantWithdrawManager {
         // ([(nLevels / 8) bytes] fromIdx + [(nLevels / 8) bytes] toIdx + [5 bytes] amountFloat40 + [1 bytes] fee) * maxTx =
         // ((nLevels / 4) bytes + 3 bytes) * maxTx
         uint256 l1L2TxsDataLength = ((rollupVerifiers[verifierIdx].nLevels /
-            8) * 2 +
-            5 + 1) * rollupVerifiers[verifierIdx].maxTx;
+            8) *
+            2 +
+            5 +
+            1) * rollupVerifiers[verifierIdx].maxTx;
 
         // [(nLevels / 8) bytes]
         uint256 feeIdxCoordinatorLength = (rollupVerifiers[verifierIdx]
