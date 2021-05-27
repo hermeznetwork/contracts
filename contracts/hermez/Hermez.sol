@@ -225,7 +225,7 @@ contract Hermez is InstantWithdrawManager {
         address _hermezGovernanceAddress,
         uint64 _withdrawalDelay,
         address _withdrawDelayerContract
-    ) external initializer {
+    ) internal initializer {
         require(
             _hermezAuctionContract != address(0) &&
                 _withdrawDelayerContract != address(0),
