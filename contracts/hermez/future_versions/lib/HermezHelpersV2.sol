@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 /**
  * @dev Rollup helper functions
  */
-contract HermezHelpers is Initializable {
+contract HermezHelpersV2 is Initializable {
     uint256 private constant _WORD_SIZE = 32;
 
     // bytes32 public constant EIP712DOMAIN_HASH =

@@ -8,7 +8,7 @@ import "../hermez/interfaces/VerifierWithdrawInterface.sol";
 import "../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract HermezV2 is InstantWithdrawManager {
+contract HermezV2Mock is InstantWithdrawManager {
     struct VerifierRollup {
         VerifierRollupInterface verifierInterface;
         uint256 maxTx; // maximum rollup transactions in a batch: L2-tx + L1-tx transactions

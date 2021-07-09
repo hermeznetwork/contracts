@@ -2,13 +2,13 @@
 
 pragma solidity 0.6.12;
 
-import "../lib/InstantWithdrawManager.sol";
+import "../lib/InstantWithdrawManagerV2.sol";
 import "../interfaces/VerifierRollupInterface.sol";
 import "../interfaces/VerifierWithdrawInterface.sol";
-import "../../interfaces/IHermezAuctionProtocol.sol";
+import "../../../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Hermezv2 is InstantWithdrawManager {
+contract HermezV2MockV2 is InstantWithdrawManagerV2 {
     struct VerifierRollup {
         VerifierRollupInterface verifierInterface;
         uint256 maxTx; // maximum rollup transactions in a batch: L2-tx + L1-tx transactions
@@ -133,6 +133,9 @@ contract Hermezv2 is InstantWithdrawManager {
     // HEZ token address
     address public tokenHEZ;
 
+    // upgradability test
+    uint256 public version;
+
     // Event emitted when a L1-user transaction is called and added to the nextL1FillingQueue queue
     event L1UserTxEvent(
         uint32 indexed queueIndex,
@@ -154,8 +157,8 @@ contract Hermezv2 is InstantWithdrawManager {
 
     // Event emitted when a withdrawal is done
     event WithdrawEvent(
+        uint256 indexed amountWithdraw,
         uint48 indexed idx,
-        uint32 indexed batchNum,
         bool indexed instantWithdraw
     );
 
@@ -166,38 +169,13 @@ contract Hermezv2 is InstantWithdrawManager {
         uint64 withdrawalDelay
     );
 
-    // Event emitted when the contract is updated to the new version
-    event hermezV2();
+    // upgradability test
+    function setVersion() public {
+        version = 2;
+    }
 
-    function updateVerifiers() external {
-        require(
-            msg.sender == address(0xb6D3f1056c015962fA66A4020E50522B58292D1E),
-            "Hermez::updateVerifiers ONLY_DEPLOYER"
-        );
-        require(
-            rollupVerifiers[0].maxTx == 344, // Old verifier 344 tx
-            "Hermez::updateVerifiers VERIFIERS_ALREADY_UPDATED"
-        );
-        rollupVerifiers[0] = VerifierRollup({
-            verifierInterface: VerifierRollupInterface(
-                address(0x3DAa0B2a994b1BC60dB9e312aD0a8d87a1Bb16D2) // New verifier 400 tx
-            ),
-            maxTx: 400,
-            nLevels: 32
-        });
-
-        rollupVerifiers[1] = VerifierRollup({
-            verifierInterface: VerifierRollupInterface(
-                address(0x1DC4b451DFcD0e848881eDE8c7A99978F00b1342) // New verifier 2048 tx
-            ),
-            maxTx: 2048,
-            nLevels: 32
-        });
-
-        withdrawVerifier = VerifierWithdrawInterface(
-            0x4464A1E499cf5443541da6728871af1D5C4920ca
-        );
-        emit hermezV2();
+    function getVersion() external view returns (uint256) {
+        return version;
     }
 
     /**
@@ -575,7 +553,7 @@ contract Hermezv2 is InstantWithdrawManager {
 
         _withdrawFunds(amountWithdraw, tokenID, instantWithdraw);
 
-        emit WithdrawEvent(idx, batchNum, instantWithdraw);
+        emit WithdrawEvent(amountWithdraw, idx, instantWithdraw);
     }
 
     //////////////
@@ -748,7 +726,7 @@ contract Hermezv2 is InstantWithdrawManager {
         uint256 dPtr;
         uint256 dLen;
 
-        (dPtr, dLen) = _getCallData(3);
+        (dPtr, dLen) = _getCallData(2);
         uint256 l1CoordinatorLength = dLen / _L1_COORDINATOR_TOTALBYTES;
 
         uint256 l1UserLength;
@@ -929,7 +907,7 @@ contract Hermezv2 is InstantWithdrawManager {
         ptr += _MAX_L1_TX * _L1_USER_TOTALBYTES;
 
         // Copy the L2 TX Data from calldata
-        (dPtr, dLen) = _getCallData(4);
+        (dPtr, dLen) = _getCallData(3);
         require(
             dLen <= l1L2TxsDataLength,
             "Hermez::_constructCircuitInput: L2_TX_OVERFLOW"
@@ -944,7 +922,7 @@ contract Hermezv2 is InstantWithdrawManager {
         ptr += l1L2TxsDataLength - dLen;
 
         // Copy the FeeIdxCoordinator from the calldata
-        (dPtr, dLen) = _getCallData(5);
+        (dPtr, dLen) = _getCallData(4);
         require(
             dLen <= feeIdxCoordinatorLength,
             "Hermez::_constructCircuitInput: INVALID_FEEIDXCOORDINATOR_LENGTH"
