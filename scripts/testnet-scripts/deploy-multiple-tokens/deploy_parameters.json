@@ -1,0 +1,17 @@
+[
+  {
+    "name": "niceTokenName",
+    "symbol": "NAM",
+    "decimals": "18"
+  },
+  {
+    "name": "tokenNAME",
+    "symbol": "SYM",
+    "decimals": "8"
+  },
+  {
+    "name": "tokenTEST",
+    "symbol": "TEST",
+    "decimals": "12"
+  }
+]
