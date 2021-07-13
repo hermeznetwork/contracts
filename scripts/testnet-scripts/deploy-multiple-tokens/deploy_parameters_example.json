@@ -1,0 +1,14 @@
+[
+  {
+    "name": "exampleName",
+    "symbol": "SYMBOL",
+    "decimals": "18",
+    "initialAccount": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+  },
+  {
+    "name": "exampleName2",
+    "symbol": "SYMBOL2",
+    "decimals": "18",
+    "initialAccount": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+  }
+]

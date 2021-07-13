@@ -16,7 +16,7 @@ const options = yargs
   .option("d", { alias: "delay", describe: "Delay TimeLock", type: "number", demandOption: false})
   .argv;
 
-const delayTimeLock = options.delay || 60;
+const delayTimeLock = options.delay || 3800;
 const roleAddress = options.r || deployOutputParameters.communitCouncilAddress;
 
 async function main() {
