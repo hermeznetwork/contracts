@@ -29,7 +29,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = require("@hermeznetwork/commonjs");
+} = require("@hermeznetwork/commonjsV1");
 
 const babyjub0 = 0;
 const fromIdx0 = 0;

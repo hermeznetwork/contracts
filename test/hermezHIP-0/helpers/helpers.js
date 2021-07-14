@@ -5,7 +5,7 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-const { float40, txUtils, utils } = require("@hermeznetwork/commonjs");
+const { float40, txUtils, utils } = require("@hermeznetwork/commonjsV1");
 const { BigNumber } = require("ethers");
 const nLevels = 32;
 const {

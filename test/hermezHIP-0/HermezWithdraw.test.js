@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { time } = require("@openzeppelin/test-helpers");
-const { HermezAccount } = require("@hermeznetwork/commonjs");
+const { HermezAccount } = require("@hermeznetwork/commonjsV1");
 const {
   AddToken,
   calculateInputMaxTxLevels,

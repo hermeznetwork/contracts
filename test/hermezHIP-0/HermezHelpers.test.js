@@ -6,7 +6,7 @@ const { smt } = require("circomlib");
 const babyJub = require("circomlib").babyJub;
 const utilsScalar = require("ffjavascript").utils;
 
-const { HermezAccount, stateUtils, txUtils } = require("@hermeznetwork/commonjs");
+const { HermezAccount, stateUtils, txUtils } = require("@hermeznetwork/commonjsV1");
 
 let tree;
 const key1 = Scalar.e(7);

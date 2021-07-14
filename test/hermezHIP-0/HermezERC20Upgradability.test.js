@@ -31,7 +31,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = require("@hermeznetwork/commonjs");
+} = require("@hermeznetwork/commonjsV1");
 
 describe("Hermez ERC 20 Upgradability", function () {
   let hardhatTokenERC20Mock;

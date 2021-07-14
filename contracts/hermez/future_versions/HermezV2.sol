@@ -900,14 +900,15 @@ contract HermezV2 is InstantWithdrawManagerV2 {
             dLen <= l1L2TxsDataLength,
             "Hermez::_constructCircuitInput: L2_TX_OVERFLOW"
         );
+
+        // L2 TX unused data is padded with 0 at the start
+        _fillZeros(ptr, l1L2TxsDataLength - dLen);
+        ptr += l1L2TxsDataLength - dLen;
+
         assembly {
             calldatacopy(ptr, dPtr, dLen)
         }
         ptr += dLen;
-
-        // L2 TX unused data is padded with 0 at the end
-        _fillZeros(ptr, l1L2TxsDataLength - dLen);
-        ptr += l1L2TxsDataLength - dLen;
 
         // Copy the FeeIdxCoordinator from the calldata
         (dPtr, dLen) = _getCallData(4);

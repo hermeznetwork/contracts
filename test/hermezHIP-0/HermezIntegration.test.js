@@ -29,7 +29,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = require("@hermeznetwork/commonjs");
+} = require("@hermeznetwork/commonjsV1");
 
 const COORDINATOR_1_URL = "https://hermez.io";
 const BLOCKS_PER_SLOT = 40;

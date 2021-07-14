@@ -19,7 +19,7 @@ const {
   Constants,
   RollupDB,
   BatchBuilder,
-} = require("@hermeznetwork/commonjs");
+} = require("@hermeznetwork/commonjsV1");
 
 const INITIAL_DELAY = 0;
 
