@@ -8,6 +8,18 @@ contract HermezTestV2 is HermezV2 {
     event ReturnUint256(uint256);
     event ReturnBytes(bytes);
 
+    function testVerifyWithdraw(
+        uint256[2] calldata proofA,
+        uint256[2][2] calldata proofB,
+        uint256[2] calldata proofC,
+        uint256[1] calldata input
+    ) public view returns (uint256) {
+        uint256 gasFirst = gasleft();
+        withdrawVerifier.verifyProof(proofA, proofB, proofC, input);
+        uint256 gasLast = gasFirst - gasleft();
+        return gasLast;
+    }
+
     function setLastIdx(uint48 newLastIdx) public {
         lastIdx = newLastIdx;
     }
