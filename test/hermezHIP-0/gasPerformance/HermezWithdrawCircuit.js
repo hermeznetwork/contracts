@@ -36,6 +36,7 @@ const {
   BatchBuilder,
   withdrawUtils
 } = require("@hermeznetwork/commonjsV1");
+const { stringifyBigInts, unstringifyBigInts } = require("ffjavascript").utils;
 
 describe("Hermez ERC 20", function () {
   let hardhatTokenERC20Mock;
@@ -269,7 +270,7 @@ describe("Hermez ERC 20", function () {
 
       // circuit stuff
       const batchNum = await hardhatHermez.lastForgedBatch();
-      const exitInfo = await rollupDB.getExitInfo(256, batchNum);
+      const exitInfo = await rollupDB.getExitInfo(fromIdx, batchNum);
       const stateRoot = await rollupDB.getStateRoot(batchNum);
       const input = {};
       const tmpExitInfo = exitInfo;
@@ -285,12 +286,25 @@ describe("Hermez ERC 20", function () {
       input.ay = Scalar.fromString(tmpState.ay, 16);
       input.exitBalance = tmpState.exitBalance;
       input.accumulatedHash = tmpState.accumulatedHash;
+      input.nonce = tmpState.nonce;
 
       let siblings = exitInfo.siblings;
       while (siblings.length < (nLevels + 1)) siblings.push(Scalar.e(0));
       input.siblingsState = siblings;
 
       const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw.wasm"), path.join(__dirname, "./circuits/withdraw.zkey" ));
+    
+      const instantWithdraw = true;
+      fs.writeFileSync(path.join(__dirname, "./circuits/proof.json"), JSON.stringify(prove.proof, null, 1));
+      fs.writeFileSync(path.join(__dirname, "./circuits/public.json"), JSON.stringify(prove.publicSignals, null, 1));
+      const vKey = JSON.parse(fs.readFileSync(path.join(__dirname, "./circuits/verification_key.json")));
+      const res = await snarkjs.groth16.verify(vKey, prove.publicSignals, prove.proof);
+      if (res === true) {
+        console.log("Verification OK");
+      } else {
+        console.log("Invalid proof");
+      }
+      
       const proofA = [prove.proof.pi_a[0],
         prove.proof.pi_a[1]
       ];
@@ -306,9 +320,30 @@ describe("Hermez ERC 20", function () {
       ];
       const proofC =  [prove.proof.pi_c[0],
         prove.proof.pi_c[1]
-      ];    
-      const instantWithdraw = true;
+      ];
+      
+      const inputSC = [prove.publicSignals[0]];
+      
+      const proofA2 = [padding256(prove.proof.pi_a[0]),
+        padding256(prove.proof.pi_a[1])
+      ];
+      const proofB2 = [
+        [
+          padding256(prove.proof.pi_b[0][1]),
+          padding256(prove.proof.pi_b[0][0])
+        ],
+        [
+          padding256(prove.proof.pi_b[1][1]),
+          padding256(prove.proof.pi_b[1][0])
+        ]
+      ];
+      const proofC2 = [padding256(prove.proof.pi_c[0]),
+        padding256(prove.proof.pi_c[1])
+      ];
+      const inputSC2 = [padding256(prove.publicSignals[0])];
+      console.log(proofA2, proofB2, proofC2, inputSC2);
 
+      console.log(proofA, proofB, proofC, inputSC);
       console.log( await hardhatVerifierWithdrawHelper.verifyProof(proofA,
         proofB,
         proofC,
@@ -336,25 +371,25 @@ describe("Hermez ERC 20", function () {
       // );
       // console.log("invalid proof: ", gasVerifiProof.toNumber());
 
-      // const tx = await hardhatHermez.withdrawCircuit(
-      //   proofA,
-      //   proofB,
-      //   proofC,
-      //   tokenID,
-      //   amount,
-      //   amount,
-      //   batchNum,
-      //   fromIdx,
-      //   instantWithdraw
-      // );
-      // console.log("withdraw circuit");
-      // console.log((await tx.wait()).gasUsed.toNumber());
-      // const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
-      //   await owner.getAddress()
-      // );
-      // expect(parseInt(finalOwnerBalance)).to.equal(
-      //   parseInt(initialOwnerBalance) + amount
-      // );
+      const tx = await hardhatHermez.withdrawCircuit(
+        proofA,
+        proofB,
+        proofC,
+        tokenID,
+        amount,
+        amount,
+        batchNum,
+        fromIdx,
+        instantWithdraw
+      );
+      console.log("withdraw circuit");
+      console.log((await tx.wait()).gasUsed.toNumber());
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+      expect(parseInt(finalOwnerBalance)).to.equal(
+        parseInt(initialOwnerBalance) + amount
+      );
     });
   
     // it("test instant withdraw merkle proof with more leafs", async function () {
@@ -618,3 +653,9 @@ describe("Hermez ERC 20", function () {
     // });
   });
 });
+function padding256(n) {
+  let nstr = Scalar.e(n).toString(16);
+  while (nstr.length < 64) nstr = "0" + nstr;
+  nstr = `0x${nstr}`;
+  return nstr;
+}

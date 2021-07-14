@@ -14,6 +14,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.6.11;
+import "hardhat/console.sol";
 
 library Pairing {
     struct G1Point {
@@ -317,6 +318,19 @@ contract VerifierWithdrawV2 {
         uint256[2] memory c,
         uint256[1] memory input
     ) public view returns (bool r) {
+        console.log(a[0]);
+        console.log(a[1]);
+
+        console.log(b[0][0]);
+        console.log(b[0][1]);
+        console.log(b[1][0]);
+        console.log(b[1][1]);
+
+        console.log(c[0]);
+        console.log(c[1]);
+
+        console.log(input[0]);
+
         Proof memory proof;
         proof.A = Pairing.G1Point(a[0], a[1]);
         proof.B = Pairing.G2Point([b[0][0], b[0][1]], [b[1][0], b[1][1]]);
