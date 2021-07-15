@@ -34,9 +34,9 @@ async function main() {
           constructorArguments: [
             currentToken.name,
             currentToken.symbol,
+            currentToken.decimals,
             currentToken.initialAccount || deployerAddress,
             currentToken.tokenInitalAmount || defaultTokenInitialAmount,
-            currentToken.decimals,
           ]
         }
       );

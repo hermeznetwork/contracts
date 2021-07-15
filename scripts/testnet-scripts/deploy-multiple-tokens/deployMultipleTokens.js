@@ -41,7 +41,7 @@ async function main() {
   console.log("<====================================>");
 
   const outputJson = {};
-  const instanceToken = await (await ethers.getContractFactory("ERC20MockDecimals")).connect(deployer);
+  const instanceToken = await (await ethers.getContractFactory("ERC20Custom")).connect(deployer);
   for (let i = 0; i < deployParameters.length; i++) {
     const currentToken = deployParameters[i];
 
@@ -65,9 +65,9 @@ async function main() {
     const deployToken = await instanceToken.deploy(
       currentToken.name,
       currentToken.symbol,
+      currentToken.decimals,
       currentToken.initialAccount || deployerAddress,
       currentToken.tokenInitalAmount || defaultTokenInitialAmount,
-      currentToken.decimals,
     );
     console.log("Token is being deployed...");
 

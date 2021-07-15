@@ -9,3 +9,5 @@ coverage
 .coverage_*
 .openzeppelin
 artifacts/
+scripts/testnet-scripts/deploy-multiple-tokens/deploy_output.json
+scripts/testnet-scripts/deploy-multiple-tokens/deploy_parameters.json
