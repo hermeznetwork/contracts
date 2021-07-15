@@ -316,4 +316,74 @@ contract HermezHelpersV2 is Initializable {
                 }
         }
     }
+
+    /**
+     * @dev Calculate the circuit input hashing all the elements
+     * @param sender tx sender
+     * @param stateRoot state root
+     * @param tokenIDs list token ids to withdraw
+     * @param amountWithdraws list amounts to withdraw
+     * @param idxs list idxs to withdraw
+     * @param nWithdraws number of tokens to withdraw
+     * @return circuit input
+     */
+    function _getInputWithdraw(
+        address sender,
+        uint256 stateRoot,
+        uint32[] memory tokenIDs,
+        uint192[] memory amountWithdraws,
+        uint48[] memory idxs,
+        uint256 nWithdraws
+    ) internal pure returns (uint256) {
+        bytes memory inputBytes;
+
+        uint256 ptr; // Position for writing the buffer
+
+        assembly {
+            let inputBytesLength := add(
+                add(add(add(32, 20), mul(4, nWithdraws)), mul(24, nWithdraws)),
+                mul(6, nWithdraws)
+            )
+
+            // Set inputBytes to the next free memory space
+            inputBytes := mload(0x40)
+            // Reserve the memory. 32 for the length , the input bytes and 32
+            // extra bytes at the end for word manipulation
+            mstore(0x40, add(add(inputBytes, 0x40), inputBytesLength))
+
+            // Set the actual length of the input bytes
+            mstore(inputBytes, inputBytesLength)
+            // Set The Ptr at the begining of the inputPubber
+            ptr := add(inputBytes, 32)
+
+            mstore(ptr, stateRoot)
+            ptr := add(ptr, 32)
+
+            mstore(ptr, shl(96, sender)) // 256 - 20*8 = 96
+            ptr := add(ptr, 20)
+        }
+
+        for (uint256 i = 0; i < nWithdraws; i++) {
+            uint32 tokenID = tokenIDs[i];
+            assembly {
+                mstore(ptr, shl(224, tokenID)) // 256 - 4*8 = 224
+                ptr := add(ptr, 4)
+            }
+        }
+        for (uint256 i = 0; i < nWithdraws; i++) {
+            uint192 amountWithdraw = amountWithdraws[i];
+            assembly {
+                mstore(ptr, shl(64, amountWithdraw)) // 256 - 24*8 = 64
+                ptr := add(ptr, 24)
+            }
+        }
+        for (uint256 i = 0; i < nWithdraws; i++) {
+            uint48 idx = idxs[i];
+            assembly {
+                mstore(ptr, shl(208, idx)) // 256 - 6*8 = 208
+                ptr := add(ptr, 6)
+            }
+        }
+        return uint256(sha256(inputBytes));
+    }
 }
