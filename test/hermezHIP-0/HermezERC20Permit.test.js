@@ -139,7 +139,7 @@ describe("Hermez ERC20 Permit", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatTokenERC20PermitMock.address,
       forgeL1L2BatchTimeout,
@@ -926,7 +926,7 @@ describe("Hermez ERC20 Permit", function () {
       await forgerTest.forgeBatch(true, l1TxUserArray, l1TxCoordiatorArray);
     });
 
-    it("test instant withdraw circuit", async function () {
+    it("test instant withdraw multi token", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(1000);
@@ -981,7 +981,7 @@ describe("Hermez ERC20 Permit", function () {
       // forge batch with all the create account and exit
       await forgerTest.forgeBatch(true, l1TxUserArray, []);
 
- 
+
       // perform withdraw
       const batchNum = await hardhatHermez.lastForgedBatch();
       const instantWithdraw = true;
@@ -994,16 +994,16 @@ describe("Hermez ERC20 Permit", function () {
       const proofC = ["0", "0"];
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amountWithdraw,
+          [tokenID],
+          [amount],
+          [amountWithdraw],
           batchNum,
-          fromIdx,
-          instantWithdraw
+          [fromIdx],
+          [instantWithdraw]
         )
       )
         .to.emit(hardhatHermez, "WithdrawEvent")
@@ -1014,36 +1014,36 @@ describe("Hermez ERC20 Permit", function () {
       );
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amountWithdraw*2,
+          [tokenID],
+          [amount],
+          [amountWithdraw * 2],
           batchNum,
-          fromIdx,
-          instantWithdraw
+          [fromIdx],
+          [instantWithdraw]
         )
       )
-        .to.be.revertedWith("Hermez::withdrawCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED");
+        .to.be.revertedWith("Hermez::withdrawMultiToken: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED");
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amountWithdraw,
+          [tokenID],
+          [amount],
+          [amountWithdraw],
           batchNum,
-          fromIdx,
-          instantWithdraw
+          [fromIdx],
+          [instantWithdraw]
         )
       )
         .to.emit(hardhatHermez, "WithdrawEvent")
         .withArgs(amountWithdraw, fromIdx, instantWithdraw);
-          
+
       const finalOwnerBalance = await hardhatTokenERC20PermitMock.balanceOf(
         await owner.getAddress()
       );
@@ -1055,7 +1055,7 @@ describe("Hermez ERC20 Permit", function () {
         await hardhatHermez.exitAccumulateMap(fromIdx)
       );
     });
-    it("test delayed withdraw circuit", async function () {
+    it("test delayed withdraw multi token", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(1000);
@@ -1124,16 +1124,16 @@ describe("Hermez ERC20 Permit", function () {
       const proofC = ["0", "0"];
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amount,
+          [tokenID],
+          [amount],
+          [amount],
           batchNum,
-          fromIdx,
-          instantWithdraw
+          [fromIdx],
+          [instantWithdraw]
         )
       )
         .to.emit(hardhatHermez, "WithdrawEvent")

@@ -113,7 +113,7 @@ describe("Hermez instant withdraw manager", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,
@@ -153,7 +153,7 @@ describe("Hermez instant withdraw manager", function () {
         await hardhatHermez.tokenExchange(ethereumAddress)
       ).to.equal(valueArray[1]);
 
-      const tokenAmount = 2; 
+      const tokenAmount = 2;
       const tokenAmountDecimals = ethers.utils.parseEther(
         tokenAmount.toString()
       ); // 18 decimals
@@ -167,7 +167,7 @@ describe("Hermez instant withdraw manager", function () {
         await hardhatHermez.token2USDTest(ethereumAddress, tokenAmountDecimals)
       ).to.equal(resultUSDEthereum);
     });
-    
+
     it("test Helpers pack/unpack function matches SC", async function () {
       const numBuckets = 5;
       const buckets = [];
@@ -274,7 +274,7 @@ describe("Hermez instant withdraw manager", function () {
         hardhatHermez.connect(governance).updateBucketsParameters(bucketsPacked)
       ).to.emit(hardhatHermez, "UpdateBucketsParameters");
 
- 
+
       for (let i = 0; i < numBuckets; i++) {
         const bucket = await hardhatHermez.buckets(i);
         const unpackedBucket = unpackBucket(bucket._hex);
@@ -742,13 +742,13 @@ describe("Hermez instant withdraw manager", function () {
       expect(
         await hardhatHermez.token2USDTest(tokenAddress, tokenAmountDecimals)
       ).to.equal(resultUSD);
-      
+
       expect(
         await hardhatHermez.instantWithdrawalViewer(tokenAddress, tokenAmountDecimals)
       ).to.be.equal(false);
       expect(
         await hardhatHermez.instantWithdrawalViewer(tokenAddress, 10)
-      ).to.be.equal(true); 
+      ).to.be.equal(true);
 
       await expect(hardhatHermez.connect(governance).safeMode()).to.emit(hardhatHermez, "SafeMode");
 
@@ -768,7 +768,7 @@ describe("Hermez instant withdraw manager", function () {
 
       expect(
         await hardhatHermez.instantWithdrawalViewer(tokenAddress, ethers.utils.parseEther("1"))
-      ).to.be.equal(false); 
+      ).to.be.equal(false);
     });
   });
 });

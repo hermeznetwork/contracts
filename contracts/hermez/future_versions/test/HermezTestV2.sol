@@ -15,7 +15,7 @@ contract HermezTestV2 is HermezV2 {
         uint256[1] calldata input
     ) public view returns (uint256) {
         uint256 gasFirst = gasleft();
-        withdrawVerifier.verifyProof(proofA, proofB, proofC, input);
+        withdrawVerifiers[0].verifyProof(proofA, proofB, proofC, input);
         uint256 gasLast = gasFirst - gasleft();
         return gasLast;
     }

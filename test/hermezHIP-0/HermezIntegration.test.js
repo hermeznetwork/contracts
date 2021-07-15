@@ -182,13 +182,13 @@ describe("Hermez integration", function () {
       HermezAddress,
       hermezGovernanceAddress,
       await whiteHackGroupAddress.getAddress()
-    );  
+    );
 
     const filterInitialize = hardhatWithdrawalDelayer.filters.InitializeWithdrawalDelayerEvent(null, null, null);
     const eventsInitialize = await hardhatWithdrawalDelayer.queryFilter(filterInitialize, 0, "latest");
     expect(eventsInitialize[0].args.initialWithdrawalDelay).to.be.equal(INITIAL_DELAY);
     expect(eventsInitialize[0].args.initialHermezGovernanceAddress).to.be.equal(hermezGovernanceAddress);
-    expect(eventsInitialize[0].args.initialEmergencyCouncil).to.be.equal( await whiteHackGroupAddress.getAddress());
+    expect(eventsInitialize[0].args.initialEmergencyCouncil).to.be.equal(await whiteHackGroupAddress.getAddress());
 
     // deploy hermez
     hardhatHermez = await Hermez.deploy();
@@ -198,7 +198,7 @@ describe("Hermez integration", function () {
       hardhatHermez.initializeHermez(
         [hardhatVerifierRollupHelper.address],
         calculateInputMaxTxLevels([maxTx], [nLevels]),
-        hardhatVerifierWithdrawHelper.address,
+        [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
         hardhatHermezAuctionProtocol.address,
         hardhatTokenHermez.address,
         forgeL1L2BatchTimeout,
@@ -504,17 +504,17 @@ describe("Hermez integration", function () {
       const batchNum = await hardhatHermez.lastForgedBatch();
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amount,
+          [tokenID],
+          [amount],
+          [amount],
           batchNum,
-          fromIdx,
-          instantWithdraw
-        ) 
+          [fromIdx],
+          [instantWithdraw]
+        )
       )
         .to.emit(hardhatHermez, "WithdrawEvent")
         .withArgs(amount, fromIdx, instantWithdraw);

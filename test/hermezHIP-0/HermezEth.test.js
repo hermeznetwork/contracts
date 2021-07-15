@@ -145,7 +145,7 @@ describe("Hermez ETH test", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,
@@ -459,7 +459,7 @@ describe("Hermez ETH test", function () {
       await forgerTest.forgeBatch(true, l1TxUserArray, l1TxCoordiatorArray);
     });
 
-    it("test instant withdraw circuit", async function () {
+    it("test instant withdraw multi token", async function () {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(1000);
@@ -510,10 +510,10 @@ describe("Hermez ETH test", function () {
       const initialOwnerBalance = await owner.getBalance();
 
       // perform withdraw
-      const numExitRoot = await hardhatHermez.lastForgedBatch();
+      const batchNum = await hardhatHermez.lastForgedBatch();
       const instantWithdraw = true;
       const state = await rollupDB.getStateByIdx(256);
-      const exitInfo = await rollupDB.getExitInfo(256, numExitRoot);
+      const exitInfo = await rollupDB.getExitInfo(256, batchNum);
 
       const proofA = ["0", "0"];
       const proofB = [
@@ -523,16 +523,16 @@ describe("Hermez ETH test", function () {
       const proofC = ["0", "0"];
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amount,
-          numExitRoot,
-          fromIdx,
-          instantWithdraw,
+          [tokenID],
+          [amount],
+          [amount],
+          batchNum,
+          [fromIdx],
+          [instantWithdraw],
           {
             gasPrice: 0,
           }
@@ -547,7 +547,7 @@ describe("Hermez ETH test", function () {
       );
     });
 
-    it("test delayed withdraw circuit with ether", async function () {
+    it("test delayed withdraw multi token with ether", async function () {
       const tokenID = 0;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(1000);
@@ -595,10 +595,10 @@ describe("Hermez ETH test", function () {
       );
 
       // perform withdraw
-      const numExitRoot = await hardhatHermez.lastForgedBatch();
+      const batchNum = await hardhatHermez.lastForgedBatch();
       const instantWithdraw = false;
       const state = await rollupDB.getStateByIdx(256);
-      const exitInfo = await rollupDB.getExitInfo(256, numExitRoot);
+      const exitInfo = await rollupDB.getExitInfo(256, batchNum);
 
       const proofA = ["0", "0"];
       const proofB = [
@@ -608,16 +608,16 @@ describe("Hermez ETH test", function () {
       const proofC = ["0", "0"];
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amount,
-          numExitRoot,
-          fromIdx,
-          instantWithdraw,
+          [tokenID],
+          [amount],
+          [amount],
+          batchNum,
+          [fromIdx],
+          [instantWithdraw],
           {
             gasPrice: 0,
           }

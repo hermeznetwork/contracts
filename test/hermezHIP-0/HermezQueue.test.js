@@ -87,7 +87,7 @@ describe("Hermez Queue", function () {
     let WithdrawalDelayer = await ethers.getContractFactory(
       "WithdrawalDelayerTest"
     );
- 
+
     // factory hermez
     let Hermez = await ethers.getContractFactory("HermezTestV2");
 
@@ -124,7 +124,7 @@ describe("Hermez Queue", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,

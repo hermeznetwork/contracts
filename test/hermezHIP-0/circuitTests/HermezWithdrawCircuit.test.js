@@ -61,7 +61,7 @@ describe("Hermez ERC 20", function () {
   }
   const tokenInitialAmount = ethers.BigNumber.from(
     "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-  ); 
+  );
   const maxL1Tx = 256;
   const maxTx = 512;
   const nLevels = 32;
@@ -108,7 +108,7 @@ describe("Hermez ERC 20", function () {
       "VerifierWithdrawV2"
     );
     // VerifierWithdraw
-    
+
     const HermezAuctionTest = await ethers.getContractFactory(
       "HermezAuctionTest"
     );
@@ -154,7 +154,7 @@ describe("Hermez ERC 20", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,
@@ -205,15 +205,15 @@ describe("Hermez ERC 20", function () {
       .updateTokenExchange(addressArray, valueArray))
       .to.emit(hardhatHermez, "UpdateTokenExchange")
       .withArgs(addressArray, valueArray);
-  
+
   });
 
 
   // You can nest describe calls to create subsections.
 
-  describe("Withdraw circuit", function () {
+  describe("Withdraw Multi Token", function () {
     this.timeout(0);
-    it("test instant withdraw circuit", async function () {
+    it("test instant withdraw multi token", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(Scalar.fromString("1000000000000000000000"));
@@ -293,13 +293,13 @@ describe("Hermez ERC 20", function () {
       while (siblings.length < (nLevels + 1)) siblings.push(Scalar.e(0));
       input.siblingsState = siblings;
 
-      const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw.wasm"), path.join(__dirname, "./circuits/withdraw.zkey" ));
+      const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw.wasm"), path.join(__dirname, "./circuits/withdraw.zkey"));
       const vKey = JSON.parse(fs.readFileSync(path.join(__dirname, "./circuits/verification_key_withdraw.json")));
       const res = await snarkjs.groth16.verify(vKey, prove.publicSignals, prove.proof);
       expect(res).to.be.true;
-      
+
       const proofA = [prove.proof.pi_a[0],
-        prove.proof.pi_a[1]
+      prove.proof.pi_a[1]
       ];
       const proofB = [
         [
@@ -311,10 +311,10 @@ describe("Hermez ERC 20", function () {
           prove.proof.pi_b[1][0]
         ]
       ];
-      const proofC =  [prove.proof.pi_c[0],
-        prove.proof.pi_c[1]
+      const proofC = [prove.proof.pi_c[0],
+      prove.proof.pi_c[1]
       ];
-            
+
       console.log("Gas testing");
       const gasVerifiProver = await hardhatVerifierWithdrawHelper.estimateGas.verifyProof(proofA,
         proofB,
@@ -338,16 +338,16 @@ describe("Hermez ERC 20", function () {
       console.log("invalid proof: ", gasVerifiInvalid.toNumber());
 
       const instantWithdraw = true;
-      const tx = await hardhatHermez.withdrawCircuit(
+      const tx = await hardhatHermez.withdrawMultiToken(
         proofA,
         proofB,
         proofC,
-        tokenID,
-        amount,
-        amount,
+        [tokenID],
+        [amount],
+        [amount],
         batchNum,
-        fromIdx,
-        instantWithdraw
+        [fromIdx],
+        [instantWithdraw]
       );
       console.log("withdraw circuit");
       console.log("Normal flow withdraw 1 leaf: ", (await tx.wait()).gasUsed.toNumber());
@@ -358,7 +358,7 @@ describe("Hermez ERC 20", function () {
         parseInt(initialOwnerBalance) + amount
       );
     });
-  
+
     it("test instant withdraw merkle proof with more leafs", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
@@ -434,7 +434,7 @@ describe("Hermez ERC 20", function () {
       // perform withdraw
       const batchNum = await hardhatHermez.lastForgedBatch();
       const stateRoot = await rollupDB.getStateRoot(batchNum);
-      for (let i = 0; i < 3; i ++) {
+      for (let i = 0; i < 3; i++) {
         const instantWithdraw = true;
         const exitInfo = await rollupDB.getExitInfo(fromIdx + i, batchNum);
 
@@ -458,9 +458,9 @@ describe("Hermez ERC 20", function () {
         while (siblings.length < (nLevels + 1)) siblings.push(Scalar.e(0));
         input.siblingsState = siblings;
 
-        const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw.wasm"), path.join(__dirname, "./circuits/withdraw.zkey" ));
+        const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw.wasm"), path.join(__dirname, "./circuits/withdraw.zkey"));
         const proofA = [prove.proof.pi_a[0],
-          prove.proof.pi_a[1]
+        prove.proof.pi_a[1]
         ];
         const proofB = [
           [
@@ -472,20 +472,20 @@ describe("Hermez ERC 20", function () {
             prove.proof.pi_b[1][0]
           ]
         ];
-        const proofC =  [prove.proof.pi_c[0],
-          prove.proof.pi_c[1]
-        ];    
+        const proofC = [prove.proof.pi_c[0],
+        prove.proof.pi_c[1]
+        ];
 
-        const tx = await hardhatHermez.withdrawCircuit(
+        const tx = await hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amount,
+          [tokenID],
+          [amount],
+          [amount],
           batchNum,
-          fromIdx + i,
-          instantWithdraw
+          [fromIdx + i],
+          [instantWithdraw]
         );
         console.log("gas used circuit 3 leafs: " + i);
         console.log((await tx.wait()).gasUsed.toNumber());
@@ -567,7 +567,7 @@ describe("Hermez ERC 20", function () {
       // perform withdraw
       const batchNum = await hardhatHermez.lastForgedBatch();
       const stateRoot = await rollupDB.getStateRoot(batchNum);
-      for (let i = 0; i < 3; i ++) {
+      for (let i = 0; i < 3; i++) {
         const instantWithdraw = false;
         const exitInfo = await rollupDB.getExitInfo(fromIdx + i, batchNum);
 
@@ -592,9 +592,9 @@ describe("Hermez ERC 20", function () {
         while (siblings.length < (nLevels + 1)) siblings.push(Scalar.e(0));
         input.siblingsState = siblings;
 
-        const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw.wasm"), path.join(__dirname, "./circuits/withdraw.zkey" ));
+        const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw.wasm"), path.join(__dirname, "./circuits/withdraw.zkey"));
         const proofA = [prove.proof.pi_a[0],
-          prove.proof.pi_a[1]
+        prove.proof.pi_a[1]
         ];
         const proofB = [
           [
@@ -606,20 +606,20 @@ describe("Hermez ERC 20", function () {
             prove.proof.pi_b[1][0]
           ]
         ];
-        const proofC =  [prove.proof.pi_c[0],
-          prove.proof.pi_c[1]
-        ];    
+        const proofC = [prove.proof.pi_c[0],
+        prove.proof.pi_c[1]
+        ];
 
-        const tx = await hardhatHermez.withdrawCircuit(
+        const tx = await hardhatHermez.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amount,
+          [tokenID],
+          [amount],
+          [amount],
           batchNum,
-          fromIdx + i,
-          instantWithdraw
+          [fromIdx + i],
+          [instantWithdraw]
         );
         console.log("gas used circuit 3 leafs: " + i);
         console.log((await tx.wait()).gasUsed.toNumber());
