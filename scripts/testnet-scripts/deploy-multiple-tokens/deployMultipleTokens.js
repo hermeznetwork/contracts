@@ -9,7 +9,7 @@ const pathDeployParameters = path.join(__dirname, "./deploy_parameters.json");
 const deployParameters = require(pathDeployParameters);
 const pathOutputJson = deployParameters.pathOutputJson || path.join(__dirname, "./deploy_output.json");
 
-const defaultTokenInitialAmount = ethers.utils.parseEther("1000000");
+const defaultTokenInitialAmount = ethers.utils.parseEther("100000");
 
 async function main() {
   // compìle contracts
@@ -20,8 +20,12 @@ async function main() {
   utils.checkEnvVariables();
 
   // load Mnemonic accounts
-  const signersArray = await ethers.getSigners();
-  const deployer = signersArray[process.env.INDEX];
+  // const signersArray = await ethers.getSigners();
+  // const deployer = signersArray[process.env.INDEX];
+  const nodeUrl = `https://${process.env.HARDHAT_NETWORK}.infura.io/v3/${process.env.INFURA_PROJECT_ID}`;
+  const provider = new ethers.providers.JsonRpcProvider(nodeUrl);
+  const deployer = new ethers.Wallet(process.env.PVT_KEY, provider);
+
   const deployerAddress = await deployer.getAddress();
   const deployerBalance = ethers.utils.formatEther((await deployer.getBalance()).toString());
 
@@ -41,21 +45,21 @@ async function main() {
   for (let i = 0; i < deployParameters.length; i++) {
     const currentToken = deployParameters[i];
 
-    if(!currentToken.tokenInitalAmount) {
+    if (!currentToken.tokenInitalAmount) {
       currentToken.tokenInitalAmount = defaultTokenInitialAmount;
       console.log("Initial amount not defined, use default initial amount instead");
     }
 
-    if(!currentToken.initialAccount) {
+    if (!currentToken.initialAccount) {
       console.log("Initial account not defined, use deployer address as initial account");
       currentToken.initialAccount = deployerAddress;
     }
 
     console.log("Info token paramneters:");
-    console.log("   tokenName: ",currentToken.name);
+    console.log("   tokenName: ", currentToken.name);
     console.log("   tokenSymbol: ", currentToken.symbol);
-    console.log("   InitialAccount: ",  currentToken.initialAccount);
-    console.log("   tokenInitalAmount: ",   currentToken.tokenInitalAmount);
+    console.log("   InitialAccount: ", currentToken.initialAccount);
+    console.log("   tokenInitalAmount: ", currentToken.tokenInitalAmount);
     console.log("   tokenDecimals: ", currentToken.decimals);
 
     const deployToken = await instanceToken.deploy(

@@ -1,0 +1,38 @@
+[
+    {
+        "name": "Elonmuted",
+        "symbol": "ELMT",
+        "decimals": "18",
+        "initialAccount": "0x2fC188fb48a6a1dDBfeCBB5cbc0181f95DDeB269"
+    },
+    {
+        "name": "Volcano",
+        "symbol": "VLCN",
+        "decimals": "18",
+        "initialAccount": "0x2fC188fb48a6a1dDBfeCBB5cbc0181f95DDeB269"
+    },
+    {
+        "name": "Corgi",
+        "symbol": "CORGI",
+        "decimals": "18",
+        "initialAccount": "0x2fC188fb48a6a1dDBfeCBB5cbc0181f95DDeB269"
+    },
+    {
+        "name": "Lambo",
+        "symbol": "LAMBO",
+        "decimals": "18",
+        "initialAccount": "0x2fC188fb48a6a1dDBfeCBB5cbc0181f95DDeB269"
+    },
+    {
+        "name": "Future of France",
+        "symbol": "FOF",
+        "decimals": "18",
+        "initialAccount": "0x2fC188fb48a6a1dDBfeCBB5cbc0181f95DDeB269"
+    },
+    {
+        "name": "Stronghand",
+        "symbol": "SHAND",
+        "decimals": "18",
+        "initialAccount": "0x2fC188fb48a6a1dDBfeCBB5cbc0181f95DDeB269"
+    }
+]
