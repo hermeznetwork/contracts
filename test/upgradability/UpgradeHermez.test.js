@@ -196,7 +196,7 @@ describe("upgradability test Hermez", function() {
   });
   it("should be able to upgrade Hermez", async () => {
 
-    const HermezV2 = await ethers.getContractFactory("HermezV2");
+    const HermezV2 = await ethers.getContractFactory("HermezV2Mock");
     const newHermezV2 = HermezV2.attach(hermez.address);
 
     await expect(newHermezV2.getVersion()).to.be.reverted;
@@ -226,7 +226,7 @@ describe("upgradability test Hermez", function() {
 
   });
   it("should be able to upgrade Hermez with prepareUpgrade", async () => {
-    const HermezV2 = await ethers.getContractFactory("HermezV2");
+    const HermezV2 = await ethers.getContractFactory("HermezV2Mock");
 
     const hermezV2 = await upgrades.prepareUpgrade(hermez.address, HermezV2, {
       unsafeAllowCustomTypes: true
@@ -243,7 +243,7 @@ describe("upgradability test Hermez", function() {
   });
 
   it("should be able to upgrade Hermez with prepareUpgrade after transferProxyAdminOwnership", async () => {
-    const HermezV2 = await ethers.getContractFactory("HermezV2");
+    const HermezV2 = await ethers.getContractFactory("HermezV2Mock");
 
     const hermezV2 = await upgrades.prepareUpgrade(hermez.address, HermezV2, {
       unsafeAllowCustomTypes: true
@@ -264,7 +264,7 @@ describe("upgradability test Hermez", function() {
 
 
   it("should be able to upgrade using Timelock Hermez with prepareUpgrade", async () => {
-    const HermezV2 = await ethers.getContractFactory("HermezV2");
+    const HermezV2 = await ethers.getContractFactory("HermezV2Mock");
     const Timelock = await ethers.getContractFactory("Timelock");
 
     const newHermezV2 = HermezV2.attach(hermez.address);
