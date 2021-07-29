@@ -2,7 +2,7 @@ name: Auction SmartContracts CI
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, feature/upgrade-v1]
 
 jobs:
   test:

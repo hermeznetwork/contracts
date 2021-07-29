@@ -12,6 +12,7 @@
     "test:auction": "npx hardhat test test/auction/*.test.js",
     "test:upgradability": "npx hardhat test test/upgradability/*.test.js",
     "test:withdrawalDelayer": "npx hardhat test test/withdrawalDelayer/*.test.js",
+    "test:hip0": "npx hardhat test test/hermezHIP-0/*.test.js",
     "test:gas": "scripts/run-gas-reporter.sh",
     "test:gas:hermez": "scripts/run-gas-reporter.sh test/hermez/*test.js test/hermez/.solcover.js",
     "test:gas:math": "scripts/run-gas-reporter.sh \"test/math/*.test.js\" \"test/math/.solcover.js\"",
