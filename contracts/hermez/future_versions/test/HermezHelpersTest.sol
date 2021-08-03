@@ -19,4 +19,23 @@ contract HermezHelpersTestV2 is HermezHelpersV2 {
     ) public view returns (address) {
         return _checkSig(babyjub, r, s, v);
     }
+
+    function getInputWithdraw(
+        address sender,
+        uint256 stateRoot,
+        uint32[] memory tokenIDs,
+        uint192[] memory amountWithdraws,
+        uint48[] memory idxs,
+        uint256 nWithdraws
+    ) public pure returns (uint256) {
+        return
+            _getInputWithdraw(
+                sender,
+                stateRoot,
+                tokenIDs,
+                amountWithdraws,
+                idxs,
+                nWithdraws
+            );
+    }
 }

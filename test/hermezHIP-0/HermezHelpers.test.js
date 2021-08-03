@@ -89,5 +89,21 @@ describe("Hermez Helpers", function () {
         expect(Scalar.e(resSm).toString()).to.be.equal(testVector[i][1]);
       }
     });
+
+    it("getInputWithdraw", async function () {
+      const sender = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+      const stateRoot = "16471487336663764955476459003196782406396780162073565271464820707413001416579";
+      const tokenIDs = [1, 2, 3, 4];
+      const amountWithdraws = [25, 50, 25, 50];
+      const idxs = [256, 257, 258, 259];
+      const nWithdraws = 4;
+      const input = Scalar.fromString("1106951918443281709282875456005307283342673022777003068551488511025245160133");
+
+      const inputWithdraw = await hardhatHermezHelpersTest.getInputWithdraw(
+        sender, stateRoot, tokenIDs, amountWithdraws, idxs, nWithdraws
+      )
+      const inputWithdrawScalar = Scalar.fromString(inputWithdraw._hex, 16)
+      expect(inputWithdrawScalar).to.equal(input);
+    });
   });
 });

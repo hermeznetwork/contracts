@@ -154,7 +154,7 @@ describe("Hermez ERC 20 Upgradability", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,
@@ -298,7 +298,7 @@ describe("Hermez ERC 20 Upgradability", function () {
 
     });
 
-    it("test instant withdraw circuit", async function () {
+    it("test instant withdraw multi token", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(1000);
@@ -353,10 +353,10 @@ describe("Hermez ERC 20 Upgradability", function () {
       await forgerTest.forgeBatch(true, l1TxUserArray, []);
 
       // perform withdraw
-      const numExitRoot = await hardhatHermez.lastForgedBatch();
+      const batchNum = await hardhatHermez.lastForgedBatch();
       const instantWithdraw = true;
       const state = await rollupDB.getStateByIdx(256);
-      const exitInfo = await rollupDB.getExitInfo(256, numExitRoot);
+      const exitInfo = await rollupDB.getExitInfo(256, batchNum);
 
       // upgrade contract and assure that the state is the same!
       const HermezV2 = await ethers.getContractFactory("HermezV2MockV2");
@@ -376,16 +376,16 @@ describe("Hermez ERC 20 Upgradability", function () {
       const proofC = ["0", "0"];
 
       await expect(
-        newHermezV2.withdrawCircuit(
+        newHermezV2.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amount,
-          numExitRoot,
-          fromIdx,
-          instantWithdraw
+          [tokenID],
+          [amount],
+          [amount],
+          batchNum,
+          [fromIdx],
+          [instantWithdraw]
         )
       )
         .to.emit(newHermezV2, "WithdrawEvent")
@@ -397,7 +397,7 @@ describe("Hermez ERC 20 Upgradability", function () {
         parseInt(initialOwnerBalance) + amount
       );
     });
-    it("test delayed withdraw circuit", async function () {
+    it("test delayed withdraw multi token", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(1000);
@@ -462,10 +462,10 @@ describe("Hermez ERC 20 Upgradability", function () {
       expect(await newHermezV2.getVersion()).to.be.equal(2);
 
       // perform withdraw
-      const numExitRoot = await hardhatHermez.lastForgedBatch();
+      const batchNum = await hardhatHermez.lastForgedBatch();
       const instantWithdraw = false;
       const state = await rollupDB.getStateByIdx(256);
-      const exitInfo = await rollupDB.getExitInfo(256, numExitRoot);
+      const exitInfo = await rollupDB.getExitInfo(256, batchNum);
 
       const proofA = ["0", "0"];
       const proofB = [
@@ -475,16 +475,16 @@ describe("Hermez ERC 20 Upgradability", function () {
       const proofC = ["0", "0"];
 
       await expect(
-        newHermezV2.withdrawCircuit(
+        newHermezV2.withdrawMultiToken(
           proofA,
           proofB,
           proofC,
-          tokenID,
-          amount,
-          amount,
-          numExitRoot,
-          fromIdx,
-          instantWithdraw
+          [tokenID],
+          [amount],
+          [amount],
+          batchNum,
+          [fromIdx],
+          [instantWithdraw]
         )
       )
         .to.emit(newHermezV2, "WithdrawEvent")

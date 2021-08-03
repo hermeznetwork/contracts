@@ -138,7 +138,7 @@ describe("Hermez gas performance", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,
@@ -239,12 +239,12 @@ describe("Hermez gas performance", function () {
         // hackmd table
         let log = `|  ${SCGasArray[i]}    |`;
         log += ` ${SCGasArray[i] - (SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i])
-        }   |`;
+          }   |`;
         log += ` ${wastedGasarray[i]}   |`;
         log += ` ${wastedGasarray[i] -
           (wastedGasarray[i - 1] ? wastedGasarray[i - 1] : wastedGasarray[i])
-        }   |`;
-        log += ` ${i*multiplier}   |`;
+          }   |`;
+        log += ` ${i * multiplier}   |`;
         console.log(log);
       }
     });
@@ -290,7 +290,7 @@ describe("Hermez gas performance", function () {
       const multiplier = 12;
 
       for (let i = 0; i < 11; i++) {
-        for (let j = 0; j < i*multiplier; j++) {
+        for (let j = 0; j < i * multiplier; j++) {
           let txUser = await l1UserTxCreateAccountDeposit(
             loadAmount,
             tokenID,
@@ -336,12 +336,12 @@ describe("Hermez gas performance", function () {
         // hackmd table
         let log = `|  ${SCGasArray[i]}    |`;
         log += ` ${SCGasArray[i] - (SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i])
-        }   |`;
+          }   |`;
         log += ` ${wastedGasarray[i]}   |`;
         log += ` ${wastedGasarray[i] -
           (wastedGasarray[i - 1] ? wastedGasarray[i - 1] : wastedGasarray[i])
-        }   |`;
-        log += ` ${i*multiplier}   |`;
+          }   |`;
+        log += ` ${i * multiplier}   |`;
         console.log(log);
       }
     });
@@ -375,7 +375,7 @@ describe("Hermez gas performance", function () {
       );
 
       for (let i = 0; i < 54; i++) {
-        L2TxsData = `0x${"1".repeat(((nLevels / 8) * 2 + 6) * i*multiplier * 2)}`; // maxL2Tx 376
+        L2TxsData = `0x${"1".repeat(((nLevels / 8) * 2 + 6) * i * multiplier * 2)}`; // maxL2Tx 376
         await hardhatHermez.forgeBatch(
           newLastIdx,
           newStateRoot,
@@ -411,12 +411,12 @@ describe("Hermez gas performance", function () {
         // hackmd table
         let log = `|  ${SCGasArray[i]}    |`;
         log += ` ${SCGasArray[i] - (SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i])
-        }   |`;
+          }   |`;
         log += ` ${wastedGasarray[i]}   |`;
         log += ` ${wastedGasarray[i] -
           (wastedGasarray[i - 1] ? wastedGasarray[i - 1] : wastedGasarray[i])
-        }   |`;
-        log += ` ${i*multiplier}   |`;
+          }   |`;
+        log += ` ${i * multiplier}   |`;
         console.log(log);
       }
     });

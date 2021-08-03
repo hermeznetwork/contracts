@@ -152,7 +152,7 @@ describe("Hermez ERC 20", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,
@@ -329,7 +329,7 @@ describe("Hermez ERC 20", function () {
       // forge batch with all the L1 tx
       await forgerTest.forgeBatch(true, l1TxUserArray, l1TxCoordiatorArray);
     });
-   
+
     it("test instant withdraw merkle proof", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
@@ -410,7 +410,7 @@ describe("Hermez ERC 20", function () {
         parseInt(initialOwnerBalance) + amount
       );
     });
-    
+
     it("test instant withdraw merkle proof with more leafs", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;

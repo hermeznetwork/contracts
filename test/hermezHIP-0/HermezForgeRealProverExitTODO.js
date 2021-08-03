@@ -48,7 +48,7 @@ describe("Hermez ERC 20", function () {
   let chainIDHex;
 
   const accounts = [];
-  
+
   // set accounts
   for (let i = 0; i < 10; i++) {
     const newHermezAccount = new HermezAccount();
@@ -163,7 +163,7 @@ describe("Hermez ERC 20", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,

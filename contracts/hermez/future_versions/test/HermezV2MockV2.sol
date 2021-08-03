@@ -87,7 +87,7 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
     VerifierRollup[] public rollupVerifiers;
 
     // Withdraw verifier interface
-    VerifierWithdrawInterface public withdrawVerifier;
+    VerifierWithdrawInterface[MAX_TOKEN_WITHDRAW] public withdrawVerifiers;
 
     // Last account index created inside the rollup
     uint48 public lastIdx;
@@ -132,6 +132,8 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
 
     // HEZ token address
     address public tokenHEZ;
+
+    uint256 public constant MAX_TOKEN_WITHDRAW = 4;
 
     // upgradability test
     uint256 public version;
@@ -185,7 +187,7 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
     function initializeHermez(
         address[] memory _verifiers,
         uint256[] memory _verifiersParams,
-        address _withdrawVerifier,
+        address[MAX_TOKEN_WITHDRAW] calldata _withdrawVerifiers,
         address _hermezAuctionContract,
         address _tokenHEZ,
         uint8 _forgeL1L2BatchTimeout,
@@ -202,7 +204,11 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
 
         // set state variables
         _initializeVerifiers(_verifiers, _verifiersParams);
-        withdrawVerifier = VerifierWithdrawInterface(_withdrawVerifier);
+        for (uint256 i = 0; i < MAX_TOKEN_WITHDRAW; i++) {
+            withdrawVerifiers[i] = VerifierWithdrawInterface(
+                _withdrawVerifiers[i]
+            );
+        }
         hermezAuctionContract = IHermezAuctionProtocol(_hermezAuctionContract);
         tokenHEZ = _tokenHEZ;
         forgeL1L2BatchTimeout = _forgeL1L2BatchTimeout;
@@ -496,64 +502,96 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
      * @param proofA zk-snark input
      * @param proofB zk-snark input
      * @param proofC zk-snark input
-     * @param tokenID Token identifier
-     * @param amountExit Amount exit of the leaf
-     * @param amountWithdraw Amount to withdraw
+     * @param tokenIDs Token identifier
+     * @param amountExits Amount exit of the leaf
+     * @param amountWithdraws Amount to withdraw
      * @param batchNum Batch number after exit transactions has been done
-     * @param idx Index of the exit tree account
-     * @param instantWithdraw true if is an instant withdraw
+     * @param idxs Index of the exit tree account
+     * @param instantWithdraws true if is an instant withdraw
      * Events: `WithdrawEvent`
      */
-    function withdrawCircuit(
+    function withdrawMultiToken(
         uint256[2] calldata proofA,
         uint256[2][2] calldata proofB,
         uint256[2] calldata proofC,
-        uint32 tokenID,
-        uint192 amountExit,
-        uint192 amountWithdraw,
+        uint32[] memory tokenIDs,
+        uint192[] memory amountExits,
+        uint192[] memory amountWithdraws,
         uint32 batchNum,
-        uint48 idx,
-        bool instantWithdraw
+        uint48[] memory idxs,
+        bool[] memory instantWithdraws
     ) external {
-        // in case of instant withdraw assure that is available
-        if (instantWithdraw) {
-            require(
-                _processInstantWithdrawal(tokenList[tokenID], amountWithdraw),
-                "Hermez::withdrawCircuit: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
-            );
-        }
+        uint256 nWithdraws = tokenIDs.length;
+
         require(
-            amountWithdraw <= uint256(amountExit).sub(exitAccumulateMap[idx]),
-            "Hermez::withdrawCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED"
+            nWithdraws <= MAX_TOKEN_WITHDRAW,
+            "Hermez::withdrawMultiToken: MAX_TOKEN_WITHDRAW_EXCEED"
         );
+
+        require(
+            nWithdraws == amountExits.length &&
+                nWithdraws == amountWithdraws.length &&
+                nWithdraws == idxs.length &&
+                nWithdraws == instantWithdraws.length,
+            "Hermez::withdrawMultiToken: SAME_ARRAY_LENGTH_REQUIRED"
+        );
+
+        for (uint256 i = 0; i < nWithdraws; i++) {
+            // in case of instant withdraw assure that is available
+            if (instantWithdraws[i]) {
+                require(
+                    _processInstantWithdrawal(
+                        tokenList[tokenIDs[i]],
+                        amountWithdraws[i]
+                    ),
+                    "Hermez::withdrawMultiToken: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
+                );
+            }
+            require(
+                amountWithdraws[i] <=
+                    uint256(amountExits[i]).sub(exitAccumulateMap[idxs[i]]),
+                "Hermez::withdrawMultiToken: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED"
+            );
+
+            // set nullifier
+            exitAccumulateMap[idxs[i]] += amountWithdraws[i];
+        }
 
         // get exit root given its index depth
         uint256 stateRoot = stateRootMap[batchNum];
 
-        uint256 input = uint256(
-            sha256(
-                abi.encodePacked(
-                    stateRoot,
-                    msg.sender,
-                    tokenID,
-                    amountExit,
-                    idx
-                )
-            )
+        uint256 input = _getInputWithdraw(
+            msg.sender,
+            stateRoot,
+            tokenIDs,
+            amountExits,
+            idxs,
+            nWithdraws
         ) % _RFIELD;
+
         // verify zk-snark circuit
         require(
-            withdrawVerifier.verifyProof(proofA, proofB, proofC, [input]) ==
-                true,
-            "Hermez::withdrawCircuit: INVALID_ZK_PROOF"
+            withdrawVerifiers[nWithdraws - 1].verifyProof(
+                proofA,
+                proofB,
+                proofC,
+                [input]
+            ) == true,
+            "Hermez::withdrawMultiToken: INVALID_ZK_PROOF"
         );
 
-        // set nullifier
-        exitAccumulateMap[idx] += amountWithdraw;
-
-        _withdrawFunds(amountWithdraw, tokenID, instantWithdraw);
-
-        emit WithdrawEvent(amountWithdraw, idx, instantWithdraw);
+        for (uint256 i = 0; i < nWithdraws; i++) {
+            _withdrawFunds(
+                amountWithdraws[i],
+                tokenIDs[i],
+                instantWithdraws[i]
+            );
+            emit WithdrawEvent(
+                amountWithdraws[i],
+                idxs[i],
+                instantWithdraws[i]
+            );
+        }
     }
 
     //////////////
