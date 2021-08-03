@@ -105,8 +105,10 @@ describe("Hermez ERC 20", function () {
     const VerifierWithdrawHelper = await ethers.getContractFactory(
       "VerifierWithdraw"
     );
+    const VerifierBjj= await ethers.getContractFactory(
+      "VerifierMock"
+    );
     // VerifierWithdraw
-    
     const HermezAuctionTest = await ethers.getContractFactory(
       "HermezAuctionTest"
     );
@@ -158,6 +160,7 @@ describe("Hermez ERC 20", function () {
     // deploy helpers
     let hardhatVerifierRollupHelper = await VerifierRollupHelper.deploy();
     hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper.deploy();
+    hardhatVerifierBjj = await VerifierBjj.deploy();
 
     let hardhatHermezAuctionTest = await HermezAuctionTest.deploy();
 
@@ -177,6 +180,7 @@ describe("Hermez ERC 20", function () {
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
       hardhatVerifierWithdrawHelper.address,
+      hardhatVerifierBjj.address,
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,
@@ -594,7 +598,7 @@ describe("Hermez ERC 20", function () {
         const tmpState = tmpExitInfo.state;
 
         // fill private inputs
-        input.rootExit = exitRoot;
+        input.rootState = stateRoot;
         input.ethAddr = Scalar.fromString(tmpState.ethAddr, 16);
         input.tokenID = tmpState.tokenID;
         input.balance = tmpState.balance;

@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "@hermeznetwork/commonjs": "git://github.com/hermeznetwork/commonjs.git#master",
-    "@hermeznetwork/commonjsV1": "git://github.com/hermeznetwork/commonjs.git#feature/upgrade-v1",
+    "@hermeznetwork/commonjsV1": "git://github.com/hermeznetwork/commonjs.git#feature/withdrawBjj",
     "axios": "^0.21.1",
     "readline": "^1.3.0",
     "snarkjs": "^0.4.6"
