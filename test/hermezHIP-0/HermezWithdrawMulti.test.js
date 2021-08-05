@@ -358,7 +358,7 @@ describe("Hermez Withdraw Multi Token", function () {
       const amount = 100;
       const amount2 = amount * 2;
       const amountF = float40.fix2Float(amount);
-      const amountF2 = float40.fix2Float(amount2)
+      const amountF2 = float40.fix2Float(amount2);
 
       const l1TxUserArray = [];
 
@@ -462,7 +462,7 @@ describe("Hermez Withdraw Multi Token", function () {
       const amount = 100;
       const amount2 = amount * 2;
       const amountF = float40.fix2Float(amount);
-      const amountF2 = float40.fix2Float(amount2)
+      const amountF2 = float40.fix2Float(amount2);
 
       const l1TxUserArray = [];
 
@@ -582,14 +582,14 @@ describe("Hermez Withdraw Multi Token", function () {
     });
 
     it("test instant withdraw multi token nWithdraws = 4", async function () {
-      const tokenID = [1, 2, 3, 4]
+      const tokenID = [1, 2, 3, 4];
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(1000);
-      const fromIdx = [256, 257, 258, 259]
+      const fromIdx = [256, 257, 258, 259];
       const amount = 100;
       const amount2 = amount * 2;
       const amountF = float40.fix2Float(amount);
-      const amountF2 = float40.fix2Float(amount2)
+      const amountF2 = float40.fix2Float(amount2);
 
       const l1TxUserArray = [];
 
@@ -696,6 +696,19 @@ describe("Hermez Withdraw Multi Token", function () {
       // forge batch with all the create account and exit
       await forgerTest.forgeBatch(true, l1TxUserArray, []);
 
+      const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+      const initialOwnerBalance2 = await hardhatTokenERC20Mock2.balanceOf(
+        await owner.getAddress()
+      );
+      const initialOwnerBalance3 = await hardhatTokenERC20Mock3.balanceOf(
+        await owner.getAddress()
+      );
+      const initialOwnerBalance4 = await hardhatTokenERC20Mock4.balanceOf(
+        await owner.getAddress()
+      );
+
       // perform withdraw
       const batchNum = await hardhatHermez.lastForgedBatch();
       const instantWithdraw = true;
@@ -729,6 +742,31 @@ describe("Hermez Withdraw Multi Token", function () {
         .withArgs(amountWithdraw, fromIdx[2], instantWithdraw)
         .to.emit(hardhatHermez, "WithdrawEvent")
         .withArgs(amountWithdraw2, fromIdx[3], instantWithdraw);
+
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+      const finalOwnerBalance2 = await hardhatTokenERC20Mock2.balanceOf(
+        await owner.getAddress()
+      );
+      const finalOwnerBalance3 = await hardhatTokenERC20Mock3.balanceOf(
+        await owner.getAddress()
+      );
+      const finalOwnerBalance4 = await hardhatTokenERC20Mock4.balanceOf(
+        await owner.getAddress()
+      );
+      expect(parseInt(finalOwnerBalance)).to.equal(
+        parseInt(initialOwnerBalance) + amountWithdraw
+      );
+      expect(parseInt(finalOwnerBalance2)).to.equal(
+        parseInt(initialOwnerBalance2) + amountWithdraw2
+      );
+      expect(parseInt(finalOwnerBalance3)).to.equal(
+        parseInt(initialOwnerBalance3) + amountWithdraw
+      );
+      expect(parseInt(finalOwnerBalance4)).to.equal(
+        parseInt(initialOwnerBalance4) + amountWithdraw2
+      );
     });
 
     it("test instant withdraw multi token nWithdraws = 2 check errors", async function () {
@@ -739,7 +777,7 @@ describe("Hermez Withdraw Multi Token", function () {
       const amount = 100;
       const amount2 = amount * 2;
       const amountF = float40.fix2Float(amount);
-      const amountF2 = float40.fix2Float(amount2)
+      const amountF2 = float40.fix2Float(amount2);
 
       const l1TxUserArray = [];
 
@@ -838,7 +876,7 @@ describe("Hermez Withdraw Multi Token", function () {
           [instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw]
         )
       )
-        .to.be.revertedWith("Hermez::withdrawMultiToken: MAX_TOKEN_WITHDRAW_EXCEED")
+        .to.be.revertedWith("Hermez::withdrawMultiToken: MAX_TOKEN_WITHDRAW_EXCEED");
 
       await expect(
         hardhatHermez.withdrawMultiToken(
@@ -853,7 +891,7 @@ describe("Hermez Withdraw Multi Token", function () {
           [instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw]
         )
       )
-        .to.be.revertedWith("Hermez::withdrawMultiToken: SAME_ARRAY_LENGTH_REQUIRED")
+        .to.be.revertedWith("Hermez::withdrawMultiToken: SAME_ARRAY_LENGTH_REQUIRED");
     });
   });
 });

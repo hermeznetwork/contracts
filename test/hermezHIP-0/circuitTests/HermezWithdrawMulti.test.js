@@ -313,7 +313,7 @@ describe("Hermez Withdraw Multi Token", function () {
       expect(res).to.be.true;
 
       const proofA = [prove.proof.pi_a[0],
-      prove.proof.pi_a[1]
+        prove.proof.pi_a[1]
       ];
       const proofB = [
         [
@@ -326,7 +326,7 @@ describe("Hermez Withdraw Multi Token", function () {
         ]
       ];
       const proofC = [prove.proof.pi_c[0],
-      prove.proof.pi_c[1]
+        prove.proof.pi_c[1]
       ];
 
       // perform withdraw
@@ -403,7 +403,7 @@ describe("Hermez Withdraw Multi Token", function () {
       const amount = 100;
       const amount2 = amount * 2;
       const amountF = float40.fix2Float(amount);
-      const amountF2 = float40.fix2Float(amount2)
+      const amountF2 = float40.fix2Float(amount2);
 
       const l1TxUserArray = [];
 
@@ -503,7 +503,7 @@ describe("Hermez Withdraw Multi Token", function () {
       expect(res).to.be.true;
 
       const proofA = [prove.proof.pi_a[0],
-      prove.proof.pi_a[1]
+        prove.proof.pi_a[1]
       ];
       const proofB = [
         [
@@ -516,7 +516,7 @@ describe("Hermez Withdraw Multi Token", function () {
         ]
       ];
       const proofC = [prove.proof.pi_c[0],
-      prove.proof.pi_c[1]
+        prove.proof.pi_c[1]
       ];
 
       // perform withdraw
@@ -551,7 +551,7 @@ describe("Hermez Withdraw Multi Token", function () {
       const amount = 100;
       const amount2 = amount * 2;
       const amountF = float40.fix2Float(amount);
-      const amountF2 = float40.fix2Float(amount2)
+      const amountF2 = float40.fix2Float(amount2);
 
       const l1TxUserArray = [];
 
@@ -677,7 +677,7 @@ describe("Hermez Withdraw Multi Token", function () {
       expect(res).to.be.true;
 
       const proofA = [prove.proof.pi_a[0],
-      prove.proof.pi_a[1]
+        prove.proof.pi_a[1]
       ];
       const proofB = [
         [
@@ -690,7 +690,7 @@ describe("Hermez Withdraw Multi Token", function () {
         ]
       ];
       const proofC = [prove.proof.pi_c[0],
-      prove.proof.pi_c[1]
+        prove.proof.pi_c[1]
       ];
 
       // perform withdraw
