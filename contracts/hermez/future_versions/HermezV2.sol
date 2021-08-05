@@ -134,6 +134,9 @@ contract HermezV2 is InstantWithdrawManagerV2 {
     address public tokenHEZ;
 
     uint256 public constant MAX_TOKEN_WITHDRAW = 4;
+    
+    // Withdraw Bjj verifier interface
+    VerifierWithdrawInterface public withdrawBjjVerfier;
 
     // Event emitted when a L1-user transaction is called and added to the nextL1FillingQueue queue
     event L1UserTxEvent(
@@ -176,6 +179,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
         address[] memory _verifiers,
         uint256[] memory _verifiersParams,
         address[MAX_TOKEN_WITHDRAW] calldata _withdrawVerifiers,
+        address _withdrawBjjVerfier,
         address _hermezAuctionContract,
         address _tokenHEZ,
         uint8 _forgeL1L2BatchTimeout,
@@ -197,6 +201,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
                 _withdrawVerifiers[i]
             );
         }
+        withdrawBjjVerfier = VerifierWithdrawInterface(_withdrawBjjVerfier);
         hermezAuctionContract = IHermezAuctionProtocol(_hermezAuctionContract);
         tokenHEZ = _tokenHEZ;
         forgeL1L2BatchTimeout = _forgeL1L2BatchTimeout;
@@ -572,6 +577,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
             _withdrawFunds(
                 amountWithdraws[i],
                 tokenIDs[i],
+                msg.sender,
                 instantWithdraws[i]
             );
             emit WithdrawEvent(
@@ -580,6 +586,80 @@ contract HermezV2 is InstantWithdrawManagerV2 {
                 instantWithdraws[i]
             );
         }
+    }
+
+    /**
+     * @dev Withdraw to retrieve the tokens from the exit tree to the owner account
+     * Before this call an exit transaction must be done
+     * The input of the circuit must be signed by the bjj of the user
+     * @param proofA zk-snark input
+     * @param proofB zk-snark input
+     * @param proofC zk-snark input
+     * @param tokenID Token identifier
+     * @param amountExit Amount exit of the leaf
+     * @param amountWithdraw Amount to withdraw
+     * @param batchNum Batch number after exit transactions has been done
+     * @param idx Index of the exit tree account
+     * @param instantWithdraw true if is an instant withdraw
+     * Events: `WithdrawEvent`
+     */
+    function withdrawBjjCircuit(
+        uint256[2] calldata proofA,
+        uint256[2][2] calldata proofB,
+        uint256[2] calldata proofC,
+        uint32 tokenID,
+        uint192 amountExit,
+        uint192 amountWithdraw,
+        uint32 batchNum,
+        uint48 idx,
+        address ethAddrBeneficiary,
+        bool instantWithdraw
+    ) external {
+        // in case of instant withdraw assure that is available
+        if (instantWithdraw) {
+            require(
+                _processInstantWithdrawal(tokenList[tokenID], amountWithdraw),
+                "Hermez::withdrawBjjCircuit: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
+            );
+        }
+        require(
+            amountWithdraw <= uint256(amountExit).sub(exitAccumulateMap[idx]),
+            "Hermez::withdrawBjjCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED"
+        );
+
+        // get exit root given its index depth
+        uint256 stateRoot = stateRootMap[batchNum];
+
+        uint256 input = uint256(
+            sha256(
+                abi.encodePacked(
+                    stateRoot,
+                    msg.sender,
+                    ethAddrBeneficiary,
+                    tokenID,
+                    amountExit,
+                    idx
+                )
+            )
+        ) % _RFIELD;
+        // verify zk-snark circuit
+        require(
+            withdrawBjjVerfier.verifyProof(proofA, proofB, proofC, [input]) ==
+                true,
+            "Hermez::withdrawBjjCircuit: INVALID_ZK_PROOF"
+        );
+
+        // set nullifier
+        exitAccumulateMap[idx] += amountWithdraw;
+
+        _withdrawFunds(
+            amountWithdraw,
+            tokenID,
+            ethAddrBeneficiary,
+            instantWithdraw
+        );
+
+        emit WithdrawEvent(amountWithdraw, idx, instantWithdraw);
     }
 
     //////////////
@@ -996,19 +1076,21 @@ contract HermezV2 is InstantWithdrawManagerV2 {
      * @dev Withdraw the funds to the msg.sender if instant withdraw or to the withdraw delayer if delayed
      * @param amount Amount to retrieve
      * @param tokenID Token identifier
+     * @param beneficiary withdraw beneficiary
      * @param instantWithdraw true if is an instant withdraw
      */
     function _withdrawFunds(
         uint192 amount,
         uint32 tokenID,
+        address beneficiary,
         bool instantWithdraw
     ) internal {
         if (instantWithdraw) {
-            _safeTransfer(tokenList[tokenID], msg.sender, amount);
+            _safeTransfer(tokenList[tokenID], beneficiary, amount);
         } else {
             if (tokenID == 0) {
                 withdrawDelayerContract.deposit{value: amount}(
-                    msg.sender,
+                    beneficiary,
                     address(0),
                     amount
                 );
@@ -1022,7 +1104,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
                 );
 
                 withdrawDelayerContract.deposit(
-                    msg.sender,
+                    beneficiary,
                     tokenAddress,
                     amount
                 );
@@ -1069,7 +1151,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
         // address 0 is reserved for eth
         if (token == address(0)) {
             /* solhint-disable avoid-low-level-calls */
-            (bool success, ) = msg.sender.call{value: value}(new bytes(0));
+            (bool success, ) = to.call{value: value}(new bytes(0));
             require(success, "Hermez::_safeTransfer: ETH_TRANSFER_FAILED");
         } else {
             /* solhint-disable avoid-low-level-calls */

@@ -135,6 +135,9 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
 
     uint256 public constant MAX_TOKEN_WITHDRAW = 4;
 
+    // Withdraw Bjj verifier interface
+    VerifierWithdrawInterface public withdrawBjjVerfier;
+    
     // upgradability test
     uint256 public version;
 
@@ -584,6 +587,7 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
             _withdrawFunds(
                 amountWithdraws[i],
                 tokenIDs[i],
+                msg.sender,
                 instantWithdraws[i]
             );
             emit WithdrawEvent(
@@ -1007,19 +1011,21 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
      * @dev Withdraw the funds to the msg.sender if instant withdraw or to the withdraw delayer if delayed
      * @param amount Amount to retrieve
      * @param tokenID Token identifier
+     * @param beneficiary withdraw beneficiary
      * @param instantWithdraw true if is an instant withdraw
      */
     function _withdrawFunds(
         uint192 amount,
         uint32 tokenID,
+        address beneficiary,
         bool instantWithdraw
     ) internal {
         if (instantWithdraw) {
-            _safeTransfer(tokenList[tokenID], msg.sender, amount);
+            _safeTransfer(tokenList[tokenID], beneficiary, amount);
         } else {
             if (tokenID == 0) {
                 withdrawDelayerContract.deposit{value: amount}(
-                    msg.sender,
+                    beneficiary,
                     address(0),
                     amount
                 );
@@ -1033,7 +1039,7 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
                 );
 
                 withdrawDelayerContract.deposit(
-                    msg.sender,
+                    beneficiary,
                     tokenAddress,
                     amount
                 );
@@ -1080,7 +1086,7 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
         // address 0 is reserved for eth
         if (token == address(0)) {
             /* solhint-disable avoid-low-level-calls */
-            (bool success, ) = msg.sender.call{value: value}(new bytes(0));
+            (bool success, ) = to.call{value: value}(new bytes(0));
             require(success, "Hermez::_safeTransfer: ETH_TRANSFER_FAILED");
         } else {
             /* solhint-disable avoid-low-level-calls */

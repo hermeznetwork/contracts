@@ -199,6 +199,7 @@ describe("Hermez integration", function () {
         [hardhatVerifierRollupHelper.address],
         calculateInputMaxTxLevels([maxTx], [nLevels]),
         [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
+        hardhatVerifierWithdrawHelper.address,
         hardhatHermezAuctionProtocol.address,
         hardhatTokenHermez.address,
         forgeL1L2BatchTimeout,
