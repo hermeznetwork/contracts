@@ -148,6 +148,7 @@ describe("Hermez ERC 20", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatVerifierWithdrawHelper.address,
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
@@ -167,7 +168,7 @@ describe("Hermez ERC 20", function () {
   });
 
   describe("Withdraw bjj test", function () {
-    it("test instant withdraw circuit", async function () {
+    it("test instant withdraw bjj circuit", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(1000);
@@ -233,7 +234,7 @@ describe("Hermez ERC 20", function () {
       const proofC = ["0", "0"];
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawBjjCircuit(
           proofA,
           proofB,
           proofC,
@@ -242,6 +243,7 @@ describe("Hermez ERC 20", function () {
           amountWithdraw,
           batchNum,
           fromIdx,
+          await owner.getAddress(),
           instantWithdraw
         )
       )
@@ -253,7 +255,7 @@ describe("Hermez ERC 20", function () {
       );
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawBjjCircuit(
           proofA,
           proofB,
           proofC,
@@ -262,13 +264,14 @@ describe("Hermez ERC 20", function () {
           amountWithdraw*2,
           batchNum,
           fromIdx,
+          await owner.getAddress(),
           instantWithdraw
         )
       )
-        .to.be.revertedWith("Hermez::withdrawCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED");
+        .to.be.revertedWith("Hermez::withdrawBjjCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED");
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawBjjCircuit(
           proofA,
           proofB,
           proofC,
@@ -277,6 +280,7 @@ describe("Hermez ERC 20", function () {
           amountWithdraw,
           batchNum,
           fromIdx,
+          await owner.getAddress(),
           instantWithdraw
         )
       )
@@ -296,11 +300,136 @@ describe("Hermez ERC 20", function () {
     });
 
     it("Delegate withdraw bjj to another address", async function () {
-      console.log("TODO");
+      const tokenID = 1;
+      const babyjub = `0x${accounts[0].bjjCompressed}`;
+      const loadAmount = float40.round(1000);
+      const fromIdx = 256;
+      const amount = 10;
+      const amountF = float40.fix2Float(amount);
+
+      const l1TxUserArray = [];
+
+      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
+      const forgerTest = new ForgerTest(
+        maxTx,
+        maxL1Tx,
+        nLevels,
+        hardhatHermez,
+        rollupDB
+      );
+
+      await AddToken(
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
+        ownerWallet,
+        feeAddToken
+      );
+
+      // Create account and exit some funds
+      const numAccounts = 1;
+      await createAccounts(
+        forgerTest,
+        loadAmount,
+        tokenID,
+        babyjub,
+        owner,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        numAccounts
+      );
+
+      l1TxUserArray.push(
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, hardhatHermez)
+      );
+
+      const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+
+      // forge empty batch
+      await forgerTest.forgeBatch(true, [], []);
+
+      // forge batch with all the create account and exit
+      await forgerTest.forgeBatch(true, l1TxUserArray, []);
+
+      // perform withdraw
+      const batchNum = await hardhatHermez.lastForgedBatch();
+      const instantWithdraw = true;
+      const amountWithdraw = amount / 2;
+      const proofA = ["0", "0"];
+      const proofB = [
+        ["0", "0"],
+        ["0", "0"],
+      ];
+      const proofC = ["0", "0"];
+
+      await expect(
+        hardhatHermez.connect(governance).withdrawBjjCircuit(
+          proofA,
+          proofB,
+          proofC,
+          tokenID,
+          amount,
+          amountWithdraw,
+          batchNum,
+          fromIdx,
+          await owner.getAddress(),
+          instantWithdraw
+        )
+      )
+        .to.emit(hardhatHermez, "WithdrawEvent")
+        .withArgs(amountWithdraw, fromIdx, instantWithdraw);
+
+      expect(amountWithdraw).to.equal(
+        await hardhatHermez.exitAccumulateMap(fromIdx)
+      );
+
+      await expect(
+        hardhatHermez.withdrawBjjCircuit(
+          proofA,
+          proofB,
+          proofC,
+          tokenID,
+          amount,
+          amountWithdraw*2,
+          batchNum,
+          fromIdx,
+          await owner.getAddress(),
+          instantWithdraw
+        )
+      )
+        .to.be.revertedWith("Hermez::withdrawBjjCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED");
+
+      await expect(
+        hardhatHermez.withdrawBjjCircuit(
+          proofA,
+          proofB,
+          proofC,
+          tokenID,
+          amount,
+          amountWithdraw,
+          batchNum,
+          fromIdx,
+          await owner.getAddress(),
+          instantWithdraw
+        )
+      )
+        .to.emit(hardhatHermez, "WithdrawEvent")
+        .withArgs(amountWithdraw, fromIdx, instantWithdraw);
+          
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+      expect(parseInt(finalOwnerBalance)).to.equal(
+        parseInt(initialOwnerBalance) + amount
+      );
+
+      expect(amount).to.equal(
+        await hardhatHermez.exitAccumulateMap(fromIdx)
+      );
     });
-    it("if caller is address '0xffff anyone can call it", async function () {
-      console.log("TODO");
-    });
+  
     it("test delayed withdraw circuit", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
@@ -369,7 +498,7 @@ describe("Hermez ERC 20", function () {
       const proofC = ["0", "0"];
 
       await expect(
-        hardhatHermez.withdrawCircuit(
+        hardhatHermez.withdrawBjjCircuit(
           proofA,
           proofB,
           proofC,
@@ -378,6 +507,7 @@ describe("Hermez ERC 20", function () {
           amount,
           batchNum,
           fromIdx,
+          await owner.getAddress(),
           instantWithdraw
         )
       )

@@ -35,7 +35,7 @@ const {
   withdrawMultiUtils,
 } = require("@hermeznetwork/commonjsV1");
 
-describe("Hermez Withdraw Multi Token", function () {
+describe("Hermez Withdraw Multi Token Circuit", function () {
   let hardhatTokenERC20Mock;
   let hardhatTokenERC20Mock2;
   let hardhatTokenERC20Mock3;
@@ -106,6 +106,9 @@ describe("Hermez Withdraw Multi Token", function () {
     const TokenERC20Mock = await ethers.getContractFactory("ERC20Mock");
     const TokenERC20PermitMock = await ethers.getContractFactory("ERC20PermitMock");
 
+    const VerifierBjjHelper = await ethers.getContractFactory(
+      "VerifierMock"
+    );
     const VerifierRollupHelper = await ethers.getContractFactory(
       "VerifierMock"
     );
@@ -174,6 +177,7 @@ describe("Hermez Withdraw Multi Token", function () {
     hardhatVerifierWithdrawHelper2 = await VerifierWithdrawHelper2.deploy();
     hardhatVerifierWithdrawHelper3 = await VerifierWithdrawHelper3.deploy();
     hardhatVerifierWithdrawHelper4 = await VerifierWithdrawHelper4.deploy();
+    hardhatVerifierBjj = await VerifierBjjHelper.deploy();
 
     let hardhatHermezAuctionTest = await HermezAuctionTest.deploy();
 
@@ -193,6 +197,7 @@ describe("Hermez Withdraw Multi Token", function () {
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
       [hardhatVerifierWithdrawHelper1.address, hardhatVerifierWithdrawHelper2.address, hardhatVerifierWithdrawHelper3.address, hardhatVerifierWithdrawHelper4.address],
+      hardhatVerifierBjj.address,
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,

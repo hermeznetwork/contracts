@@ -140,6 +140,7 @@ describe("Hermez ERC20 Permit", function () {
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
       [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
+      hardhatVerifierWithdrawHelper.address,
       hardhatHermezAuctionTest.address,
       hardhatTokenERC20PermitMock.address,
       forgeL1L2BatchTimeout,

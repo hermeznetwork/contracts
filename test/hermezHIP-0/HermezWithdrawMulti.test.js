@@ -166,6 +166,7 @@ describe("Hermez Withdraw Multi Token", function () {
     let hardhatVerifierWithdrawHelper2 = await VerifierWithdrawHelper2.deploy();
     let hardhatVerifierWithdrawHelper3 = await VerifierWithdrawHelper3.deploy();
     let hardhatVerifierWithdrawHelper4 = await VerifierWithdrawHelper4.deploy();
+    let hardhatVerifierBjj = await VerifierRollupHelper.deploy();
 
     let hardhatHermezAuctionTest = await HermezAuctionTest.deploy();
 
@@ -185,6 +186,7 @@ describe("Hermez Withdraw Multi Token", function () {
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
       [hardhatVerifierWithdrawHelper1.address, hardhatVerifierWithdrawHelper2.address, hardhatVerifierWithdrawHelper3.address, hardhatVerifierWithdrawHelper4.address],
+      hardhatVerifierBjj.address,
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
       forgeL1L2BatchTimeout,

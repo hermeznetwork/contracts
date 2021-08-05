@@ -78,7 +78,7 @@ describe("Hermez ERC 20", function () {
     [
       owner,
       governance,
-      id1,
+      relayer,
       id2,
       ...addrs
     ] = await ethers.getSigners();
@@ -159,7 +159,7 @@ describe("Hermez ERC 20", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      hardhatVerifierWithdrawHelper.address,
+      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
       hardhatVerifierWithdrawBjj.address,
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
@@ -218,7 +218,7 @@ describe("Hermez ERC 20", function () {
   // You can nest describe calls to create subsections.
   describe("Withdraw circuit", function () {
     this.timeout(0);
-    it("test instant withdraw circuit", async function () {
+    it("test instant withdraw Bjj circuit", async function () {
       const tokenID = 1;
       const babyjub = `0x${accounts[0].bjjCompressed}`;
       const loadAmount = float40.round(Scalar.fromString("1000000000000000000000"));
@@ -297,9 +297,15 @@ describe("Hermez ERC 20", function () {
       // withdraw bjj inputs
       input.ethAddrCaller = Scalar.fromString(tmpState.ethAddr, 16);
       input.ethAddrBeneficiary = Scalar.fromString(tmpState.ethAddr, 16);
+      input.ethAddrCallerAuth = Scalar.fromString(tmpState.ethAddr, 16);
 
       // bjj signature
-      const signature = accounts[0].signWithdrawBjj(input);
+      const signature = accounts[0].signWithdrawBjj(
+        input.ethAddrCallerAuth.toString(16),
+        input.ethAddrBeneficiary.toString(16),
+        input.rootState,
+        input.idx
+      );
       input.s = signature.S;
       input.r8x = signature.R8[0];
       input.r8y = signature.R8[1];
@@ -347,8 +353,470 @@ describe("Hermez ERC 20", function () {
         await owner.getAddress(),
         instantWithdraw
       );
-      console.log("withdraw circuit");
-      console.log("Normal flow withdraw 1 leaf: ", (await tx.wait()).gasUsed.toNumber());
+      console.log("withdraw circuit Bjj");
+      console.log("withdraw Bjj gas cost: ", (await tx.wait()).gasUsed.toNumber());
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+      expect(parseInt(finalOwnerBalance)).to.equal(
+        parseInt(initialOwnerBalance) + amount
+      );
+    });
+    it("Delegate withdraw bjj to another addres", async function () {
+      const tokenID = 1;
+      const babyjub = `0x${accounts[0].bjjCompressed}`;
+      const loadAmount = float40.round(Scalar.fromString("1000000000000000000000"));
+      const loadAmountF = float40.fix2Float(loadAmount);
+      const fromIdx = 256;
+      const amount = 10;
+      const amountF = float40.fix2Float(amount);
+
+      const l1TxUserArray = [];
+
+      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
+      const forgerTest = new ForgerTest(
+        maxTx,
+        maxL1Tx,
+        nLevels,
+        hardhatHermez,
+        rollupDB
+      );
+
+      await AddToken(
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
+        ownerWallet,
+        feeAddToken
+      );
+
+      // Create account and exit some funds
+      const numAccounts = 1;
+      await createAccounts(
+        forgerTest,
+        loadAmount,
+        tokenID,
+        babyjub,
+        owner,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        numAccounts,
+        null,
+        false
+      );
+
+      l1TxUserArray.push(
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, hardhatHermez)
+      );
+
+      const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+
+      // forge empty batch
+      await forgerTest.forgeBatch(true, [], [], [], false, true);
+      // forge the create accounts
+      await forgerTest.forgeBatch(true, l1TxUserArray, [], [], false, true);
+
+      // circuit stuff
+      const batchNum = await hardhatHermez.lastForgedBatch();
+      const exitInfo = await rollupDB.getExitInfo(fromIdx, batchNum);
+      const stateRoot = await rollupDB.getStateRoot(batchNum);
+      const input = {};
+      const tmpExitInfo = exitInfo;
+      const tmpState = tmpExitInfo.state;
+
+
+      const relayerAddress = await relayer.getAddress();
+      // fill private inputs
+      input.rootState = stateRoot;
+      input.ethAddrState = Scalar.fromString(tmpState.ethAddr, 16);
+      input.tokenID = tmpState.tokenID;
+      input.balance = tmpState.balance;
+      input.idx = tmpState.idx;
+      input.sign = tmpState.sign;
+      input.ay = Scalar.fromString(tmpState.ay, 16);
+      input.exitBalance = tmpState.exitBalance;
+      input.accumulatedHash = tmpState.accumulatedHash;
+      input.nonce = tmpState.nonce;
+
+      // withdraw bjj inputs
+      input.ethAddrCaller = Scalar.fromString(relayerAddress, 16);
+      input.ethAddrBeneficiary = Scalar.fromString(tmpState.ethAddr, 16);
+      input.ethAddrCallerAuth = Scalar.fromString(relayerAddress, 16);
+
+      // bjj signature
+      const signature = accounts[0].signWithdrawBjj(
+        input.ethAddrCallerAuth.toString(16),
+        input.ethAddrBeneficiary.toString(16),
+        input.rootState,
+        input.idx
+      );
+      input.s = signature.S;
+      input.r8x = signature.R8[0];
+      input.r8y = signature.R8[1];
+
+
+      let siblings = exitInfo.siblings;
+      while (siblings.length < (nLevels + 1)) siblings.push(Scalar.e(0));
+      input.siblingsState = siblings;
+
+      const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw-bjj.wasm"), path.join(__dirname, "./circuits/withdraw-bjj.zkey" ));
+      const vKey = JSON.parse(fs.readFileSync(path.join(__dirname, "./circuits/verification_key-bjj.json")));
+      const res = await snarkjs.groth16.verify(vKey, prove.publicSignals, prove.proof);
+      expect(res).to.be.true;
+    
+      const proofA = [prove.proof.pi_a[0],
+        prove.proof.pi_a[1]
+      ];
+      const proofB = [
+        [
+          prove.proof.pi_b[0][1],
+          prove.proof.pi_b[0][0]
+        ],
+        [
+          prove.proof.pi_b[1][1],
+          prove.proof.pi_b[1][0]
+        ]
+      ];
+      const proofC =  [prove.proof.pi_c[0],
+        prove.proof.pi_c[1]
+      ];
+          
+      const outputWithdraw = withdrawUtils.hashInputsWithdrawBjj(input);
+      expect(Scalar.e(prove.publicSignals[0])).to.be.equal(outputWithdraw);
+   
+      const instantWithdraw = true;
+
+      await expect (hardhatHermez.withdrawBjjCircuit(
+        proofA,
+        proofB,
+        proofC,
+        tokenID,
+        amount,
+        amount,
+        batchNum,
+        fromIdx,
+        await owner.getAddress(),
+        instantWithdraw
+      )).to.be.reverted;
+
+      const tx = await hardhatHermez.connect(relayer).withdrawBjjCircuit(
+        proofA,
+        proofB,
+        proofC,
+        tokenID,
+        amount,
+        amount,
+        batchNum,
+        fromIdx,
+        await owner.getAddress(),
+        instantWithdraw
+      );
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+      expect(parseInt(finalOwnerBalance)).to.equal(
+        parseInt(initialOwnerBalance) + amount
+      );
+    });
+    it("Delegate withdraw Bjj to call and beneficiary", async function () {
+      const tokenID = 1;
+      const babyjub = `0x${accounts[0].bjjCompressed}`;
+      const loadAmount = float40.round(Scalar.fromString("1000000000000000000000"));
+      const loadAmountF = float40.fix2Float(loadAmount);
+      const fromIdx = 256;
+      const amount = 10;
+      const amountF = float40.fix2Float(amount);
+
+      const l1TxUserArray = [];
+
+      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
+      const forgerTest = new ForgerTest(
+        maxTx,
+        maxL1Tx,
+        nLevels,
+        hardhatHermez,
+        rollupDB
+      );
+
+      await AddToken(
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
+        ownerWallet,
+        feeAddToken
+      );
+
+      // Create account and exit some funds
+      const numAccounts = 1;
+      await createAccounts(
+        forgerTest,
+        loadAmount,
+        tokenID,
+        babyjub,
+        owner,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        numAccounts,
+        null,
+        false
+      );
+
+      l1TxUserArray.push(
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, hardhatHermez)
+      );
+
+      const relayerAddress = await relayer.getAddress();
+
+      const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        relayerAddress
+      );
+
+      // forge empty batch
+      await forgerTest.forgeBatch(true, [], [], [], false, true);
+      // forge the create accounts
+      await forgerTest.forgeBatch(true, l1TxUserArray, [], [], false, true);
+
+      // circuit stuff
+      const batchNum = await hardhatHermez.lastForgedBatch();
+      const exitInfo = await rollupDB.getExitInfo(fromIdx, batchNum);
+      const stateRoot = await rollupDB.getStateRoot(batchNum);
+      const input = {};
+      const tmpExitInfo = exitInfo;
+      const tmpState = tmpExitInfo.state;
+
+      // fill private inputs
+      input.rootState = stateRoot;
+      input.ethAddrState = Scalar.fromString(tmpState.ethAddr, 16);
+      input.tokenID = tmpState.tokenID;
+      input.balance = tmpState.balance;
+      input.idx = tmpState.idx;
+      input.sign = tmpState.sign;
+      input.ay = Scalar.fromString(tmpState.ay, 16);
+      input.exitBalance = tmpState.exitBalance;
+      input.accumulatedHash = tmpState.accumulatedHash;
+      input.nonce = tmpState.nonce;
+
+      // withdraw bjj inputs
+      input.ethAddrCaller = Scalar.fromString(relayerAddress, 16);
+      input.ethAddrBeneficiary = Scalar.fromString(relayerAddress, 16);
+      input.ethAddrCallerAuth = Scalar.fromString(relayerAddress, 16);
+
+      // bjj signature
+      const signature = accounts[0].signWithdrawBjj(
+        input.ethAddrCallerAuth.toString(16),
+        input.ethAddrBeneficiary.toString(16),
+        input.rootState,
+        input.idx
+      );
+      input.s = signature.S;
+      input.r8x = signature.R8[0];
+      input.r8y = signature.R8[1];
+
+
+      let siblings = exitInfo.siblings;
+      while (siblings.length < (nLevels + 1)) siblings.push(Scalar.e(0));
+      input.siblingsState = siblings;
+
+      const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw-bjj.wasm"), path.join(__dirname, "./circuits/withdraw-bjj.zkey" ));
+      const vKey = JSON.parse(fs.readFileSync(path.join(__dirname, "./circuits/verification_key-bjj.json")));
+      const res = await snarkjs.groth16.verify(vKey, prove.publicSignals, prove.proof);
+      expect(res).to.be.true;
+    
+      const proofA = [prove.proof.pi_a[0],
+        prove.proof.pi_a[1]
+      ];
+      const proofB = [
+        [
+          prove.proof.pi_b[0][1],
+          prove.proof.pi_b[0][0]
+        ],
+        [
+          prove.proof.pi_b[1][1],
+          prove.proof.pi_b[1][0]
+        ]
+      ];
+      const proofC =  [prove.proof.pi_c[0],
+        prove.proof.pi_c[1]
+      ];
+          
+      const outputWithdraw = withdrawUtils.hashInputsWithdrawBjj(input);
+      expect(Scalar.e(prove.publicSignals[0])).to.be.equal(outputWithdraw);
+   
+      const instantWithdraw = true;
+      await expect (hardhatHermez.withdrawBjjCircuit(
+        proofA,
+        proofB,
+        proofC,
+        tokenID,
+        amount,
+        amount,
+        batchNum,
+        fromIdx,
+        await owner.getAddress(),
+        instantWithdraw
+      )).to.be.revertedWith("Hermez::withdrawBjjCircuit: INVALID_ZK_PROOF");
+
+      const tx = await hardhatHermez.connect(relayer).withdrawBjjCircuit(
+        proofA,
+        proofB,
+        proofC,
+        tokenID,
+        amount,
+        amount,
+        batchNum,
+        fromIdx,
+        relayerAddress,
+        instantWithdraw
+      );
+      console.log("withdraw circuit Bjj");
+      console.log("withdraw Bjj gas cost: ", (await tx.wait()).gasUsed.toNumber());
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        relayerAddress
+      );
+      expect(parseInt(finalOwnerBalance)).to.equal(
+        parseInt(initialOwnerBalance) + amount
+      );
+    });
+    it("Delegate withdraw bjj to any address", async function () {
+      const tokenID = 1;
+      const babyjub = `0x${accounts[0].bjjCompressed}`;
+      const loadAmount = float40.round(Scalar.fromString("1000000000000000000000"));
+      const loadAmountF = float40.fix2Float(loadAmount);
+      const fromIdx = 256;
+      const amount = 10;
+      const amountF = float40.fix2Float(amount);
+  
+      const l1TxUserArray = [];
+  
+      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
+      const forgerTest = new ForgerTest(
+        maxTx,
+        maxL1Tx,
+        nLevels,
+        hardhatHermez,
+        rollupDB
+      );
+  
+      await AddToken(
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        hardhatHEZ,
+        ownerWallet,
+        feeAddToken
+      );
+  
+      // Create account and exit some funds
+      const numAccounts = 1;
+      await createAccounts(
+        forgerTest,
+        loadAmount,
+        tokenID,
+        babyjub,
+        owner,
+        hardhatHermez,
+        hardhatTokenERC20Mock,
+        numAccounts,
+        null,
+        false
+      );
+  
+      l1TxUserArray.push(
+        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, hardhatHermez)
+      );
+  
+      const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+  
+      // forge empty batch
+      await forgerTest.forgeBatch(true, [], [], [], false, true);
+      // forge the create accounts
+      await forgerTest.forgeBatch(true, l1TxUserArray, [], [], false, true);
+  
+      // circuit stuff
+      const batchNum = await hardhatHermez.lastForgedBatch();
+      const exitInfo = await rollupDB.getExitInfo(fromIdx, batchNum);
+      const stateRoot = await rollupDB.getStateRoot(batchNum);
+      const input = {};
+      const tmpExitInfo = exitInfo;
+      const tmpState = tmpExitInfo.state;
+  
+  
+      const relayerAddress = await relayer.getAddress();
+      // fill private inputs
+      input.rootState = stateRoot;
+      input.ethAddrState = Scalar.fromString(tmpState.ethAddr, 16);
+      input.tokenID = tmpState.tokenID;
+      input.balance = tmpState.balance;
+      input.idx = tmpState.idx;
+      input.sign = tmpState.sign;
+      input.ay = Scalar.fromString(tmpState.ay, 16);
+      input.exitBalance = tmpState.exitBalance;
+      input.accumulatedHash = tmpState.accumulatedHash;
+      input.nonce = tmpState.nonce;
+  
+      // withdraw bjj inputs
+      input.ethAddrCaller = Scalar.fromString(relayerAddress, 16);
+      input.ethAddrBeneficiary = Scalar.fromString(tmpState.ethAddr, 16);
+      input.ethAddrCallerAuth = Scalar.fromString(Constants.nullEthAddr, 16);
+  
+      // bjj signature
+      const signature = accounts[0].signWithdrawBjj(
+        input.ethAddrCallerAuth.toString(16),
+        input.ethAddrBeneficiary.toString(16),
+        input.rootState,
+        input.idx
+      );
+      input.s = signature.S;
+      input.r8x = signature.R8[0];
+      input.r8y = signature.R8[1];
+  
+  
+      let siblings = exitInfo.siblings;
+      while (siblings.length < (nLevels + 1)) siblings.push(Scalar.e(0));
+      input.siblingsState = siblings;
+  
+      const prove = await snarkjs.groth16.fullProve(input, path.join(__dirname, "./circuits/withdraw-bjj.wasm"), path.join(__dirname, "./circuits/withdraw-bjj.zkey" ));
+      const vKey = JSON.parse(fs.readFileSync(path.join(__dirname, "./circuits/verification_key-bjj.json")));
+      const res = await snarkjs.groth16.verify(vKey, prove.publicSignals, prove.proof);
+      expect(res).to.be.true;
+      
+      const proofA = [prove.proof.pi_a[0],
+        prove.proof.pi_a[1]
+      ];
+      const proofB = [
+        [
+          prove.proof.pi_b[0][1],
+          prove.proof.pi_b[0][0]
+        ],
+        [
+          prove.proof.pi_b[1][1],
+          prove.proof.pi_b[1][0]
+        ]
+      ];
+      const proofC =  [prove.proof.pi_c[0],
+        prove.proof.pi_c[1]
+      ];
+            
+      const outputWithdraw = withdrawUtils.hashInputsWithdrawBjj(input);
+      expect(Scalar.e(prove.publicSignals[0])).to.be.equal(outputWithdraw);
+     
+      const instantWithdraw = true;
+  
+      const tx = await hardhatHermez.connect(relayer).withdrawBjjCircuit(
+        proofA,
+        proofB,
+        proofC,
+        tokenID,
+        amount,
+        amount,
+        batchNum,
+        fromIdx,
+        await owner.getAddress(),
+        instantWithdraw
+      );
       const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()
       );
@@ -358,9 +826,3 @@ describe("Hermez ERC 20", function () {
     });
   });
 });
-function padding256(n) {
-  let nstr = Scalar.e(n).toString(16);
-  while (nstr.length < 64) nstr = "0" + nstr;
-  nstr = `0x${nstr}`;
-  return nstr;
-}

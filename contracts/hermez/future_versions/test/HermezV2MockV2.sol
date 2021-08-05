@@ -135,6 +135,9 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
 
     uint256 public constant MAX_TOKEN_WITHDRAW = 4;
 
+    // Withdraw Bjj verifier interface
+    VerifierWithdrawInterface public withdrawBjjVerfier;
+    
     // upgradability test
     uint256 public version;
 

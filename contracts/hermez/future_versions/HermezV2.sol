@@ -134,6 +134,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
     address public tokenHEZ;
 
     uint256 public constant MAX_TOKEN_WITHDRAW = 4;
+    
     // Withdraw Bjj verifier interface
     VerifierWithdrawInterface public withdrawBjjVerfier;
 
@@ -618,12 +619,12 @@ contract HermezV2 is InstantWithdrawManagerV2 {
         if (instantWithdraw) {
             require(
                 _processInstantWithdrawal(tokenList[tokenID], amountWithdraw),
-                "Hermez::withdrawCircuit: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
+                "Hermez::withdrawBjjCircuit: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
             );
         }
         require(
             amountWithdraw <= uint256(amountExit).sub(exitAccumulateMap[idx]),
-            "Hermez::withdrawCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED"
+            "Hermez::withdrawBjjCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED"
         );
 
         // get exit root given its index depth
@@ -645,7 +646,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
         require(
             withdrawBjjVerfier.verifyProof(proofA, proofB, proofC, [input]) ==
                 true,
-            "Hermez::withdrawCircuit: INVALID_ZK_PROOF"
+            "Hermez::withdrawBjjCircuit: INVALID_ZK_PROOF"
         );
 
         // set nullifier
