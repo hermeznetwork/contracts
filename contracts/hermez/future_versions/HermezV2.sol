@@ -178,7 +178,6 @@ contract HermezV2 is InstantWithdrawManagerV2 {
         address[] memory _verifiers,
         uint256[] memory _verifiersParams,
         address[MAX_TOKEN_WITHDRAW] calldata _withdrawVerifiers,
-        address _withdrawVerifier,
         address _withdrawBjjVerfier,
         address _hermezAuctionContract,
         address _tokenHEZ,
@@ -201,7 +200,6 @@ contract HermezV2 is InstantWithdrawManagerV2 {
                 _withdrawVerifiers[i]
             );
         }
-        withdrawVerifier = VerifierWithdrawInterface(_withdrawVerifier);
         withdrawBjjVerfier = VerifierWithdrawInterface(_withdrawBjjVerfier);
         hermezAuctionContract = IHermezAuctionProtocol(_hermezAuctionContract);
         tokenHEZ = _tokenHEZ;
@@ -578,6 +576,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
             _withdrawFunds(
                 amountWithdraws[i],
                 tokenIDs[i],
+                msg.sender,
                 instantWithdraws[i]
             );
             emit WithdrawEvent(
@@ -586,12 +585,6 @@ contract HermezV2 is InstantWithdrawManagerV2 {
                 instantWithdraws[i]
             );
         }
-        // set nullifier
-        exitAccumulateMap[idx] += amountWithdraw;
-
-        _withdrawFunds(amountWithdraw, tokenID, msg.sender, instantWithdraw);
-
-        emit WithdrawEvent(amountWithdraw, idx, instantWithdraw);
     }
 
     /**

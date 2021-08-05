@@ -239,11 +239,11 @@ describe("Hermez gas performance", function () {
         // hackmd table
         let log = `|  ${SCGasArray[i]}    |`;
         log += ` ${SCGasArray[i] - (SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i])
-          }   |`;
+        }   |`;
         log += ` ${wastedGasarray[i]}   |`;
         log += ` ${wastedGasarray[i] -
           (wastedGasarray[i - 1] ? wastedGasarray[i - 1] : wastedGasarray[i])
-          }   |`;
+        }   |`;
         log += ` ${i * multiplier}   |`;
         console.log(log);
       }
@@ -336,11 +336,11 @@ describe("Hermez gas performance", function () {
         // hackmd table
         let log = `|  ${SCGasArray[i]}    |`;
         log += ` ${SCGasArray[i] - (SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i])
-          }   |`;
+        }   |`;
         log += ` ${wastedGasarray[i]}   |`;
         log += ` ${wastedGasarray[i] -
           (wastedGasarray[i - 1] ? wastedGasarray[i - 1] : wastedGasarray[i])
-          }   |`;
+        }   |`;
         log += ` ${i * multiplier}   |`;
         console.log(log);
       }
@@ -411,11 +411,11 @@ describe("Hermez gas performance", function () {
         // hackmd table
         let log = `|  ${SCGasArray[i]}    |`;
         log += ` ${SCGasArray[i] - (SCGasArray[i - 1] ? SCGasArray[i - 1] : SCGasArray[i])
-          }   |`;
+        }   |`;
         log += ` ${wastedGasarray[i]}   |`;
         log += ` ${wastedGasarray[i] -
           (wastedGasarray[i - 1] ? wastedGasarray[i - 1] : wastedGasarray[i])
-          }   |`;
+        }   |`;
         log += ` ${i * multiplier}   |`;
         console.log(log);
       }
