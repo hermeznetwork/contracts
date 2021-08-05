@@ -662,7 +662,7 @@ describe("WithdrawalDelayer Tests", function() {
         hardhatWithdrawalDelayer.address,
         await hermezGovernanceDAO.getAddress()
       );
-      hardhatWithdrawalDelayer.connect(hermezGovernanceDAO).claimGovernance();
+      await hardhatWithdrawalDelayer.connect(hermezGovernanceDAO).claimGovernance();
       //Check that the new address is the WithdrawalDelayerAddress
       expect(
         await hardhatWithdrawalDelayer.getHermezGovernanceAddress()
@@ -681,7 +681,7 @@ describe("WithdrawalDelayer Tests", function() {
         hardhatWithdrawalDelayer.address,
         await hermezGovernanceDAO.getAddress()
       );
-      hardhatWithdrawalDelayer.connect(hermezGovernanceDAO).claimEmergencyCouncil();
+      await hardhatWithdrawalDelayer.connect(hermezGovernanceDAO).claimEmergencyCouncil();
 
       //Check that the new address is the WithdrawalDelayerAddress
       expect(
