@@ -333,7 +333,7 @@ describe("Hermez Withdraw Multi Token", function () {
           [instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx, instantWithdraw);
 
       expect(amountWithdraw).to.equal(
@@ -368,7 +368,7 @@ describe("Hermez Withdraw Multi Token", function () {
           [instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx, instantWithdraw);
 
       const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
@@ -420,9 +420,9 @@ describe("Hermez Withdraw Multi Token", function () {
           [instantWithdraw, instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[0], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw2, fromIdx[1], instantWithdraw);
     });
 
@@ -463,11 +463,11 @@ describe("Hermez Withdraw Multi Token", function () {
           [instantWithdraw, instantWithdraw, instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[0], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw2, fromIdx[1], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[2], instantWithdraw);
     });
 
@@ -521,13 +521,13 @@ describe("Hermez Withdraw Multi Token", function () {
           [instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[0], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw2, fromIdx[1], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[2], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw2, fromIdx[3], instantWithdraw);
 
       const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(

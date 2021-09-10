@@ -526,7 +526,7 @@ describe("Hermez integration", function () {
           [instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amount, fromIdx, instantWithdraw);
 
       const finalOwnerBalance = await hardhatTokenHermez.balanceOf(
