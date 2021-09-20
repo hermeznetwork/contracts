@@ -83,9 +83,9 @@ class ForgerTest {
     //   bb.addToken(1);
     //   bb.addFeeIdx(259);
     // }
-    
+
     await bb.build();
-    
+
     let stringL1CoordinatorTx = "";
     for (let tx of l1TxCoordiatorArray) {
       stringL1CoordinatorTx =
@@ -98,7 +98,7 @@ class ForgerTest {
     if (this.realVerifier == true) {
       // real verifier
       const inputJson = stringifyBigInts(bb.getInput());
-      if(log) {
+      if (log) {
         fs.writeFileSync(pathInput, JSON.stringify(inputJson, null, 1));
       }
       await axios.post("http://ec2-3-139-54-168.us-east-2.compute.amazonaws.com:3000/api/input", inputJson);
@@ -109,7 +109,7 @@ class ForgerTest {
       } while (response.data.status == "busy");
 
       proofA = [JSON.parse(response.data.proof).pi_a[0],
-        JSON.parse(response.data.proof).pi_a[1]
+      JSON.parse(response.data.proof).pi_a[1]
       ];
       proofB = [
         [
@@ -121,9 +121,9 @@ class ForgerTest {
           JSON.parse(response.data.proof).pi_b[1][0]
         ]
       ];
-      proofC =  [JSON.parse(response.data.proof).pi_c[0],
-        JSON.parse(response.data.proof).pi_c[1]
-      ];    
+      proofC = [JSON.parse(response.data.proof).pi_c[0],
+      JSON.parse(response.data.proof).pi_c[1]
+      ];
 
       const input = JSON.parse(response.data.pubData);
       expect(input[0]).to.equal(bb.getHashInputs().toString());
@@ -309,8 +309,10 @@ async function l1UserTxCreateAccountDeposit(
   } else {
     // ether
     const initialOwnerBalance = await wallet.getBalance();
+
+    let txRes;
     await expect(
-      hardhatHermez.connect(wallet).addL1Transaction(
+      txRes = await hardhatHermez.connect(wallet).addL1Transaction(
         babyjub,
         fromIdx0,
         loadAmountF,
@@ -319,18 +321,19 @@ async function l1UserTxCreateAccountDeposit(
         toIdx0,
         emptyPermit,
         {
-          value: loadAmount,
-          gasPrice: 0,
+          value: loadAmount
         }
       )
     )
       .to.emit(hardhatHermez, "L1UserTxEvent")
       .withArgs(lastQueue, currentIndex, l1Txbytes);
+    const txReceipt = await txRes.wait();
 
+    const gasCost = BigNumber.from(txReceipt.gasUsed).mul(BigNumber.from(txRes.gasPrice));
     const finalOwnerBalance = await wallet.getBalance();
 
     expect(finalOwnerBalance).to.equal(
-      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
+      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount)).sub(gasCost)
     );
   }
 
@@ -453,8 +456,9 @@ async function l1UserTxDeposit(
     // ether
     const initialOwnerBalance = await wallet.getBalance();
 
+    let txRes;
     await expect(
-      hardhatHermez.connect(wallet).addL1Transaction(
+      txRes = await hardhatHermez.connect(wallet).addL1Transaction(
         babyjub0,
         fromIdx,
         loadAmountF,
@@ -463,18 +467,20 @@ async function l1UserTxDeposit(
         toIdx0,
         emptyPermit,
         {
-          value: loadAmount,
-          gasPrice: 0,
+          value: loadAmount
         }
       )
     )
       .to.emit(hardhatHermez, "L1UserTxEvent")
       .withArgs(lastQueue, currentIndex, l1Txbytes);
 
+    const txReceipt = await txRes.wait();
+
+    const gasCost = BigNumber.from(txReceipt.gasUsed).mul(BigNumber.from(txRes.gasPrice));
     const finalOwnerBalance = await wallet.getBalance();
 
     expect(finalOwnerBalance).to.equal(
-      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
+      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount)).sub(gasCost)
     );
   }
 
@@ -599,8 +605,9 @@ async function l1UserTxDepositTransfer(
     // ether
     const initialOwnerBalance = await wallet.getBalance();
 
+    let txRes;
     await expect(
-      hardhatHermez.connect(wallet).addL1Transaction(
+      txRes = await hardhatHermez.connect(wallet).addL1Transaction(
         babyjub0,
         fromIdx,
         loadAmountF,
@@ -609,18 +616,20 @@ async function l1UserTxDepositTransfer(
         toIdx,
         emptyPermit,
         {
-          value: loadAmount,
-          gasPrice: 0,
+          value: loadAmount
         }
       )
     )
       .to.emit(hardhatHermez, "L1UserTxEvent")
       .withArgs(lastQueue, currentIndex, l1Txbytes);
 
+    const txReceipt = await txRes.wait();
+
+    const gasCost = BigNumber.from(txReceipt.gasUsed).mul(BigNumber.from(txRes.gasPrice));
     const finalOwnerBalance = await wallet.getBalance();
 
     expect(finalOwnerBalance).to.equal(
-      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
+      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount)).sub(gasCost)
     );
   }
 
@@ -745,8 +754,9 @@ async function l1UserTxCreateAccountDepositTransfer(
     // ether
     const initialOwnerBalance = await wallet.getBalance();
 
+    let txRes;
     await expect(
-      hardhatHermez.connect(wallet).addL1Transaction(
+      txRes = await hardhatHermez.connect(wallet).addL1Transaction(
         babyjub,
         fromIdx0,
         loadAmountF,
@@ -755,18 +765,20 @@ async function l1UserTxCreateAccountDepositTransfer(
         toIdx,
         emptyPermit,
         {
-          value: loadAmount,
-          gasPrice: 0,
+          value: loadAmount
         }
       )
     )
       .to.emit(hardhatHermez, "L1UserTxEvent")
       .withArgs(lastQueue, currentIndex, l1Txbytes);
 
+    const txReceipt = await txRes.wait();
+
+    const gasCost = BigNumber.from(txReceipt.gasUsed).mul(BigNumber.from(txRes.gasPrice));
     const finalOwnerBalance = await wallet.getBalance();
 
     expect(finalOwnerBalance).to.equal(
-      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount))
+      BigNumber.from(initialOwnerBalance).sub(BigNumber.from(loadAmount)).sub(gasCost)
     );
   }
   return l1Txbytes;
@@ -1041,10 +1053,10 @@ function packBucket(bucket) {
   const rateBlocksB = 32;
   const rateBlocksValue = Scalar.band(bucket.rateBlocks, Scalar.fromString("0xFFFFFFFF", 16));
 
-  const rateWithdrawalsB = 32; 
+  const rateWithdrawalsB = 32;
   const rateWithdrawalsValue = Scalar.band(bucket.rateWithdrawals, Scalar.fromString("0xFFFFFFFF", 16));
 
-  const maxWithdrawalsB = 32; 
+  const maxWithdrawalsB = 32;
   const maxWithdrawalsValue = Scalar.band(bucket.maxWithdrawals, Scalar.fromString("0xFFFFFFFF", 16));
 
   let res = ceilValue;
@@ -1079,8 +1091,8 @@ function unpackBucket(encodeBucket) {
   const blockStampB = 32;
   const withdrawalsB = 32;
   const rateBlocksB = 32;
-  const rateWithdrawalsB = 32; 
-  const maxWithdrawalsB = 32; 
+  const rateWithdrawalsB = 32;
+  const maxWithdrawalsB = 32;
 
   let bucket = {};
   let shift = 0;

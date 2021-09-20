@@ -196,6 +196,7 @@ async function main() {
     console.log("HEZToken deployed at: ", HEZTokenAddress);
   }
   else {
+    hardhatHEZToken = await HEZToken.attach(HEZTokenAddress);
     console.log("HEZ already deployed");
   }
   // load or deploy libs
@@ -307,7 +308,7 @@ async function main() {
   );
   const receiptAuction = await hermezAuctionTx.wait();
   expect(receiptAuction.events[0].args.donationAddress).to.be.equal(donationAddress);
-  expect(receiptAuction.events[0].args.bootCoordinatorAddress).to.be.equal(bootCoordinatorAddress);
+  expect(receiptAuction.events[0].args.bootCoordinatorAddress.toLowerCase()).to.be.equal(bootCoordinatorAddress.toLowerCase());
   expect(receiptAuction.events[0].args.bootCoordinatorURL).to.be.equal(deployParameters[chainId].bootCoordinatorURL);
   expect(receiptAuction.events[0].args.outbidding).to.be.equal(outbidding);
   expect(receiptAuction.events[0].args.slotDeadline).to.be.equal(slotDeadline);
@@ -350,7 +351,9 @@ async function main() {
     console.log("Add Tokens to the hermez");
     await hardhatHEZToken.approve(hermez.address, deployParameters[chainId].feeAddToken*addTokens.length);
     for (let i = 0; i < addTokens.length; i++) {
-      await hermez.addToken(addTokens[i], "0x",{gasLimit: 300000});
+      const txHash = await hermez.addToken(addTokens[i], "0x",{gasLimit: 300000});
+      await txHash.wait();
+      console.log(`   added token with address ${addTokens[i]}`);
     }
   }
 

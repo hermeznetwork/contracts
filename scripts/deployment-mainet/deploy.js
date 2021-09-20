@@ -129,6 +129,7 @@ async function main() {
     console.log("HEZToken deployed at: ", HEZTokenAddress);
   }
   else {
+    hardhatHEZToken = await HEZToken.attach(HEZTokenAddress);
     console.log("HEZ already deployed");
   }
 

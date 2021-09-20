@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const { BigNumber } = require("ethers");
 const { ethers } = require("hardhat");
 const SMTMemDB = require("circomlib").SMTMemDB;
 const { time } = require("@openzeppelin/test-helpers");
@@ -218,8 +219,7 @@ describe("Hermez ETH test", function () {
           toIdx0,
           emptyPermit,
           {
-            value: loadAmount - Scalar.e(1),
-            gasPrice: 0,
+            value: loadAmount - Scalar.e(1)
           }
         )
       ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH");
@@ -261,8 +261,7 @@ describe("Hermez ETH test", function () {
           toIdx0,
           emptyPermit,
           {
-            value: loadAmount - Scalar.e(1),
-            gasPrice: 0,
+            value: loadAmount - Scalar.e(1)
           }
         )
       ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH");
@@ -305,8 +304,7 @@ describe("Hermez ETH test", function () {
           toIdx,
           emptyPermit,
           {
-            value: loadAmount - Scalar.e(1),
-            gasPrice: 0,
+            value: loadAmount - Scalar.e(1)
           }
         )
       ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH");
@@ -352,7 +350,6 @@ describe("Hermez ETH test", function () {
           emptyPermit,
           {
             value: loadAmount - Scalar.e(1),
-            gasPrice: 0,
           }
         )
       ).to.be.revertedWith("Hermez::addL1Transaction: LOADAMOUNT_ETH_DOES_NOT_MATCH");
@@ -551,8 +548,9 @@ describe("Hermez ETH test", function () {
       ];
       const proofC = ["0", "0"];
 
+      let txRes;
       await expect(
-        hardhatHermez.withdrawCircuit(
+        txRes = await hardhatHermez.withdrawCircuit(
           proofA,
           proofB,
           proofC,
@@ -561,17 +559,18 @@ describe("Hermez ETH test", function () {
           numExitRoot,
           fromIdx,
           instantWithdraw,
-          {
-            gasPrice: 0,
-          }
         )
       )
         .to.emit(hardhatHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
+
+      const txReceipt = await txRes.wait();
+
+      const gasCost = BigNumber.from(txReceipt.gasUsed).mul(BigNumber.from(txRes.gasPrice));
       const finalOwnerBalance = await owner.getBalance();
 
-      expect(parseInt(finalOwnerBalance)).to.equal(
-        parseInt(initialOwnerBalance) + amount
+      expect(finalOwnerBalance).to.equal(
+        BigNumber.from(initialOwnerBalance).add(BigNumber.from(amount)).sub(gasCost)
       );
     });
 
@@ -644,10 +643,7 @@ describe("Hermez ETH test", function () {
           amount,
           numExitRoot,
           fromIdx,
-          instantWithdraw,
-          {
-            gasPrice: 0,
-          }
+          instantWithdraw
         )
       )
         .to.emit(hardhatHermez, "WithdrawEvent")
@@ -657,8 +653,8 @@ describe("Hermez ETH test", function () {
         hardhatWithdrawalDelayer.address
       );
 
-      expect(parseInt(finalWithdrawalBalance)).to.equal(
-        parseInt(initialWithdrawalBalance) + amount
+      expect(finalWithdrawalBalance).to.equal(
+        BigNumber.from(initialWithdrawalBalance).add(BigNumber.from(amount))
       );
     });
     it("test instant withdraw merkle proof with ether", async function () {
@@ -710,27 +706,29 @@ describe("Hermez ETH test", function () {
       const instantWithdraw = true;
       const state = await rollupDB.getStateByIdx(256);
       const exitInfo = await rollupDB.getExitTreeInfo(256, numExitRoot);
+
+      let txRes;
       await expect(
-        hardhatHermez.withdrawMerkleProof(
+        txRes = await hardhatHermez.withdrawMerkleProof(
           tokenID,
           amount,
           babyjub,
           numExitRoot,
           exitInfo.siblings,
           fromIdx,
-          instantWithdraw,
-          {
-            gasPrice: 0,
-          }
+          instantWithdraw
         )
       )
         .to.emit(hardhatHermez, "WithdrawEvent")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
 
+      const txReceipt = await txRes.wait();
+
+      const gasCost = BigNumber.from(txReceipt.gasUsed).mul(BigNumber.from(txRes.gasPrice));
       const finalOwnerBalance = await owner.getBalance();
 
-      expect(parseInt(finalOwnerBalance)).to.equal(
-        parseInt(initialOwnerBalance) + amount
+      expect(finalOwnerBalance).to.equal(
+        BigNumber.from(initialOwnerBalance).add(BigNumber.from(amount)).sub(gasCost)
       );
     });
 
@@ -787,6 +785,7 @@ describe("Hermez ETH test", function () {
       const instantWithdraw = false;
       const state = await rollupDB.getStateByIdx(256);
       const exitInfo = await rollupDB.getExitTreeInfo(256, numExitRoot);
+
       await expect(
         hardhatHermez.withdrawMerkleProof(
           tokenID,
@@ -795,10 +794,7 @@ describe("Hermez ETH test", function () {
           numExitRoot,
           exitInfo.siblings,
           fromIdx,
-          instantWithdraw,
-          {
-            gasPrice: 0,
-          }
+          instantWithdraw
         )
       )
         .to.emit(hardhatHermez, "WithdrawEvent")
@@ -808,8 +804,8 @@ describe("Hermez ETH test", function () {
         hardhatWithdrawalDelayer.address
       );
 
-      expect(parseInt(finalWithdrawalBalance)).to.equal(
-        parseInt(initialWithdrawalBalance) + amount
+      expect(finalWithdrawalBalance).to.equal(
+        BigNumber.from(initialWithdrawalBalance).add(BigNumber.from(amount))
       );
     });
   });
