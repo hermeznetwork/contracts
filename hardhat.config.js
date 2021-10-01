@@ -19,6 +19,7 @@ module.exports = {
     hardhat: {
       blockGasLimit: 12500000,
       allowUnlimitedContractSize: true,
+      initialBaseFeePerGas: 0,
     },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
