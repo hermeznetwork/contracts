@@ -133,8 +133,8 @@ contract HermezV2 is InstantWithdrawManagerV2 {
     // HEZ token address
     address public tokenHEZ;
 
-    uint256 public constant MAX_TOKEN_WITHDRAW = 4;
-    
+    uint256 public constant MAX_TOKEN_WITHDRAW = 8;
+
     // Withdraw Bjj verifier interface
     VerifierWithdrawInterface public withdrawBjjVerfier;
 

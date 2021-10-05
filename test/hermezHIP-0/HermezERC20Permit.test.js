@@ -139,7 +139,16 @@ describe("Hermez ERC20 Permit", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
+      [
+        hardhatVerifierWithdrawHelper.address,
+        hardhatVerifierWithdrawHelper.address,
+        hardhatVerifierWithdrawHelper.address,
+        hardhatVerifierWithdrawHelper.address,
+        hardhatVerifierWithdrawHelper.address,
+        hardhatVerifierWithdrawHelper.address,
+        hardhatVerifierWithdrawHelper.address,
+        hardhatVerifierWithdrawHelper.address
+      ],
       hardhatVerifierWithdrawHelper.address,
       hardhatHermezAuctionTest.address,
       hardhatTokenERC20PermitMock.address,

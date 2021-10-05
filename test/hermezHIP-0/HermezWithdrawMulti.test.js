@@ -36,6 +36,11 @@ describe("Hermez Withdraw Multi Token", function () {
   let hardhatTokenERC20Mock2;
   let hardhatTokenERC20Mock3;
   let hardhatTokenERC20Mock4;
+  let hardhatTokenERC20Mock5;
+  let hardhatTokenERC20Mock6;
+  let hardhatTokenERC20Mock7;
+  let hardhatTokenERC20Mock8;
+  let hardhatTokenERC20Mocks;
   let hardhatHermez;
   let hardhatWithdrawalDelayer;
   let hardhatHEZ;
@@ -113,6 +118,18 @@ describe("Hermez Withdraw Multi Token", function () {
     const VerifierWithdrawHelper4 = await ethers.getContractFactory(
       "VerifierMock"
     );
+    const VerifierWithdrawHelper5 = await ethers.getContractFactory(
+      "VerifierMock"
+    );
+    const VerifierWithdrawHelper6 = await ethers.getContractFactory(
+      "VerifierMock"
+    );
+    const VerifierWithdrawHelper7 = await ethers.getContractFactory(
+      "VerifierMock"
+    );
+    const VerifierWithdrawHelper8 = await ethers.getContractFactory(
+      "VerifierMock"
+    );
 
     const HermezAuctionTest = await ethers.getContractFactory(
       "HermezAuctionTest"
@@ -153,6 +170,34 @@ describe("Hermez Withdraw Multi Token", function () {
       tokenInitialAmount
     );
 
+    hardhatTokenERC20Mock5 = await TokenERC20Mock.deploy(
+      "tokenname5",
+      "TKN5",
+      await owner.getAddress(),
+      tokenInitialAmount
+    );
+
+    hardhatTokenERC20Mock6 = await TokenERC20Mock.deploy(
+      "tokenname6",
+      "TKN6",
+      await owner.getAddress(),
+      tokenInitialAmount
+    );
+
+    hardhatTokenERC20Mock7 = await TokenERC20Mock.deploy(
+      "tokenname7",
+      "TKN7",
+      await owner.getAddress(),
+      tokenInitialAmount
+    );
+
+    hardhatTokenERC20Mock8 = await TokenERC20Mock.deploy(
+      "tokenname8",
+      "TKN8",
+      await owner.getAddress(),
+      tokenInitialAmount
+    );
+
     hardhatHEZ = await TokenERC20PermitMock.deploy(
       "tokenname",
       "TKN",
@@ -162,10 +207,14 @@ describe("Hermez Withdraw Multi Token", function () {
 
     // deploy helpers
     let hardhatVerifierRollupHelper = await VerifierRollupHelper.deploy();
-    let hardhatVerifierWithdrawHelper1 = await VerifierWithdrawHelper1.deploy();
+    let hardhatVerifierWithdrawHelper = await VerifierWithdrawHelper1.deploy();
     let hardhatVerifierWithdrawHelper2 = await VerifierWithdrawHelper2.deploy();
     let hardhatVerifierWithdrawHelper3 = await VerifierWithdrawHelper3.deploy();
     let hardhatVerifierWithdrawHelper4 = await VerifierWithdrawHelper4.deploy();
+    let hardhatVerifierWithdrawHelper5 = await VerifierWithdrawHelper5.deploy();
+    let hardhatVerifierWithdrawHelper6 = await VerifierWithdrawHelper6.deploy();
+    let hardhatVerifierWithdrawHelper7 = await VerifierWithdrawHelper7.deploy();
+    let hardhatVerifierWithdrawHelper8 = await VerifierWithdrawHelper8.deploy();
     let hardhatVerifierBjj = await VerifierRollupHelper.deploy();
 
     let hardhatHermezAuctionTest = await HermezAuctionTest.deploy();
@@ -185,7 +234,16 @@ describe("Hermez Withdraw Multi Token", function () {
     await hardhatHermez.initializeHermez(
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
-      [hardhatVerifierWithdrawHelper1.address, hardhatVerifierWithdrawHelper2.address, hardhatVerifierWithdrawHelper3.address, hardhatVerifierWithdrawHelper4.address],
+      [
+        hardhatVerifierWithdrawHelper.address,
+        hardhatVerifierWithdrawHelper2.address,
+        hardhatVerifierWithdrawHelper3.address,
+        hardhatVerifierWithdrawHelper4.address,
+        hardhatVerifierWithdrawHelper5.address,
+        hardhatVerifierWithdrawHelper6.address,
+        hardhatVerifierWithdrawHelper7.address,
+        hardhatVerifierWithdrawHelper8.address
+      ],
       hardhatVerifierBjj.address,
       hardhatHermezAuctionTest.address,
       hardhatHEZ.address,
@@ -201,10 +259,24 @@ describe("Hermez Withdraw Multi Token", function () {
     await hardhatTokenERC20Mock2.deployed();
     await hardhatTokenERC20Mock3.deployed();
     await hardhatTokenERC20Mock4.deployed();
+    await hardhatTokenERC20Mock5.deployed();
+    await hardhatTokenERC20Mock6.deployed();
+    await hardhatTokenERC20Mock7.deployed();
+    await hardhatTokenERC20Mock8.deployed();
 
     const chainSC = await hardhatHermez.getChainID();
     chainID = chainSC.toNumber();
     chainIDHex = chainSC.toHexString();
+    hardhatTokenERC20Mocks = [
+      hardhatTokenERC20Mock,
+      hardhatTokenERC20Mock2,
+      hardhatTokenERC20Mock3,
+      hardhatTokenERC20Mock4,
+      hardhatTokenERC20Mock5,
+      hardhatTokenERC20Mock6,
+      hardhatTokenERC20Mock7,
+      hardhatTokenERC20Mock8
+    ];
   });
 
   describe("test tokens contract", function () {
@@ -232,51 +304,10 @@ describe("Hermez Withdraw Multi Token", function () {
       const amount = 10;
       const amountF = float40.fix2Float(amount);
 
-      const l1TxUserArray = [];
-
-      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
-      const forgerTest = new ForgerTest(
-        maxTx,
-        maxL1Tx,
-        nLevels,
-        hardhatHermez,
-        rollupDB
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      // Create account and exit some funds
-      const numAccounts = 1;
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID,
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock,
-        numAccounts
-      );
-
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID, fromIdx, amountF, owner, hardhatHermez)
-      );
-
+      await createExits([tokenID], babyjub, loadAmount, [fromIdx], amountF, 0);
       const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()
       );
-
-      // forge empty batch
-      await forgerTest.forgeBatch(true, [], []);
-
-      // forge batch with all the create account and exit
-      await forgerTest.forgeBatch(true, l1TxUserArray, []);
 
       // perform withdraw
       const batchNum = await hardhatHermez.lastForgedBatch();
@@ -362,68 +393,7 @@ describe("Hermez Withdraw Multi Token", function () {
       const amountF = float40.fix2Float(amount);
       const amountF2 = float40.fix2Float(amount2);
 
-      const l1TxUserArray = [];
-
-      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
-      const forgerTest = new ForgerTest(
-        maxTx,
-        maxL1Tx,
-        nLevels,
-        hardhatHermez,
-        rollupDB
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock2,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      // Create account and exit some funds
-      const numAccounts = 1;
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[0],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock,
-        numAccounts
-      );
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[1],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock2,
-        numAccounts
-      );
-
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[0], fromIdx[0], amountF, owner, hardhatHermez)
-      );
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[1], fromIdx[1], amountF2, owner, hardhatHermez)
-      );
-
-      // forge empty batch
-      await forgerTest.forgeBatch(true, [], []);
-
-      // forge batch with all the create account and exit
-      await forgerTest.forgeBatch(true, l1TxUserArray, []);
+      await createExits(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2);
 
       // perform withdraw
       const batchNum = await hardhatHermez.lastForgedBatch();
@@ -466,89 +436,7 @@ describe("Hermez Withdraw Multi Token", function () {
       const amountF = float40.fix2Float(amount);
       const amountF2 = float40.fix2Float(amount2);
 
-      const l1TxUserArray = [];
-
-      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
-      const forgerTest = new ForgerTest(
-        maxTx,
-        maxL1Tx,
-        nLevels,
-        hardhatHermez,
-        rollupDB
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock2,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock3,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      // Create account and exit some funds
-      const numAccounts = 1;
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[0],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock,
-        numAccounts
-      );
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[1],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock2,
-        numAccounts
-      );
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[2],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock3,
-        numAccounts
-      );
-
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[0], fromIdx[0], amountF, owner, hardhatHermez)
-      );
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[1], fromIdx[1], amountF2, owner, hardhatHermez)
-      );
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[2], fromIdx[2], amountF, owner, hardhatHermez)
-      );
-
-      // forge empty batch
-      await forgerTest.forgeBatch(true, [], []);
-
-      // forge batch with all the create account and exit
-      await forgerTest.forgeBatch(true, l1TxUserArray, []);
+      await createExits(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2);
 
       // perform withdraw
       const batchNum = await hardhatHermez.lastForgedBatch();
@@ -593,110 +481,7 @@ describe("Hermez Withdraw Multi Token", function () {
       const amountF = float40.fix2Float(amount);
       const amountF2 = float40.fix2Float(amount2);
 
-      const l1TxUserArray = [];
-
-      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
-      const forgerTest = new ForgerTest(
-        maxTx,
-        maxL1Tx,
-        nLevels,
-        hardhatHermez,
-        rollupDB
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock2,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock3,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      await AddToken(
-        hardhatHermez,
-        hardhatTokenERC20Mock4,
-        hardhatHEZ,
-        ownerWallet,
-        feeAddToken
-      );
-
-      // Create account and exit some funds
-      const numAccounts = 1;
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[0],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock,
-        numAccounts
-      );
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[1],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock2,
-        numAccounts
-      );
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[2],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock3,
-        numAccounts
-      );
-      await createAccounts(
-        forgerTest,
-        loadAmount,
-        tokenID[3],
-        babyjub,
-        owner,
-        hardhatHermez,
-        hardhatTokenERC20Mock4,
-        numAccounts
-      );
-
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[0], fromIdx[0], amountF, owner, hardhatHermez)
-      );
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[1], fromIdx[1], amountF2, owner, hardhatHermez)
-      );
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[2], fromIdx[2], amountF, owner, hardhatHermez)
-      );
-      l1TxUserArray.push(
-        await l1UserTxForceExit(tokenID[3], fromIdx[3], amountF2, owner, hardhatHermez)
-      );
-
-      // forge empty batch
-      await forgerTest.forgeBatch(true, [], []);
-
-      // forge batch with all the create account and exit
-      await forgerTest.forgeBatch(true, l1TxUserArray, []);
+      await createExits(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2);
 
       const initialOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()
@@ -870,12 +655,12 @@ describe("Hermez Withdraw Multi Token", function () {
           proofA,
           proofB,
           proofC,
-          [tokenID[0], tokenID[1], tokenID[0], tokenID[1], tokenID[0]],
-          [amount, amount2, amount, amount2, amount],
-          [amountWithdraw, amountWithdraw2, amountWithdraw, amountWithdraw2, amountWithdraw],
+          [tokenID[0], tokenID[1], tokenID[0], tokenID[1], tokenID[0], tokenID[1], tokenID[0], tokenID[1], tokenID[0]],
+          [amount, amount2, amount, amount2, amount, amount2, amount, amount2, amount],
+          [amountWithdraw, amountWithdraw2, amountWithdraw, amountWithdraw2, amountWithdraw, amountWithdraw2, amountWithdraw, amountWithdraw2, amountWithdraw],
           batchNum,
-          [fromIdx[0], fromIdx[1], fromIdx[0], fromIdx[1], fromIdx[0]],
-          [instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw]
+          [fromIdx[0], fromIdx[1], fromIdx[0], fromIdx[1], fromIdx[0], fromIdx[1], fromIdx[0], fromIdx[1], fromIdx[0]],
+          [instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw]
         )
       )
         .to.be.revertedWith("Hermez::withdrawMultiToken: MAX_TOKEN_WITHDRAW_EXCEED");
@@ -895,5 +680,61 @@ describe("Hermez Withdraw Multi Token", function () {
       )
         .to.be.revertedWith("Hermez::withdrawMultiToken: SAME_ARRAY_LENGTH_REQUIRED");
     });
+
+    async function createExits(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2){
+      const l1TxUserArray = [];
+
+      const rollupDB = await RollupDB(new SMTMemDB(), chainID);
+      const forgerTest = new ForgerTest(
+        maxTx,
+        maxL1Tx,
+        nLevels,
+        hardhatHermez,
+        rollupDB
+      );
+
+      for (let i = 0; i < tokenID.length; i++) {
+        await AddToken(
+          hardhatHermez,
+          hardhatTokenERC20Mocks[i],
+          hardhatHEZ,
+          ownerWallet,
+          feeAddToken
+        );
+      }
+
+      // Create account and exit some funds
+      const numAccounts = 1;
+      for (let i = 0; i < tokenID.length; i++) {
+        await createAccounts(
+          forgerTest,
+          loadAmount,
+          tokenID[i],
+          babyjub,
+          owner,
+          hardhatHermez,
+          hardhatTokenERC20Mocks[i],
+          numAccounts
+        );
+      }
+
+      for (let i = 0; i < tokenID.length; i++) {
+        if( i % 2 == 0) {
+          l1TxUserArray.push(
+            await l1UserTxForceExit(tokenID[i], fromIdx[i], amountF, owner, hardhatHermez)
+          );
+        } else {
+          l1TxUserArray.push(
+            await l1UserTxForceExit(tokenID[i], fromIdx[i], amountF2, owner, hardhatHermez)
+          );
+        }
+      }
+
+      // forge empty batch
+      await forgerTest.forgeBatch(true, [], []);
+      // forge batch with all the create account and exit
+      await forgerTest.forgeBatch(true, l1TxUserArray, []);
+    }
+
   });
 });

@@ -198,7 +198,16 @@ describe("Hermez integration", function () {
       hardhatHermez.initializeHermez(
         [hardhatVerifierRollupHelper.address],
         calculateInputMaxTxLevels([maxTx], [nLevels]),
-        [hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address, hardhatVerifierWithdrawHelper.address],
+        [
+          hardhatVerifierWithdrawHelper.address,
+          hardhatVerifierWithdrawHelper.address,
+          hardhatVerifierWithdrawHelper.address,
+          hardhatVerifierWithdrawHelper.address,
+          hardhatVerifierWithdrawHelper.address,
+          hardhatVerifierWithdrawHelper.address,
+          hardhatVerifierWithdrawHelper.address,
+          hardhatVerifierWithdrawHelper.address
+        ],
         hardhatVerifierWithdrawHelper.address,
         hardhatHermezAuctionProtocol.address,
         hardhatTokenHermez.address,
