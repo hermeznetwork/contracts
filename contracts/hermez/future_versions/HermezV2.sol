@@ -134,6 +134,7 @@ contract HermezV2 is InstantWithdrawManagerV2 {
 
     // Withdraw verifier interface
     VerifierWithdrawInterface[MAX_TOKEN_WITHDRAW] public withdrawVerifiers;
+
     // Withdraw Bjj verifier interface
     VerifierWithdrawInterface public withdrawBjjVerfier;
 

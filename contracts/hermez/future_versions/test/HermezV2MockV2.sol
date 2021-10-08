@@ -86,9 +86,6 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
     // Verifiers array
     VerifierRollup[] public rollupVerifiers;
 
-    // Withdraw verifier interface
-    VerifierWithdrawInterface[MAX_TOKEN_WITHDRAW] public withdrawVerifiers;
-
     // Last account index created inside the rollup
     uint48 public lastIdx;
 
@@ -135,9 +132,12 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
 
     uint256 public constant MAX_TOKEN_WITHDRAW = 8;
 
+    // Withdraw verifier interface
+    VerifierWithdrawInterface[MAX_TOKEN_WITHDRAW] public withdrawVerifiers;
+
     // Withdraw Bjj verifier interface
     VerifierWithdrawInterface public withdrawBjjVerfier;
-    
+
     // upgradability test
     uint256 public version;
 
@@ -161,12 +161,11 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
     event UpdateFeeAddToken(uint256 newFeeAddToken);
 
     // Event emitted when a withdrawal is done
-    event WithdrawEvent(
-        uint256 indexed amountWithdraw,
+    event WithdrawEventNew(
+        uint192 indexed amountWithdraw,
         uint48 indexed idx,
         bool indexed instantWithdraw
     );
-
     // Event emitted when the contract is initialized
     event InitializeHermezEvent(
         uint8 forgeL1L2BatchTimeout,
@@ -511,7 +510,7 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
      * @param batchNum Batch number after exit transactions has been done
      * @param idxs Index of the exit tree account
      * @param instantWithdraws true if is an instant withdraw
-     * Events: `WithdrawEvent`
+     * Events: `WithdrawEventNew`
      */
     function withdrawMultiToken(
         uint256[2] calldata proofA,
@@ -590,7 +589,7 @@ contract HermezV2MockV2 is InstantWithdrawManagerV2 {
                 msg.sender,
                 instantWithdraws[i]
             );
-            emit WithdrawEvent(
+            emit WithdrawEventNew(
                 amountWithdraws[i],
                 idxs[i],
                 instantWithdraws[i]
