@@ -1016,7 +1016,7 @@ describe("Hermez ERC20 Permit", function () {
           [instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx, instantWithdraw);
 
       expect(amountWithdraw).to.equal(
@@ -1051,7 +1051,7 @@ describe("Hermez ERC20 Permit", function () {
           [instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx, instantWithdraw);
 
       const finalOwnerBalance = await hardhatTokenERC20PermitMock.balanceOf(
@@ -1146,7 +1146,7 @@ describe("Hermez ERC20 Permit", function () {
           [instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amount, fromIdx, instantWithdraw);
 
       const finalOwnerBalance = await hardhatTokenERC20PermitMock.balanceOf(

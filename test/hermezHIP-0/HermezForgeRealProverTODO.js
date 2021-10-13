@@ -402,7 +402,7 @@ describe("Hermez ERC 20", function () {
           instantWithdraw
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
       const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()
@@ -500,7 +500,7 @@ describe("Hermez ERC 20", function () {
           instantWithdraw
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(fromIdx, numExitRoot, instantWithdraw);
       const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
         await owner.getAddress()

@@ -548,7 +548,7 @@ describe("Hermez ETH test", function () {
           }
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amount, fromIdx, instantWithdraw);
       const finalOwnerBalance = await owner.getBalance();
 
@@ -633,7 +633,7 @@ describe("Hermez ETH test", function () {
           }
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amount, fromIdx, instantWithdraw);
 
       const finalWithdrawalBalance = await provider.getBalance(

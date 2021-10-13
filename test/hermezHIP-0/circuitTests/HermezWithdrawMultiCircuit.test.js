@@ -251,13 +251,13 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
       [hardhatVerifierRollupHelper.address],
       calculateInputMaxTxLevels([maxTx], [nLevels]),
       [hardhatVerifierWithdrawHelper1.address,
-        hardhatVerifierWithdrawHelper2.address,
-        hardhatVerifierWithdrawHelper3.address,
-        hardhatVerifierWithdrawHelper4.address,
-        hardhatVerifierWithdrawHelper5.address,
-        hardhatVerifierWithdrawHelper6.address,
-        hardhatVerifierWithdrawHelper7.address,
-        hardhatVerifierWithdrawHelper8.address
+      hardhatVerifierWithdrawHelper2.address,
+      hardhatVerifierWithdrawHelper3.address,
+      hardhatVerifierWithdrawHelper4.address,
+      hardhatVerifierWithdrawHelper5.address,
+      hardhatVerifierWithdrawHelper6.address,
+      hardhatVerifierWithdrawHelper7.address,
+      hardhatVerifierWithdrawHelper8.address
       ],
       hardhatVerifierBjj.address,
       hardhatHermezAuctionTest.address,
@@ -319,7 +319,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
       const amount = 10;
       const amountF = float40.fix2Float(amount);
 
-      const {proofA, proofB, proofC} = await createProof(tokenID, babyjub, loadAmount, fromIdx, amountF, 0);
+      const { proofA, proofB, proofC } = await createProof(tokenID, babyjub, loadAmount, fromIdx, amountF, 0);
       const batchNum = await hardhatHermez.lastForgedBatch();
 
       // perform withdraw
@@ -338,7 +338,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
           [instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[0], instantWithdraw);
 
       expect(amountWithdraw).to.equal(
@@ -373,8 +373,15 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
           [instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[0], instantWithdraw);
+
+      const finalOwnerBalance = await hardhatTokenERC20Mock.balanceOf(
+        await owner.getAddress()
+      );
+      expect(parseInt(finalOwnerBalance)).to.equal(
+        parseInt(initialOwnerBalance) + amount
+      );
 
       expect(amount).to.equal(
         await hardhatHermez.exitAccumulateMap(fromIdx[0])
@@ -391,7 +398,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
       const amountF = float40.fix2Float(amount);
       const amountF2 = float40.fix2Float(amount2);
 
-      const {proofA, proofB, proofC} = await createProof(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2);
+      const { proofA, proofB, proofC } = await createProof(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2);
       const batchNum = await hardhatHermez.lastForgedBatch();
 
       // perform withdraw
@@ -412,9 +419,9 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
           [instantWithdraw, instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[0], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw2, fromIdx[1], instantWithdraw);
     });
 
@@ -428,7 +435,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
       const amountF = float40.fix2Float(amount);
       const amountF2 = float40.fix2Float(amount2);
 
-      const {proofA, proofB, proofC} = await createProof(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2);
+      const { proofA, proofB, proofC } = await createProof(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2);
       const batchNum = await hardhatHermez.lastForgedBatch();
 
       // perform withdraw
@@ -449,11 +456,11 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
           [instantWithdraw, instantWithdraw, instantWithdraw]
         )
       )
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[0], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw2, fromIdx[1], instantWithdraw)
-        .to.emit(hardhatHermez, "WithdrawEvent")
+        .to.emit(hardhatHermez, "WithdrawEventNew")
         .withArgs(amountWithdraw, fromIdx[2], instantWithdraw);
     });
 
@@ -683,7 +690,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
     // });
   });
 
-  async function createProof(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2){
+  async function createProof(tokenID, babyjub, loadAmount, fromIdx, amountF, amountF2) {
     const l1TxUserArray = [];
 
     const rollupDB = await RollupDB(new SMTMemDB(), chainID);
@@ -721,7 +728,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
     }
 
     for (let i = 0; i < tokenID.length; i++) {
-      if( i % 2 == 0) {
+      if (i % 2 == 0) {
         l1TxUserArray.push(
           await l1UserTxForceExit(tokenID[i], fromIdx[i], amountF, owner, hardhatHermez)
         );
@@ -753,7 +760,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
     };
     const tmpStates = [];
     const siblingsArray = []
-    for(let i = 0; i < tokenID.length; i++) {
+    for (let i = 0; i < tokenID.length; i++) {
       const exitInfo = await rollupDB.getExitInfo(fromIdx[i], batchNum);
       const tmpExitInfo = exitInfo;
       const tmpState = tmpExitInfo.state;
@@ -764,7 +771,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
 
     input.rootState = stateRoot;
     input.ethAddr = Scalar.fromString(tmpStates[0].ethAddr, 16);
-    for(let i = 0; i < tmpStates.length; i++) {
+    for (let i = 0; i < tmpStates.length; i++) {
       input.tokenIDs.push(tmpStates[i].tokenID);
       input.balances.push(tmpStates[i].balance);
       input.idxs.push(tmpStates[i].idx);
@@ -787,7 +794,7 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
     expect(res).to.be.true;
 
     const proofA = [prove.proof.pi_a[0],
-      prove.proof.pi_a[1]
+    prove.proof.pi_a[1]
     ];
     const proofB = [
       [
@@ -800,10 +807,36 @@ describe("Hermez Withdraw Multi Token Circuit", function () {
       ]
     ];
     const proofC = [prove.proof.pi_c[0],
-      prove.proof.pi_c[1]
+    prove.proof.pi_c[1]
     ];
 
-    return {proofA, proofB, proofC};
-  }
+    // perform withdraw
+    const instantWithdraw = true;
+    const amountWithdraw = amount / 4;
+    const amountWithdraw2 = amount2 / 4;
+
+    await expect(
+      hardhatHermez.withdrawMultiToken(
+        proofA,
+        proofB,
+        proofC,
+        [tokenID[0], tokenID[1], tokenID[2], tokenID[3]],
+        [amount, amount2, amount, amount2],
+        [amountWithdraw, amountWithdraw2, amountWithdraw, amountWithdraw2],
+        batchNum,
+        [fromIdx[0], fromIdx[1], fromIdx[2], fromIdx[3]],
+        [instantWithdraw, instantWithdraw, instantWithdraw, instantWithdraw]
+      )
+    )
+      .to.emit(hardhatHermez, "WithdrawEventNew")
+      .withArgs(amountWithdraw, fromIdx[0], instantWithdraw)
+      .to.emit(hardhatHermez, "WithdrawEventNew")
+      .withArgs(amountWithdraw2, fromIdx[1], instantWithdraw)
+      .to.emit(hardhatHermez, "WithdrawEventNew")
+      .withArgs(amountWithdraw, fromIdx[2], instantWithdraw)
+      .to.emit(hardhatHermez, "WithdrawEventNew")
+      .withArgs(amountWithdraw2, fromIdx[3], instantWithdraw);
+  });* /
+  });
 });
 
