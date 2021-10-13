@@ -8,7 +8,7 @@ import "./interfaces/VerifierWithdrawInterface.sol";
 import "../../interfaces/IHermezAuctionProtocol.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Hermez is InstantWithdrawManager {
+contract HermezV2 is InstantWithdrawManagerV2 {
     struct VerifierRollup {
         VerifierRollupInterface verifierInterface;
         uint256 maxTx; // maximum rollup transactions in a batch: L2-tx + L1-tx transactions
@@ -68,11 +68,11 @@ contract Hermez is InstantWithdrawManager {
     // Modulus zkSNARK
     uint256 constant _RFIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
-    // [6 bytes] lastIdx + [6 bytes] newLastIdx  + [32 bytes] stateRoot  + [32 bytes] newStRoot  + [32 bytes] newExitRoot +
+    // [6 bytes] lastIdx + [6 bytes] newLastIdx  + [32 bytes] stateRoot  + [32 bytes] newStRoot +
     // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData + totall1L2TxsDataLength + feeIdxCoordinatorLength + [2 bytes] chainID + [4 bytes] batchNum =
     // 18546 bytes + totall1L2TxsDataLength + feeIdxCoordinatorLength
 
-    uint256 constant _INPUT_SHA_CONSTANT_BYTES = 20082;
+    uint256 constant _INPUT_SHA_CONSTANT_BYTES = 20050;
 
     uint8 public constant ABSOLUTE_MAX_L1L2BATCHTIMEOUT = 240;
 
@@ -86,9 +86,6 @@ contract Hermez is InstantWithdrawManager {
     // Verifiers array
     VerifierRollup[] public rollupVerifiers;
 
-    // Withdraw verifier interface
-    VerifierWithdrawInterface public withdrawVerifier;
-
     // Last account index created inside the rollup
     uint48 public lastIdx;
 
@@ -98,15 +95,8 @@ contract Hermez is InstantWithdrawManager {
     // Each batch forged will have a correlated 'state root'
     mapping(uint32 => uint256) public stateRootMap;
 
-    // Each batch forged will have a correlated 'exit tree' represented by the exit root
-    mapping(uint32 => uint256) public exitRootsMap;
-
-    // Each batch forged will have a correlated 'l1L2TxDataHash'
-    mapping(uint32 => bytes32) public l1L2TxsDataHashMap;
-
-    // Mapping of exit nullifiers, only allowing each withdrawal to be made once
-    // rootId => (Idx => true/false)
-    mapping(uint32 => mapping(uint48 => bool)) public exitNullifierMap;
+    // Mapping of exit amounts, store all the amount already withdrawed of every account
+    mapping(uint48 => uint256) public exitAccumulateMap;
 
     // List of ERC20 tokens that can be used in rollup
     // ID = 0 will be reserved for ether
@@ -140,6 +130,14 @@ contract Hermez is InstantWithdrawManager {
     // HEZ token address
     address public tokenHEZ;
 
+    uint256 public constant MAX_TOKEN_WITHDRAW = 8;
+
+    // Withdraw verifier interface
+    VerifierWithdrawInterface[MAX_TOKEN_WITHDRAW] public withdrawVerifiers;
+
+    // Withdraw Bjj verifier interface
+    VerifierWithdrawInterface public withdrawBjjVerfier;
+
     // Event emitted when a L1-user transaction is called and added to the nextL1FillingQueue queue
     event L1UserTxEvent(
         uint32 indexed queueIndex,
@@ -160,9 +158,9 @@ contract Hermez is InstantWithdrawManager {
     event UpdateFeeAddToken(uint256 newFeeAddToken);
 
     // Event emitted when a withdrawal is done
-    event WithdrawEvent(
+    event WithdrawEventNew(
+        uint192 indexed amountWithdraw,
         uint48 indexed idx,
-        uint32 indexed numExitRoot,
         bool indexed instantWithdraw
     );
 
@@ -173,40 +171,6 @@ contract Hermez is InstantWithdrawManager {
         uint64 withdrawalDelay
     );
 
-    // Event emitted when the contract is updated to the new version
-    event hermezV2();
-
-    function updateVerifiers() external {
-        require(
-            msg.sender == address(0xb6D3f1056c015962fA66A4020E50522B58292D1E),
-            "Hermez::updateVerifiers ONLY_DEPLOYER"
-        );
-        require(
-            rollupVerifiers[0].maxTx == 344, // Old verifier 344 tx
-            "Hermez::updateVerifiers VERIFIERS_ALREADY_UPDATED"
-        );
-        rollupVerifiers[0] = VerifierRollup({
-            verifierInterface: VerifierRollupInterface(
-                address(0x3DAa0B2a994b1BC60dB9e312aD0a8d87a1Bb16D2) // New verifier 400 tx
-            ),
-            maxTx: 400,
-            nLevels: 32
-        });
-
-        rollupVerifiers[1] = VerifierRollup({
-            verifierInterface: VerifierRollupInterface(
-                address(0x1DC4b451DFcD0e848881eDE8c7A99978F00b1342) // New verifier 2048 tx
-            ),
-            maxTx: 2048,
-            nLevels: 32
-        });
-
-        withdrawVerifier = VerifierWithdrawInterface(
-            0x4464A1E499cf5443541da6728871af1D5C4920ca
-        );
-        emit hermezV2();
-    }
-
     /**
      * @dev Initializer function (equivalent to the constructor). Since we use
      * upgradeable smartcontracts the state vars have to be initialized here.
@@ -214,14 +178,12 @@ contract Hermez is InstantWithdrawManager {
     function initializeHermez(
         address[] memory _verifiers,
         uint256[] memory _verifiersParams,
-        address _withdrawVerifier,
+        address[MAX_TOKEN_WITHDRAW] calldata _withdrawVerifiers,
+        address _withdrawBjjVerfier,
         address _hermezAuctionContract,
         address _tokenHEZ,
         uint8 _forgeL1L2BatchTimeout,
         uint256 _feeAddToken,
-        address _poseidon2Elements,
-        address _poseidon3Elements,
-        address _poseidon4Elements,
         address _hermezGovernanceAddress,
         uint64 _withdrawalDelay,
         address _withdrawDelayerContract
@@ -234,7 +196,12 @@ contract Hermez is InstantWithdrawManager {
 
         // set state variables
         _initializeVerifiers(_verifiers, _verifiersParams);
-        withdrawVerifier = VerifierWithdrawInterface(_withdrawVerifier);
+        for (uint256 i = 0; i < MAX_TOKEN_WITHDRAW; i++) {
+            withdrawVerifiers[i] = VerifierWithdrawInterface(
+                _withdrawVerifiers[i]
+            );
+        }
+        withdrawBjjVerfier = VerifierWithdrawInterface(_withdrawBjjVerfier);
         hermezAuctionContract = IHermezAuctionProtocol(_hermezAuctionContract);
         tokenHEZ = _tokenHEZ;
         forgeL1L2BatchTimeout = _forgeL1L2BatchTimeout;
@@ -248,12 +215,6 @@ contract Hermez is InstantWithdrawManager {
         // stateRootMap[0] = 0 --> genesis batch will have root = 0
         tokenList.push(address(0)); // Token 0 is ETH
 
-        // initialize libs
-        _initializeHelpers(
-            _poseidon2Elements,
-            _poseidon3Elements,
-            _poseidon4Elements
-        );
         _initializeWithdraw(
             _hermezGovernanceAddress,
             _withdrawalDelay,
@@ -272,12 +233,11 @@ contract Hermez is InstantWithdrawManager {
 
     /**
      * @dev Forge a new batch providing the L2 Transactions, L1Corrdinator transactions and the proof.
-     * If the proof is succesfully verified, update the current state, adding a new state and exit root.
+     * If the proof is succesfully verified, update the current state, adding a new state.
      * In order to optimize the gas consumption the parameters `encodedL1CoordinatorTx`, `l1L2TxsData` and `feeIdxCoordinator`
      * are read directly from the calldata using assembly with the instruction `calldatacopy`
      * @param newLastIdx New total rollup accounts
      * @param newStRoot New state root
-     * @param newExitRoot New exit root
      * @param encodedL1CoordinatorTx Encoded L1-coordinator transactions
      * @param l1L2TxsData Encoded l2 data
      * @param feeIdxCoordinator Encoded idx accounts of the coordinator where the fees will be payed
@@ -291,7 +251,6 @@ contract Hermez is InstantWithdrawManager {
     function forgeBatch(
         uint48 newLastIdx,
         uint256 newStRoot,
-        uint256 newExitRoot,
         bytes calldata encodedL1CoordinatorTx,
         bytes calldata l1L2TxsData,
         bytes calldata feeIdxCoordinator,
@@ -327,7 +286,6 @@ contract Hermez is InstantWithdrawManager {
         uint256 input = _constructCircuitInput(
             newLastIdx,
             newStRoot,
-            newExitRoot,
             l1Batch,
             verifierIdx
         );
@@ -347,8 +305,6 @@ contract Hermez is InstantWithdrawManager {
         lastForgedBatch++;
         lastIdx = newLastIdx;
         stateRootMap[lastForgedBatch] = newStRoot;
-        exitRootsMap[lastForgedBatch] = newExitRoot;
-        l1L2TxsDataHashMap[lastForgedBatch] = sha256(l1L2TxsData);
 
         uint16 l1UserTxsLen;
         if (l1Batch) {
@@ -533,125 +489,177 @@ contract Hermez is InstantWithdrawManager {
         );
     }
 
-    //////////////
-    // User operations
-    /////////////
-
-    /**
-     * @dev Withdraw to retrieve the tokens from the exit tree to the owner account
-     * Before this call an exit transaction must be done
-     * @param tokenID Token identifier
-     * @param amount Amount to retrieve
-     * @param babyPubKey Public key babyjubjub represented as point: sign + (Ay)
-     * @param numExitRoot Batch number where the exit transaction has been done
-     * @param siblings Siblings to demonstrate merkle tree proof
-     * @param idx Index of the exit tree account
-     * @param instantWithdraw true if is an instant withdraw
-     * Events: `WithdrawEvent`
-     */
-    function withdrawMerkleProof(
-        uint32 tokenID,
-        uint192 amount,
-        uint256 babyPubKey,
-        uint32 numExitRoot,
-        uint256[] memory siblings,
-        uint48 idx,
-        bool instantWithdraw
-    ) external {
-        // numExitRoot is not checked because an invalid numExitRoot will bring to a 0 root
-        // and this is an empty tree.
-        // in case of instant withdraw assure that is available
-        if (instantWithdraw) {
-            require(
-                _processInstantWithdrawal(tokenList[tokenID], amount),
-                "Hermez::withdrawMerkleProof: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
-            );
-        }
-
-        // build 'key' and 'value' for exit tree
-        uint256[4] memory arrayState = _buildTreeState(
-            tokenID,
-            0,
-            amount,
-            babyPubKey,
-            msg.sender
-        );
-        uint256 stateHash = _hash4Elements(arrayState);
-        // get exit root given its index depth
-        uint256 exitRoot = exitRootsMap[numExitRoot];
-        // check exit tree nullifier
-        require(
-            exitNullifierMap[numExitRoot][idx] == false,
-            "Hermez::withdrawMerkleProof: WITHDRAW_ALREADY_DONE"
-        );
-        // check sparse merkle tree proof
-        require(
-            _smtVerifier(exitRoot, siblings, idx, stateHash) == true,
-            "Hermez::withdrawMerkleProof: SMT_PROOF_INVALID"
-        );
-
-        // set nullifier
-        exitNullifierMap[numExitRoot][idx] = true;
-
-        _withdrawFunds(amount, tokenID, instantWithdraw);
-
-        emit WithdrawEvent(idx, numExitRoot, instantWithdraw);
-    }
-
     /**
      * @dev Withdraw to retrieve the tokens from the exit tree to the owner account
      * Before this call an exit transaction must be done
      * @param proofA zk-snark input
      * @param proofB zk-snark input
      * @param proofC zk-snark input
+     * @param tokenIDs Token identifier
+     * @param amountExits Amount exit of the leaf
+     * @param amountWithdraws Amount to withdraw
+     * @param batchNum Batch number after exit transactions has been done
+     * @param idxs Index of the exit tree account
+     * @param instantWithdraws true if is an instant withdraw
+     * Events: `WithdrawEventNew`
+     */
+    function withdrawMultiToken(
+        uint256[2] calldata proofA,
+        uint256[2][2] calldata proofB,
+        uint256[2] calldata proofC,
+        uint32[] memory tokenIDs,
+        uint192[] memory amountExits,
+        uint192[] memory amountWithdraws,
+        uint32 batchNum,
+        uint48[] memory idxs,
+        bool[] memory instantWithdraws
+    ) external {
+        uint256 nWithdraws = tokenIDs.length;
+
+        require(
+            nWithdraws <= MAX_TOKEN_WITHDRAW,
+            "Hermez::withdrawMultiToken: MAX_TOKEN_WITHDRAW_EXCEED"
+        );
+
+        require(
+            nWithdraws == amountExits.length &&
+                nWithdraws == amountWithdraws.length &&
+                nWithdraws == idxs.length &&
+                nWithdraws == instantWithdraws.length,
+            "Hermez::withdrawMultiToken: SAME_ARRAY_LENGTH_REQUIRED"
+        );
+
+        for (uint256 i = 0; i < nWithdraws; i++) {
+            // in case of instant withdraw assure that is available
+            if (instantWithdraws[i]) {
+                require(
+                    _processInstantWithdrawal(
+                        tokenList[tokenIDs[i]],
+                        amountWithdraws[i]
+                    ),
+                    "Hermez::withdrawMultiToken: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
+                );
+            }
+            require(
+                amountWithdraws[i] <=
+                    uint256(amountExits[i]).sub(exitAccumulateMap[idxs[i]]),
+                "Hermez::withdrawMultiToken: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED"
+            );
+
+            // set nullifier
+            exitAccumulateMap[idxs[i]] += amountWithdraws[i];
+        }
+
+        // get exit root given its index depth
+        uint256 stateRoot = stateRootMap[batchNum];
+
+        uint256 input = _getInputWithdraw(
+            msg.sender,
+            stateRoot,
+            tokenIDs,
+            amountExits,
+            idxs,
+            nWithdraws
+        ) % _RFIELD;
+
+        // verify zk-snark circuit
+        require(
+            withdrawVerifiers[nWithdraws - 1].verifyProof(
+                proofA,
+                proofB,
+                proofC,
+                [input]
+            ) == true,
+            "Hermez::withdrawMultiToken: INVALID_ZK_PROOF"
+        );
+
+        for (uint256 i = 0; i < nWithdraws; i++) {
+            _withdrawFunds(
+                amountWithdraws[i],
+                tokenIDs[i],
+                msg.sender,
+                instantWithdraws[i]
+            );
+            emit WithdrawEventNew(
+                amountWithdraws[i],
+                idxs[i],
+                instantWithdraws[i]
+            );
+        }
+    }
+
+    /**
+     * @dev Withdraw to retrieve the tokens from the exit tree to the owner account
+     * Before this call an exit transaction must be done
+     * The input of the circuit must be signed by the bjj of the user
+     * @param proofA zk-snark input
+     * @param proofB zk-snark input
+     * @param proofC zk-snark input
      * @param tokenID Token identifier
-     * @param amount Amount to retrieve
-     * @param numExitRoot Batch number where the exit transaction has been done
+     * @param amountExit Amount exit of the leaf
+     * @param amountWithdraw Amount to withdraw
+     * @param batchNum Batch number after exit transactions has been done
      * @param idx Index of the exit tree account
      * @param instantWithdraw true if is an instant withdraw
-     * Events: `WithdrawEvent`
+     * Events: `WithdrawEventNew`
      */
-    function withdrawCircuit(
+    function withdrawBjjCircuit(
         uint256[2] calldata proofA,
         uint256[2][2] calldata proofB,
         uint256[2] calldata proofC,
         uint32 tokenID,
-        uint192 amount,
-        uint32 numExitRoot,
+        uint192 amountExit,
+        uint192 amountWithdraw,
+        uint32 batchNum,
         uint48 idx,
+        address ethAddrBeneficiary,
         bool instantWithdraw
     ) external {
         // in case of instant withdraw assure that is available
         if (instantWithdraw) {
             require(
-                _processInstantWithdrawal(tokenList[tokenID], amount),
-                "Hermez::withdrawCircuit: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
+                _processInstantWithdrawal(tokenList[tokenID], amountWithdraw),
+                "Hermez::withdrawBjjCircuit: INSTANT_WITHDRAW_WASTED_FOR_THIS_USD_RANGE"
             );
         }
         require(
-            exitNullifierMap[numExitRoot][idx] == false,
-            "Hermez::withdrawCircuit: WITHDRAW_ALREADY_DONE"
+            amountWithdraw <= uint256(amountExit).sub(exitAccumulateMap[idx]),
+            "Hermez::withdrawBjjCircuit: AMOUNT_WITHDRAW_LESS_THAN_ACCUMULATED"
         );
 
         // get exit root given its index depth
-        uint256 exitRoot = exitRootsMap[numExitRoot];
+        uint256 stateRoot = stateRootMap[batchNum];
 
         uint256 input = uint256(
-            sha256(abi.encodePacked(exitRoot, msg.sender, tokenID, amount, idx))
+            sha256(
+                abi.encodePacked(
+                    stateRoot,
+                    msg.sender,
+                    ethAddrBeneficiary,
+                    tokenID,
+                    amountExit,
+                    idx
+                )
+            )
         ) % _RFIELD;
         // verify zk-snark circuit
         require(
-            withdrawVerifier.verifyProof(proofA, proofB, proofC, [input]) ==
+            withdrawBjjVerfier.verifyProof(proofA, proofB, proofC, [input]) ==
                 true,
-            "Hermez::withdrawCircuit: INVALID_ZK_PROOF"
+            "Hermez::withdrawBjjCircuit: INVALID_ZK_PROOF"
         );
 
         // set nullifier
-        exitNullifierMap[numExitRoot][idx] = true;
+        exitAccumulateMap[idx] += amountWithdraw;
 
-        _withdrawFunds(amount, tokenID, instantWithdraw);
+        _withdrawFunds(
+            amountWithdraw,
+            tokenID,
+            ethAddrBeneficiary,
+            instantWithdraw
+        );
 
-        emit WithdrawEvent(idx, numExitRoot, instantWithdraw);
+        emit WithdrawEventNew(amountWithdraw, idx, instantWithdraw);
     }
 
     //////////////
@@ -824,7 +832,7 @@ contract Hermez is InstantWithdrawManager {
         uint256 dPtr;
         uint256 dLen;
 
-        (dPtr, dLen) = _getCallData(3);
+        (dPtr, dLen) = _getCallData(2);
         uint256 l1CoordinatorLength = dLen / _L1_COORDINATOR_TOTALBYTES;
 
         uint256 l1UserLength;
@@ -927,14 +935,12 @@ contract Hermez is InstantWithdrawManager {
      * @dev Calculate the circuit input hashing all the elements
      * @param newLastIdx New total rollup accounts
      * @param newStRoot New state root
-     * @param newExitRoot New exit root
      * @param l1Batch Indicates if this forge will be L2 or L1-L2
      * @param verifierIdx Verifier index
      */
     function _constructCircuitInput(
         uint48 newLastIdx,
         uint256 newStRoot,
-        uint256 newExitRoot,
         bool l1Batch,
         uint8 verifierIdx
     ) internal view returns (uint256) {
@@ -961,7 +967,6 @@ contract Hermez is InstantWithdrawManager {
         // [6 bytes] newLastIdx  +
         // [32 bytes] stateRoot  +
         // [32 bytes] newStRoot  +
-        // [32 bytes] newExitRoot +
         // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData +
         // totall1L2TxsDataLength +
         // feeIdxCoordinatorLength +
@@ -1001,9 +1006,6 @@ contract Hermez is InstantWithdrawManager {
 
             mstore(ptr, newStRoot)
             ptr := add(ptr, 32)
-
-            mstore(ptr, newExitRoot)
-            ptr := add(ptr, 32)
         }
 
         // Copy the L1TX Data
@@ -1011,22 +1013,22 @@ contract Hermez is InstantWithdrawManager {
         ptr += _MAX_L1_TX * _L1_USER_TOTALBYTES;
 
         // Copy the L2 TX Data from calldata
-        (dPtr, dLen) = _getCallData(4);
+        (dPtr, dLen) = _getCallData(3);
         require(
             dLen <= l1L2TxsDataLength,
             "Hermez::_constructCircuitInput: L2_TX_OVERFLOW"
         );
+
+        // L2 TX unused data is padded with 0 at the start
+        _fillZeros(ptr, l1L2TxsDataLength - dLen);
+        ptr += l1L2TxsDataLength - dLen;
         assembly {
             calldatacopy(ptr, dPtr, dLen)
         }
         ptr += dLen;
 
-        // L2 TX unused data is padded with 0 at the end
-        _fillZeros(ptr, l1L2TxsDataLength - dLen);
-        ptr += l1L2TxsDataLength - dLen;
-
         // Copy the FeeIdxCoordinator from the calldata
-        (dPtr, dLen) = _getCallData(5);
+        (dPtr, dLen) = _getCallData(4);
         require(
             dLen <= feeIdxCoordinatorLength,
             "Hermez::_constructCircuitInput: INVALID_FEEIDXCOORDINATOR_LENGTH"
@@ -1073,19 +1075,21 @@ contract Hermez is InstantWithdrawManager {
      * @dev Withdraw the funds to the msg.sender if instant withdraw or to the withdraw delayer if delayed
      * @param amount Amount to retrieve
      * @param tokenID Token identifier
+     * @param beneficiary withdraw beneficiary
      * @param instantWithdraw true if is an instant withdraw
      */
     function _withdrawFunds(
         uint192 amount,
         uint32 tokenID,
+        address beneficiary,
         bool instantWithdraw
     ) internal {
         if (instantWithdraw) {
-            _safeTransfer(tokenList[tokenID], msg.sender, amount);
+            _safeTransfer(tokenList[tokenID], beneficiary, amount);
         } else {
             if (tokenID == 0) {
                 withdrawDelayerContract.deposit{value: amount}(
-                    msg.sender,
+                    beneficiary,
                     address(0),
                     amount
                 );
@@ -1099,7 +1103,7 @@ contract Hermez is InstantWithdrawManager {
                 );
 
                 withdrawDelayerContract.deposit(
-                    msg.sender,
+                    beneficiary,
                     tokenAddress,
                     amount
                 );
@@ -1146,7 +1150,7 @@ contract Hermez is InstantWithdrawManager {
         // address 0 is reserved for eth
         if (token == address(0)) {
             /* solhint-disable avoid-low-level-calls */
-            (bool success, ) = msg.sender.call{value: value}(new bytes(0));
+            (bool success, ) = to.call{value: value}(new bytes(0));
             require(success, "Hermez::_safeTransfer: ETH_TRANSFER_FAILED");
         } else {
             /* solhint-disable avoid-low-level-calls */

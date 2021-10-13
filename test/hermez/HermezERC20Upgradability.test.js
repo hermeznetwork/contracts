@@ -313,7 +313,7 @@ describe("Hermez ERC 20 Upgradability", function () {
       );
 
       // upgrade contract and assure that the state is the same!
-      const HermezV2 = await ethers.getContractFactory("HermezV2");
+      const HermezV2 = await ethers.getContractFactory("HermezV2Mock");
       const newHermezV2 = HermezV2.attach(hardhatHermez.address);
       await expect(newHermezV2.getVersion()).to.be.reverted;
       await upgrades.upgradeProxy(hardhatHermez.address, HermezV2, {
@@ -388,7 +388,7 @@ describe("Hermez ERC 20 Upgradability", function () {
       const exitInfo = await rollupDB.getExitTreeInfo(256, numExitRoot);
 
       // upgrade contract and assure that the state is the same!
-      const HermezV2 = await ethers.getContractFactory("HermezV2");
+      const HermezV2 = await ethers.getContractFactory("HermezV2Mock");
       const newHermezV2 = HermezV2.attach(hardhatHermez.address);
       await expect(newHermezV2.getVersion()).to.be.reverted;
       await upgrades.upgradeProxy(hardhatHermez.address, HermezV2, {
@@ -480,7 +480,7 @@ describe("Hermez ERC 20 Upgradability", function () {
       await forgerTest.forgeBatch(true, l1TxUserArray, []);
 
       // upgrade contract and assure that the state is the same!
-      const HermezV2 = await ethers.getContractFactory("HermezV2");
+      const HermezV2 = await ethers.getContractFactory("HermezV2Mock");
       const newHermezV2 = HermezV2.attach(hardhatHermez.address);
       await expect(newHermezV2.getVersion()).to.be.reverted;
       await upgrades.upgradeProxy(hardhatHermez.address, HermezV2, {

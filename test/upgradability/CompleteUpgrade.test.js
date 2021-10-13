@@ -206,7 +206,7 @@ describe("upgradability test", function() {
   it("should be able to upgrade all", async () => {
     const HermezAuctionProtocolV2 = await ethers.getContractFactory("HermezAuctionProtocolV2");
     const Timelock = await ethers.getContractFactory("Timelock");
-    const HermezV2 = await ethers.getContractFactory("HermezV2");
+    const HermezV2 = await ethers.getContractFactory("HermezV2Mock");
 
     const newHermezAuctionProtocolV2 = HermezAuctionProtocolV2.attach(hermezAuctionProtocol.address);
     await expect(newHermezAuctionProtocolV2.getVersion()).to.be.reverted;
