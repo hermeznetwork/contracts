@@ -46,7 +46,7 @@ class ForgerTest {
     this.L1TxB = 544;
   }
 
-  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray, log) {
+  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, log) {
     const bb = await this.rollupDB.buildBatch(
       this.maxTx,
       this.nLevels,
@@ -71,18 +71,6 @@ class ForgerTest {
         bb.addTx(txUtils.decodeL1TxFull(tx.l1TxBytes));
       }
     }
-
-
-    if (l2txArray) {
-      for (let tx of l2txArray) {
-        bb.addTx(tx);
-      }
-    }
-
-    // if(log) {
-    //   bb.addToken(1);
-    //   bb.addFeeIdx(259);
-    // }
 
     await bb.build();
 
@@ -141,7 +129,6 @@ class ForgerTest {
     const newStateRoot = bb.getNewStateRoot();
     const newExitRoot = bb.getNewExitRoot();
     const compressedL1CoordinatorTx = `0x${stringL1CoordinatorTx}`;
-    const L1L2TxsData = bb.getL1L2TxsDataSM();
     const feeIdxCoordinator = bb.getFeeTxsDataSM();
     const verifierIdx = 0;
 
@@ -160,7 +147,6 @@ class ForgerTest {
           newStateRoot,
           newExitRoot,
           compressedL1CoordinatorTx,
-          L1L2TxsData,
           feeIdxCoordinator,
           l1Batch,
           verifierIdx
@@ -175,7 +161,6 @@ class ForgerTest {
         newStateRoot,
         newExitRoot,
         compressedL1CoordinatorTx,
-        L1L2TxsData,
         feeIdxCoordinator,
         verifierIdx,
         l1Batch,

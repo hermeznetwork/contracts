@@ -409,7 +409,6 @@ describe("Hermez ERC 20", function () {
       const newStateRoot = 0;
       const newExitRoot = 0;
       const compressedL1CoordinatorTx = "0x00";
-      const L2TxsData = "0x00";
       const feeIdxCoordinator = `0x${utils.padZeros(
         "",
         ((nLevels * 64) / 8) * 2
@@ -428,7 +427,6 @@ describe("Hermez ERC 20", function () {
           newStateRoot,
           newExitRoot,
           compressedL1CoordinatorTx,
-          L2TxsData,
           feeIdxCoordinator,
           verifierIdx,
           false,
@@ -444,7 +442,6 @@ describe("Hermez ERC 20", function () {
         newStateRoot,
         newExitRoot,
         compressedL1CoordinatorTx,
-        L2TxsData,
         feeIdxCoordinator,
         verifierIdx,
         true,
@@ -458,7 +455,6 @@ describe("Hermez ERC 20", function () {
         newStateRoot,
         newExitRoot,
         compressedL1CoordinatorTx,
-        L2TxsData,
         feeIdxCoordinator,
         verifierIdx,
         false,
@@ -476,7 +472,6 @@ describe("Hermez ERC 20", function () {
           newStateRoot,
           newExitRoot,
           compressedL1CoordinatorTx,
-          L2TxsData,
           feeIdxCoordinator,
           verifierIdx,
           false,
@@ -502,7 +497,6 @@ describe("Hermez ERC 20", function () {
         const newStateRoot = 0;
         const newExitRoot = 0;
         const compressedL1CoordinatorTx = "0x00";
-        const L1L2TxsData = "0x00";
         const verifierIdx = 0;
         const l1Batch = true;
 
@@ -517,7 +511,6 @@ describe("Hermez ERC 20", function () {
           newStateRoot,
           newExitRoot,
           compressedL1CoordinatorTx,
-          L1L2TxsData,
           feeIdxCoordinator,
           l1Batch,
           verifierIdx
@@ -532,7 +525,6 @@ describe("Hermez ERC 20", function () {
             newStateRoot,
             newExitRoot,
             compressedL1CoordinatorTx,
-            L1L2TxsData,
             "0x",
             l1Batch,
             verifierIdx
@@ -545,7 +537,6 @@ describe("Hermez ERC 20", function () {
           newStateRoot,
           newExitRoot,
           compressedL1CoordinatorTx,
-          L1L2TxsData,
           feeIdxCoordinator,
           verifierIdx,
           l1Batch,
@@ -615,7 +606,6 @@ describe("Hermez ERC 20", function () {
           0,
           0,
           `0x${stringL1CoordinatorTx}`,
-          "0x",
           "0x",
           0,
           0,
