@@ -46,7 +46,7 @@ class ForgerTest {
     this.L1TxB = 544;
   }
 
-  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, log) {
+  async forgeBatch(l1Batch, l1TxUserArray, l1TxCoordiatorArray, l2txArray, log) {
     const bb = await this.rollupDB.buildBatch(
       this.maxTx,
       this.nLevels,
@@ -72,6 +72,12 @@ class ForgerTest {
       }
     }
 
+    if (l2txArray) {
+      for (let tx of l2txArray) {
+        bb.addTx(tx);
+      }
+    }
+    
     await bb.build();
 
     let stringL1CoordinatorTx = "";
