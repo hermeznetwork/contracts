@@ -68,10 +68,6 @@ contract Hermez is InstantWithdrawManager {
     // Modulus zkSNARK
     uint256 constant _RFIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
-    // [6 bytes] lastIdx + [6 bytes] newLastIdx  + [32 bytes] stateRoot  + [32 bytes] newStRoot  + [32 bytes] newExitRoot +
-    // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData + totall1L2TxsDataLength + feeIdxCoordinatorLength + [2 bytes] chainID + [4 bytes] batchNum =
-    // 18546 bytes + totall1L2TxsDataLength + feeIdxCoordinatorLength
-
     uint256 constant _INPUT_SHA_CONSTANT_BYTES = 20082;
 
     uint8 public constant ABSOLUTE_MAX_L1L2BATCHTIMEOUT = 240;
@@ -100,9 +96,6 @@ contract Hermez is InstantWithdrawManager {
 
     // Each batch forged will have a correlated 'exit tree' represented by the exit root
     mapping(uint32 => uint256) public exitRootsMap;
-
-    // Each batch forged will have a correlated 'l1L2TxDataHash'
-    mapping(uint32 => bytes32) public l1L2TxsDataHashMap;
 
     // Mapping of exit nullifiers, only allowing each withdrawal to be made once
     // rootId => (Idx => true/false)
@@ -173,40 +166,6 @@ contract Hermez is InstantWithdrawManager {
         uint64 withdrawalDelay
     );
 
-    // Event emitted when the contract is updated to the new version
-    event hermezV2();
-
-    function updateVerifiers() external {
-        require(
-            msg.sender == address(0xb6D3f1056c015962fA66A4020E50522B58292D1E),
-            "Hermez::updateVerifiers ONLY_DEPLOYER"
-        );
-        require(
-            rollupVerifiers[0].maxTx == 344, // Old verifier 344 tx
-            "Hermez::updateVerifiers VERIFIERS_ALREADY_UPDATED"
-        );
-        rollupVerifiers[0] = VerifierRollup({
-            verifierInterface: VerifierRollupInterface(
-                address(0x3DAa0B2a994b1BC60dB9e312aD0a8d87a1Bb16D2) // New verifier 400 tx
-            ),
-            maxTx: 400,
-            nLevels: 32
-        });
-
-        rollupVerifiers[1] = VerifierRollup({
-            verifierInterface: VerifierRollupInterface(
-                address(0x1DC4b451DFcD0e848881eDE8c7A99978F00b1342) // New verifier 2048 tx
-            ),
-            maxTx: 2048,
-            nLevels: 32
-        });
-
-        withdrawVerifier = VerifierWithdrawInterface(
-            0x4464A1E499cf5443541da6728871af1D5C4920ca
-        );
-        emit hermezV2();
-    }
-
     /**
      * @dev Initializer function (equivalent to the constructor). Since we use
      * upgradeable smartcontracts the state vars have to be initialized here.
@@ -273,13 +232,12 @@ contract Hermez is InstantWithdrawManager {
     /**
      * @dev Forge a new batch providing the L2 Transactions, L1Corrdinator transactions and the proof.
      * If the proof is succesfully verified, update the current state, adding a new state and exit root.
-     * In order to optimize the gas consumption the parameters `encodedL1CoordinatorTx`, `l1L2TxsData` and `feeIdxCoordinator`
+     * In order to optimize the gas consumption the parameters `encodedL1CoordinatorTx` and `feeIdxCoordinator`
      * are read directly from the calldata using assembly with the instruction `calldatacopy`
      * @param newLastIdx New total rollup accounts
      * @param newStRoot New state root
      * @param newExitRoot New exit root
      * @param encodedL1CoordinatorTx Encoded L1-coordinator transactions
-     * @param l1L2TxsData Encoded l2 data
      * @param feeIdxCoordinator Encoded idx accounts of the coordinator where the fees will be payed
      * @param verifierIdx Verifier index
      * @param l1Batch Indicates if this batch will be L2 or L1-L2
@@ -293,7 +251,6 @@ contract Hermez is InstantWithdrawManager {
         uint256 newStRoot,
         uint256 newExitRoot,
         bytes calldata encodedL1CoordinatorTx,
-        bytes calldata l1L2TxsData,
         bytes calldata feeIdxCoordinator,
         uint8 verifierIdx,
         bool l1Batch,
@@ -348,7 +305,6 @@ contract Hermez is InstantWithdrawManager {
         lastIdx = newLastIdx;
         stateRootMap[lastForgedBatch] = newStRoot;
         exitRootsMap[lastForgedBatch] = newExitRoot;
-        l1L2TxsDataHashMap[lastForgedBatch] = sha256(l1L2TxsData);
 
         uint16 l1UserTxsLen;
         if (l1Batch) {
@@ -943,14 +899,6 @@ contract Hermez is InstantWithdrawManager {
         uint256 dPtr; // Pointer to the calldata parameter data
         uint256 dLen; // Length of the calldata parameter
 
-        // l1L2TxsData = l2Bytes * maxTx =
-        // ([(nLevels / 8) bytes] fromIdx + [(nLevels / 8) bytes] toIdx + [5 bytes] amountFloat40 + [1 bytes] fee) * maxTx =
-        // ((nLevels / 4) bytes + 3 bytes) * maxTx
-        uint256 l1L2TxsDataLength = ((rollupVerifiers[verifierIdx].nLevels /
-            8) *
-            2 +
-            5 +
-            1) * rollupVerifiers[verifierIdx].maxTx;
 
         // [(nLevels / 8) bytes]
         uint256 feeIdxCoordinatorLength = (rollupVerifiers[verifierIdx]
@@ -963,18 +911,17 @@ contract Hermez is InstantWithdrawManager {
         // [32 bytes] newStRoot  +
         // [32 bytes] newExitRoot +
         // [_MAX_L1_TX * _L1_USER_TOTALBYTES bytes] l1TxsData +
-        // totall1L2TxsDataLength +
         // feeIdxCoordinatorLength +
         // [2 bytes] chainID +
         // [4 bytes] batchNum =
-        // _INPUT_SHA_CONSTANT_BYTES bytes +  totall1L2TxsDataLength + feeIdxCoordinatorLength
+        // _INPUT_SHA_CONSTANT_BYTES bytes + feeIdxCoordinatorLength
         bytes memory inputBytes;
 
         uint256 ptr; // Position for writing the bufftr
 
         assembly {
             let inputBytesLength := add(
-                add(_INPUT_SHA_CONSTANT_BYTES, l1L2TxsDataLength),
+                _INPUT_SHA_CONSTANT_BYTES,
                 feeIdxCoordinatorLength
             )
 
@@ -1010,23 +957,9 @@ contract Hermez is InstantWithdrawManager {
         _buildL1Data(ptr, l1Batch);
         ptr += _MAX_L1_TX * _L1_USER_TOTALBYTES;
 
-        // Copy the L2 TX Data from calldata
-        (dPtr, dLen) = _getCallData(4);
-        require(
-            dLen <= l1L2TxsDataLength,
-            "Hermez::_constructCircuitInput: L2_TX_OVERFLOW"
-        );
-        assembly {
-            calldatacopy(ptr, dPtr, dLen)
-        }
-        ptr += dLen;
-
-        // L2 TX unused data is padded with 0 at the end
-        _fillZeros(ptr, l1L2TxsDataLength - dLen);
-        ptr += l1L2TxsDataLength - dLen;
 
         // Copy the FeeIdxCoordinator from the calldata
-        (dPtr, dLen) = _getCallData(5);
+        (dPtr, dLen) = _getCallData(4);
         require(
             dLen <= feeIdxCoordinatorLength,
             "Hermez::_constructCircuitInput: INVALID_FEEIDXCOORDINATOR_LENGTH"

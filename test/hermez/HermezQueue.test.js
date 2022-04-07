@@ -310,7 +310,6 @@ describe("Hermez Queue", function () {
           newStateRoot,
           newExitRoot,
           compressedL1CoordinatorTx,
-          L2TxsData,
           feeIdxCoordinator,
           verifierIdx,
           true,

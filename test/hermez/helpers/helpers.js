@@ -72,18 +72,12 @@ class ForgerTest {
       }
     }
 
-
     if (l2txArray) {
       for (let tx of l2txArray) {
         bb.addTx(tx);
       }
     }
-
-    // if(log) {
-    //   bb.addToken(1);
-    //   bb.addFeeIdx(259);
-    // }
-
+    
     await bb.build();
 
     let stringL1CoordinatorTx = "";
@@ -141,7 +135,6 @@ class ForgerTest {
     const newStateRoot = bb.getNewStateRoot();
     const newExitRoot = bb.getNewExitRoot();
     const compressedL1CoordinatorTx = `0x${stringL1CoordinatorTx}`;
-    const L1L2TxsData = bb.getL1L2TxsDataSM();
     const feeIdxCoordinator = bb.getFeeTxsDataSM();
     const verifierIdx = 0;
 
@@ -160,7 +153,6 @@ class ForgerTest {
           newStateRoot,
           newExitRoot,
           compressedL1CoordinatorTx,
-          L1L2TxsData,
           feeIdxCoordinator,
           l1Batch,
           verifierIdx
@@ -175,7 +167,6 @@ class ForgerTest {
         newStateRoot,
         newExitRoot,
         compressedL1CoordinatorTx,
-        L1L2TxsData,
         feeIdxCoordinator,
         verifierIdx,
         l1Batch,

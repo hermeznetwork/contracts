@@ -85,7 +85,6 @@ contract HermezTest is Hermez {
         uint256 newStRoot,
         uint256 newExitRoot,
         bytes calldata compressedL1CoordinatorTx,
-        bytes calldata l2TxsData,
         bytes calldata feeIdxCoordinator,
         bool l1Batch,
         uint8 verifierIdx
@@ -106,7 +105,6 @@ contract HermezTest is Hermez {
         uint256 newStRoot,
         uint256 newExitRoot,
         bytes calldata encodedL1CoordinatorTx,
-        bytes calldata l1L2TxsData,
         bytes calldata feeIdxCoordinator,
         uint8 verifierIdx,
         bool l1Batch,
@@ -161,7 +159,6 @@ contract HermezTest is Hermez {
         lastIdx = newLastIdx;
         stateRootMap[lastForgedBatch] = newStRoot;
         exitRootsMap[lastForgedBatch] = newExitRoot;
-        l1L2TxsDataHashMap[lastForgedBatch] = sha256(l1L2TxsData);
 
         uint16 l1UserTxsLen;
         if (l1Batch) {
@@ -183,7 +180,6 @@ contract HermezTest is Hermez {
         uint256 newStRoot,
         uint256 newExitRoot,
         bytes calldata encodedL1CoordinatorTx,
-        bytes calldata l1L2TxsData,
         bytes calldata feeIdxCoordinator,
         uint8 verifierIdx,
         bool l1Batch,
